@@ -101,14 +101,6 @@ function WalletPage() {
         </div>
         <div className="mt-2 flex items-baseline gap-2">
           <span className="battle-title text-4xl">₹{bal.toFixed(2)}</span>
-          <span className="text-xs text-white/50">mock — not real money</span>
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/80 inline-flex items-center gap-1.5"
-            onClick={() => setShowForm((v) => !v)}
-        <div className="mt-2 flex items-baseline gap-2">
-          <span className="battle-title text-4xl">₹{bal.toFixed(2)}</span>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           <button
