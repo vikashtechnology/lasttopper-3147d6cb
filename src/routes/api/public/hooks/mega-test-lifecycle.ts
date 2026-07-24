@@ -73,6 +73,49 @@ export const Route = createFileRoute("/api/public/hooks/mega-test-lifecycle")({
           await supabaseAdmin.from("mega_tests").update({ status: "completed" }).eq("id", t.id);
           results.push({ id: t.id, action: "completed" });
         }
+
+        // Auto-configure next Sunday's mega test.
+        // Trigger window: any run after Sunday 14:00 IST (= 08:30 UTC) and before
+        // the following Sunday 10:00 IST guarantees the row exists for the
+        // upcoming Sunday 10:00 IST start (= 04:30 UTC), for both professions.
+        const nowD = new Date();
+        function nextSunday1000IST(from: Date): Date {
+          for (let i = 0; i < 8; i += 1) {
+            const c = new Date(from.getTime() + i * 24 * 60 * 60 * 1000);
+            c.setUTCHours(4, 30, 0, 0);
+            if (c.getUTCDay() === 0 && c.getTime() > from.getTime()) return c;
+          }
+          return from;
+        }
+        // Only pre-provision once the current Sunday's window is clearly over (>= 14:00 IST Sunday, or any later day).
+        const isSunday = nowD.getUTCDay() === 0;
+        const past2pmIST = nowD.getUTCHours() * 60 + nowD.getUTCMinutes() >= 8 * 60 + 30; // 08:30 UTC = 14:00 IST
+        const shouldProvision = !isSunday || past2pmIST;
+        if (shouldProvision) {
+          const start = nextSunday1000IST(nowD);
+          const end = new Date(start.getTime() + 3 * 60 * 60 * 1000);
+          for (const profession of ["pcm", "pcb"] as const) {
+            const { data: existing } = await supabaseAdmin
+              .from("mega_tests")
+              .select("id")
+              .eq("profession", profession)
+              .eq("scheduled_start", start.toISOString())
+              .maybeSingle();
+            if (!existing) {
+              await supabaseAdmin.from("mega_tests").insert({
+                profession,
+                scheduled_start: start.toISOString(),
+                scheduled_end: end.toISOString(),
+                status: "scheduled",
+                entry_fee: 10,
+                min_participants: 50,
+                question_count: 180,
+              });
+              results.push({ id: `${profession}-${start.toISOString()}`, action: "provisioned" });
+            }
+          }
+        }
+
         return Response.json({ ok: true, results });
       },
     },
