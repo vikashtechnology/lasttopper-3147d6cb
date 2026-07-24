@@ -248,19 +248,7 @@ function LearningPage() {
             </div>
           )}
 
-          {distribution.length > 0 && (
-            <div className="mt-5">
-              <div className="text-sm font-semibold">Adaptive distribution</div>
-              <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                {distribution.map((d, i) => (
-                  <li key={i} className="flex justify-between">
-                    <span className="truncate pr-2">{d.name}</span>
-                    <span>{d.q} Q</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+
         </div>
 
         <Button className="mt-5 h-12 w-full text-base" onClick={handleStart} disabled={busy}>
