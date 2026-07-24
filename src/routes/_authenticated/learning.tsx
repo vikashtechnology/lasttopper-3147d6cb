@@ -43,7 +43,11 @@ export const Route = createFileRoute("/_authenticated/learning")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  loader: ({ context }) => context.queryClient.ensureQueryData(subjectsQuery),
+  loader: ({ context }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(subjectsQuery),
+      context.queryClient.ensureQueryData(profileQuery),
+    ]),
   component: LearningPage,
 });
 
