@@ -1,0 +1,369 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { QuizQuestion } from "@/lib/learning.functions";
+
+/* ----------------------------- AI generation ----------------------------- */
+
+async function callGemini(prompt: string, count: number): Promise<QuizQuestion[]> {
+  const key = process.env.LOVABLE_API_KEY;
+  if (!key) throw new Error("Missing LOVABLE_API_KEY");
+  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+    body: JSON.stringify({
+      model: "google/gemini-3.6-flash",
+      messages: [
+        { role: "system", content: "You are an expert exam question generator. Output STRICT JSON only." },
+        { role: "user", content: prompt },
+      ],
+      response_format: { type: "json_object" },
+    }),
+  });
+  if (!resp.ok) {
+    if (resp.status === 429 || resp.status === 402) throw new Error("AI_BUSY");
+    throw new Error(`AI error ${resp.status}`);
+  }
+  const data = await resp.json();
+  const content: string = data?.choices?.[0]?.message?.content ?? "{}";
+  const parsed = JSON.parse(content) as {
+    questions?: Array<Omit<QuizQuestion, "id" | "chapter_id">>;
+  };
+  return (parsed.questions ?? []).slice(0, count).map((q, i) => ({
+    id: `bq_${Date.now()}_${i}`,
+    chapter_id: "",
+    question: q.question,
+    options: q.options,
+    correct: q.correct,
+    hint: q.hint ?? "",
+    explanation: q.explanation ?? "",
+  }));
+}
+
+/* --------------------------------- Wallet -------------------------------- */
+
+type SupabaseClient = Parameters<Parameters<typeof requireSupabaseAuth>[0]["next"]>[0]["context"]["supabase"];
+
+async function addTxn(
+  supabase: SupabaseClient,
+  userId: string,
+  type: "credit" | "debit",
+  category: string,
+  amount: number,
+  note: string,
+  referenceId?: string,
+) {
+  const { data: u } = await supabase.from("users").select("balance").eq("id", userId).maybeSingle();
+  const cur = Number(u?.balance ?? 0);
+  const next = type === "credit" ? cur + amount : cur - amount;
+  if (next < 0) throw new Error("Insufficient balance");
+  await supabase.from("users").update({ balance: next }).eq("id", userId);
+  await supabase.from("wallet_transactions").insert({
+    user_id: userId, type, category, amount, balance_after: next, note, reference_id: referenceId ?? null,
+  });
+  return next;
+}
+
+export const getWallet = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: u } = await context.supabase
+      .from("users").select("balance").eq("id", context.userId).maybeSingle();
+    const { data: txns } = await context.supabase
+      .from("wallet_transactions")
+      .select("id, type, category, amount, balance_after, note, created_at")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    return { balance: Number(u?.balance ?? 0), transactions: txns ?? [] };
+  });
+
+export const claimSignupBonus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: existing } = await context.supabase
+      .from("wallet_transactions")
+      .select("id").eq("user_id", context.userId).eq("category", "bonus").maybeSingle();
+    if (existing) return { already: true as const };
+    const bal = await addTxn(context.supabase, context.userId, "credit", "bonus", 100, "Welcome bonus");
+    return { already: false as const, balance: bal };
+  });
+
+/* ------------------------------ Quick battle ----------------------------- */
+
+export const startQuickBattle = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: profile } = await context.supabase
+      .from("users").select("profession").eq("id", context.userId).maybeSingle();
+    const profession = profile?.profession;
+    if (!profession) throw new Error("Complete onboarding first");
+    const subjectLabel = profession === "pcm"
+      ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
+    const prompt = `Generate exactly 10 exam-style MCQ for ${subjectLabel}. Mix chapters and difficulty. Use LaTeX ($...$ / $$...$$) for math. Return STRICT JSON: {"questions":[{"question":"...","options":{"A":"","B":"","C":"","D":""},"correct":"A|B|C|D","hint":"...","explanation":"..."}]}`;
+    const questions = await callGemini(prompt, 10);
+    const { data: row, error } = await context.supabase
+      .from("battle_sessions")
+      .insert({ user_id: context.userId, mode: "quick", profession, questions: questions as unknown as never })
+      .select("id").single();
+    if (error) throw error;
+    return { id: row.id as string, questions };
+  });
+
+const submitBattleSchema = z.object({
+  id: z.string().uuid(),
+  answers: z.record(z.string(), z.enum(["A", "B", "C", "D"])),
+  time_taken_seconds: z.number().int().nonnegative(),
+});
+
+export const submitBattle = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => submitBattleSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: s } = await context.supabase
+      .from("battle_sessions")
+      .select("questions, submitted_at, mode, mega_test_id")
+      .eq("id", data.id).eq("user_id", context.userId).maybeSingle();
+    if (!s) throw new Error("Not found");
+    if (s.submitted_at) return { already: true as const, correct: 0, total: 0, score: 0 };
+    const qs = (s.questions as QuizQuestion[]) ?? [];
+    let correct = 0;
+    for (const q of qs) if (data.answers[q.id] && data.answers[q.id] === q.correct) correct += 1;
+    const score = correct * 10;
+    await context.supabase.from("battle_sessions").update({
+      answers: data.answers, score, correct_count: correct,
+      time_taken_seconds: data.time_taken_seconds, submitted_at: new Date().toISOString(),
+    }).eq("id", data.id).eq("user_id", context.userId);
+    if (s.mode === "mega" && s.mega_test_id) {
+      await context.supabase.from("mega_test_entries")
+        .update({ score, correct_count: correct })
+        .eq("mega_test_id", s.mega_test_id).eq("user_id", context.userId);
+    }
+    return { already: false as const, correct, total: qs.length, score };
+  });
+
+export const getBattleSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: s } = await context.supabase
+      .from("battle_sessions").select("*")
+      .eq("id", data.id).eq("user_id", context.userId).maybeSingle();
+    return s;
+  });
+
+/* -------------------------------- Leaderboards --------------------------- */
+
+export const getQuickLeaderboard = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data } = await context.supabase
+      .from("battle_sessions")
+      .select("id, user_id, score, correct_count, time_taken_seconds, submitted_at")
+      .eq("mode", "quick").not("submitted_at", "is", null).gt("submitted_at", since)
+      .order("score", { ascending: false })
+      .order("time_taken_seconds", { ascending: true })
+      .limit(10);
+    const rows = data ?? [];
+    const userIds = Array.from(new Set(rows.map((r) => r.user_id as string)));
+    const { data: users } = userIds.length
+      ? await context.supabase.from("users").select("id, full_name, email, avatar_url").in("id", userIds)
+      : { data: [] as Array<{ id: string; full_name: string | null; email: string | null; avatar_url: string | null }> };
+    const map = new Map((users ?? []).map((u) => [u.id, u] as const));
+    return rows.map((r, i) => ({
+      rank: i + 1,
+      user: map.get(r.user_id as string) ?? { id: r.user_id as string, full_name: null, email: null, avatar_url: null },
+      score: r.score as number,
+      correct_count: r.correct_count as number,
+      time_taken_seconds: r.time_taken_seconds as number | null,
+      is_me: r.user_id === context.userId,
+    }));
+  });
+
+/* --------------------------------- Mega Test ----------------------------- */
+
+// Next Sunday 10:00 IST = 04:30 UTC. 3-hour window.
+function nextSundayIST(): { start: Date; end: Date } {
+  const now = new Date();
+  for (let i = 0; i < 8; i += 1) {
+    const cand = new Date(now.getTime() + i * 24 * 60 * 60 * 1000);
+    cand.setUTCHours(4, 30, 0, 0);
+    if (cand.getUTCDay() === 0 && cand.getTime() + 3 * 60 * 60 * 1000 > now.getTime()) {
+      return { start: cand, end: new Date(cand.getTime() + 3 * 60 * 60 * 1000) };
+    }
+  }
+  return { start: now, end: now };
+}
+
+export const getUpcomingMegaTest = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: profile } = await context.supabase
+      .from("users").select("profession").eq("id", context.userId).maybeSingle();
+    const profession = profile?.profession;
+    if (!profession) return null;
+    const { start, end } = nextSundayIST();
+    const { data: existing } = await context.supabase
+      .from("mega_tests").select("*")
+      .eq("profession", profession).eq("scheduled_start", start.toISOString()).maybeSingle();
+    let test = existing;
+    if (!test) {
+      const { data: inserted, error } = await context.supabase.from("mega_tests")
+        .insert({
+          profession,
+          scheduled_start: start.toISOString(),
+          scheduled_end: end.toISOString(),
+          status: "scheduled", entry_fee: 10, min_participants: 50, question_count: 180,
+        })
+        .select("*").single();
+      if (error) throw error;
+      test = inserted;
+    }
+    const { data: entry } = await context.supabase
+      .from("mega_test_entries")
+      .select("id, paid, refunded, session_id, score, rank, prize")
+      .eq("mega_test_id", test.id).eq("user_id", context.userId).maybeSingle();
+    const { count } = await context.supabase
+      .from("mega_test_entries").select("id", { count: "exact", head: true })
+      .eq("mega_test_id", test.id).eq("paid", true);
+    return { test, entry, participants: count ?? 0 };
+  });
+
+export const joinMegaTest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ mega_test_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: test } = await context.supabase
+      .from("mega_tests").select("id, entry_fee, status")
+      .eq("id", data.mega_test_id).maybeSingle();
+    if (!test) throw new Error("Test not found");
+    if (test.status === "completed" || test.status === "cancelled") throw new Error("Registration closed");
+    const { data: existing } = await context.supabase
+      .from("mega_test_entries").select("id, paid")
+      .eq("mega_test_id", data.mega_test_id).eq("user_id", context.userId).maybeSingle();
+    if (existing?.paid) return { already: true as const };
+    const fee = Number(test.entry_fee);
+    const bal = await addTxn(context.supabase, context.userId, "debit", "entry_fee", fee, "Sunday Mega Test entry", data.mega_test_id);
+    if (existing) {
+      await context.supabase.from("mega_test_entries").update({ paid: true }).eq("id", existing.id);
+    } else {
+      await context.supabase.from("mega_test_entries")
+        .insert({ mega_test_id: data.mega_test_id, user_id: context.userId, paid: true });
+    }
+    return { already: false as const, balance: bal };
+  });
+
+export const startMegaSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ mega_test_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: test } = await context.supabase
+      .from("mega_tests").select("*").eq("id", data.mega_test_id).maybeSingle();
+    if (!test) throw new Error("Test not found");
+    const now = Date.now();
+    const start = new Date(test.scheduled_start as string).getTime();
+    const end = new Date(test.scheduled_end as string).getTime();
+    if (now < start) throw new Error("Test hasn't started yet");
+    if (now > end) throw new Error("Test has ended");
+    const { data: entry } = await context.supabase
+      .from("mega_test_entries").select("id, paid, session_id")
+      .eq("mega_test_id", data.mega_test_id).eq("user_id", context.userId).maybeSingle();
+    if (!entry?.paid) throw new Error("Join first to play");
+    if (entry.session_id) return { id: entry.session_id as string };
+    let questions = (test.questions as QuizQuestion[] | null) ?? null;
+    if (!questions) {
+      const label = test.profession === "pcm"
+        ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
+      const prompt = `Generate exactly 60 exam-style MCQ for ${label}. Mix chapters, difficulties. Use LaTeX. Return STRICT JSON: {"questions":[{"question":"","options":{"A":"","B":"","C":"","D":""},"correct":"A","hint":"","explanation":""}]}`;
+      const parts = await Promise.all([callGemini(prompt, 60), callGemini(prompt, 60), callGemini(prompt, 60)]);
+      questions = parts.flat().slice(0, 180);
+      await context.supabase.from("mega_tests")
+        .update({ questions: questions as unknown as never, status: "live" })
+        .eq("id", data.mega_test_id);
+    }
+    const { data: row, error } = await context.supabase
+      .from("battle_sessions")
+      .insert({
+        user_id: context.userId, mode: "mega",
+        profession: test.profession, mega_test_id: data.mega_test_id,
+        questions: questions as unknown as never,
+      })
+      .select("id").single();
+    if (error) throw error;
+    await context.supabase.from("mega_test_entries").update({ session_id: row.id }).eq("id", entry.id);
+    return { id: row.id as string };
+  });
+
+/* ----------------------------- Withdrawals ------------------------------- */
+
+const withdrawSchema = z.object({
+  amount: z.number().positive(),
+  method: z.enum(["upi", "bank"]),
+  upi_id: z.string().optional(),
+  account_name: z.string().optional(),
+  account_number: z.string().optional(),
+  ifsc: z.string().optional(),
+});
+
+export const requestWithdrawal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => withdrawSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: u } = await context.supabase
+      .from("users").select("balance, full_name, email").eq("id", context.userId).maybeSingle();
+    const bal = Number(u?.balance ?? 0);
+    if (data.amount > bal) throw new Error("Insufficient balance");
+    await addTxn(context.supabase, context.userId, "debit", "withdrawal", data.amount, "Withdrawal requested");
+    const { data: row, error } = await context.supabase
+      .from("withdrawal_requests")
+      .insert({
+        user_id: context.userId, amount: data.amount, method: data.method,
+        upi_id: data.upi_id ?? null, account_name: data.account_name ?? null,
+        account_number: data.account_number ?? null, ifsc: data.ifsc ?? null,
+      })
+      .select("id, process_after").single();
+    if (error) throw error;
+    try {
+      const chat = process.env.REPORT_TELEGRAM_CHAT_ID;
+      const gwKey = process.env.LOVABLE_API_KEY;
+      const tgKey = process.env.TELEGRAM_API_KEY;
+      if (chat && gwKey && tgKey) {
+        await fetch("https://connector-gateway.lovable.dev/telegram/sendMessage", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${gwKey}`,
+            "X-Connection-Api-Key": tgKey,
+          },
+          body: JSON.stringify({
+            chat_id: chat,
+            text: `💸 Withdrawal request\nUser: ${u?.full_name ?? u?.email ?? context.userId}\nAmount: ₹${data.amount}\nMethod: ${data.method}\nID: ${row.id}`,
+          }),
+        });
+      }
+    } catch { /* non-fatal */ }
+    return { id: row.id, process_after: row.process_after };
+  });
+
+export const getWithdrawals = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase
+      .from("withdrawal_requests")
+      .select("id, amount, method, status, process_after, processed_at, created_at")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false }).limit(20);
+    return data ?? [];
+  });
+
+export const getBattleHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase
+      .from("battle_sessions")
+      .select("id, mode, score, correct_count, time_taken_seconds, submitted_at, mega_test_id")
+      .eq("user_id", context.userId).not("submitted_at", "is", null)
+      .order("submitted_at", { ascending: false }).limit(30);
+    return data ?? [];
+  });

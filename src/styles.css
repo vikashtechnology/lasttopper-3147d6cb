@@ -142,3 +142,84 @@
     color: var(--color-foreground);
   }
 }
+
+/* -------------------------------------------------------------
+ * Battle theme — dark neon gaming, scoped to `.battle-theme`.
+ * ------------------------------------------------------------- */
+.battle-theme {
+  --neon-cyan: #22d3ee;
+  --neon-magenta: #d946ef;
+  --battle-surface: rgba(20, 22, 45, 0.55);
+  --battle-border: rgba(167, 139, 250, 0.35);
+  background: radial-gradient(ellipse at top, #1a1035 0%, #05060f 60%);
+  color: #e5e7ff;
+  font-family: "Orbitron", "Rajdhani", ui-sans-serif, system-ui, sans-serif;
+  min-height: 100vh;
+}
+.battle-theme .battle-title {
+  font-family: "Orbitron", ui-sans-serif, system-ui;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #22d3ee, #d946ef);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 24px rgba(217, 70, 239, 0.35);
+}
+.battle-theme .battle-glass {
+  background: var(--battle-surface);
+  border: 1px solid var(--battle-border);
+  backdrop-filter: blur(16px) saturate(140%);
+  border-radius: 1rem;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 20px 60px -20px rgba(139, 92, 246, 0.4);
+}
+.battle-theme .battle-btn {
+  background: linear-gradient(135deg, #7c3aed, #22d3ee);
+  color: #f8fafc;
+  border: 0;
+  border-radius: 0.75rem;
+  padding: 0.6rem 1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  box-shadow: 0 10px 30px -10px rgba(124, 58, 237, 0.7);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.battle-theme .battle-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 36px -10px rgba(34, 211, 238, 0.7);
+}
+.battle-theme .battle-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.battle-theme .battle-tab {
+  color: rgba(229, 231, 255, 0.6);
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: all 200ms;
+  white-space: nowrap;
+}
+.battle-theme .battle-tab[data-status="active"] {
+  color: #fff;
+  background: rgba(124, 58, 237, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.55), 0 0 20px rgba(34, 211, 238, 0.25);
+}
+.battle-theme .battle-noselect {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+@media print { .battle-theme { display: none !important; } }
+
+@keyframes battle-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.12); opacity: 0.8; }
+}
+.battle-theme .battle-pulse { animation: battle-pulse 1s ease-in-out infinite; }
+@keyframes battle-slide-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.battle-theme .battle-slide-up { animation: battle-slide-up 260ms ease-out; }
+
