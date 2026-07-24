@@ -195,23 +195,46 @@ function LearningPage() {
 
       <section className="mx-auto max-w-3xl px-5 py-6">
         <div className="rounded-2xl border bg-card p-5">
-          <div className="text-sm font-semibold">Question count</div>
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-semibold">Question count</div>
+            {!isPro && (
+              <Link to="/pricing" className="text-[11px] font-medium text-primary hover:underline">
+                Unlock 50 & 100 with Pro
+              </Link>
+            )}
+          </div>
           <RadioGroup
             value={String(count)}
-            onValueChange={(v) => setCount(Number(v) as 20 | 50 | 100)}
+            onValueChange={(v) => {
+              const n = Number(v) as 20 | 50 | 100;
+              if (n > 20 && !isPro) {
+                toast.error("50 & 100 question sets are a Pro feature.", {
+                  action: { label: "Upgrade", onClick: () => nav({ to: "/pricing" }) },
+                });
+                return;
+              }
+              setCount(n);
+            }}
             className="mt-3 grid grid-cols-3 gap-3"
           >
-            {[20, 50, 100].map((n) => (
-              <label
-                key={n}
-                htmlFor={`n-${n}`}
-                className="flex cursor-pointer items-center gap-2 rounded-lg border p-3 hover:bg-accent"
-              >
-                <RadioGroupItem id={`n-${n}`} value={String(n)} />
-                <span className="text-sm">{n}</span>
-              </label>
-            ))}
+            {[20, 50, 100].map((n) => {
+              const locked = n > 20 && !isPro;
+              return (
+                <label
+                  key={n}
+                  htmlFor={`n-${n}`}
+                  className={`flex items-center gap-2 rounded-lg border p-3 ${
+                    locked ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:bg-accent"
+                  }`}
+                >
+                  <RadioGroupItem id={`n-${n}`} value={String(n)} disabled={locked} />
+                  <span className="text-sm">{n}</span>
+                  {locked && <Lock className="ml-auto h-3.5 w-3.5 text-muted-foreground" />}
+                </label>
+              );
+            })}
           </RadioGroup>
+
 
           <div className="mt-5 flex items-center justify-between">
             <div>
