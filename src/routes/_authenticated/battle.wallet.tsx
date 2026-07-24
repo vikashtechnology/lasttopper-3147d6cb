@@ -32,7 +32,7 @@ function WalletPage() {
   const [showTopup, setShowTopup] = useState(false);
 
   const topup = async () => {
-    if (topupAmt < 10) return toast.error("Minimum ₹10");
+    if (topupAmt < 10) return toast.error("Minimum 🪙10 TC");
     setTopupLoading(true);
     try {
       await payWithRazorpay({
@@ -41,7 +41,7 @@ function WalletPage() {
         name: profile.data?.full_name,
         email: profile.data?.email,
       });
-      toast.success(`₹${topupAmt} added to wallet`);
+      toast.success(`🪙${topupAmt} TC added to wallet`);
       setShowTopup(false);
       qc.invalidateQueries({ queryKey: ["wallet"] });
     } catch (e) {
@@ -97,10 +97,11 @@ function WalletPage() {
       <div className="battle-glass battle-slide-up p-6">
         <div className="flex items-center gap-2 text-white/70">
           <Wallet className="h-4 w-4" />
-          <span className="text-xs uppercase tracking-widest">Balance</span>
+          <span className="text-xs uppercase tracking-widest">Topper Coin balance</span>
         </div>
         <div className="mt-2 flex items-baseline gap-2">
-          <span className="battle-title text-4xl">₹{bal.toFixed(2)}</span>
+          <span className="battle-title text-4xl">🪙{bal.toFixed(2)} TC</span>
+          <span className="text-xs text-white/50">1 TC = ₹1</span>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           <button
@@ -127,16 +128,16 @@ function WalletPage() {
                 key={v}
                 onClick={() => setTopupAmt(v)}
                 className={`rounded-lg border px-3 py-1.5 text-xs ${topupAmt === v ? "border-cyan-400/60 bg-cyan-400/10" : "border-white/15"}`}
-              >₹{v}</button>
+              >🪙{v}</button>
             ))}
           </div>
           <input
             className="w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2"
-            type="number" min={10} max={5000} placeholder="Amount (₹)"
+            type="number" min={10} max={5000} placeholder="Amount (Topper Coins)"
             value={topupAmt || ""} onChange={(e) => setTopupAmt(Number(e.target.value))}
           />
           <button className="battle-btn w-full" disabled={topupLoading} onClick={topup}>
-            {topupLoading ? "Opening checkout…" : `Pay ₹${topupAmt}`}
+            {topupLoading ? "Opening checkout…" : `Pay ₹${topupAmt} · get 🪙${topupAmt} TC`}
           </button>
         </div>
       )}
@@ -155,7 +156,7 @@ function WalletPage() {
           </div>
           <input
             className="w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2"
-            type="number" min={1} max={bal} placeholder="Amount (₹)"
+            type="number" min={1} max={bal} placeholder="Amount (Topper Coins)"
             value={amt || ""} onChange={(e) => setAmt(Number(e.target.value))}
           />
           {method === "upi" ? (
@@ -186,7 +187,7 @@ function WalletPage() {
             {(wr.data ?? []).map((r) => (
               <li key={r.id} className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
                 <div>
-                  <div className="font-medium">₹{Number(r.amount).toFixed(2)} · {r.method.toUpperCase()}</div>
+                  <div className="font-medium">🪙{Number(r.amount).toFixed(2)} TC · {r.method.toUpperCase()}</div>
                   <div className="text-xs text-white/50">
                     {r.status === "pending"
                       ? `Processes at ${new Date(r.process_after).toLocaleTimeString()}`
@@ -213,7 +214,7 @@ function WalletPage() {
                   <div className="text-xs text-white/50">{new Date(t.created_at).toLocaleString()}</div>
                 </div>
                 <span className={t.type === "credit" ? "text-emerald-300" : "text-red-300"}>
-                  {t.type === "credit" ? "+" : "−"}₹{Number(t.amount).toFixed(2)}
+                  {t.type === "credit" ? "+" : "−"}🪙{Number(t.amount).toFixed(2)}
                 </span>
               </li>
             ))}

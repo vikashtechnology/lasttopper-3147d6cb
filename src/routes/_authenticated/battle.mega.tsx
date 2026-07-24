@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/battle/mega")({
       { title: "Sunday Mega Test — Last Topper" },
       { name: "description", content: "180 questions, 3 hours, real prizes every Sunday 10AM IST." },
       { property: "og:title", content: "Sunday Mega Test" },
-      { property: "og:description", content: "180q · 3hr · prizes up to ₹100." },
+      { property: "og:description", content: "180q · 3hr · prizes up to 🪙100 Topper Coins." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -79,8 +79,8 @@ function MegaTest() {
           <Trophy className="h-5 w-5" />
           <span className="text-xs uppercase tracking-widest">Sunday Mega Test</span>
         </div>
-        <h1 className="battle-title mt-2 text-2xl">₹100 · ₹50 · ₹25 · 7×₹15</h1>
-        <p className="mt-2 text-sm text-white/70">180 questions · 3-hour window · entry ₹{Number(test.entry_fee)}</p>
+        <h1 className="battle-title mt-2 text-2xl">🪙100 · 🪙50 · 🪙25 · 7×🪙15</h1>
+        <p className="mt-2 text-sm text-white/70">180 questions · 3-hour window · entry 🪙{Number(test.entry_fee)} TC</p>
 
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
           <Stat icon={<Users className="h-4 w-4" />} label="Players" value={String(participants)} />
@@ -103,7 +103,7 @@ function MegaTest() {
               onClick={() => join.mutate(test.id)}
             >
               <Coins className="h-4 w-4" />
-              {join.isPending ? "Joining…" : `Join for ₹${Number(test.entry_fee)}`}
+              {join.isPending ? "Joining…" : `Join for 🪙${Number(test.entry_fee)} TC`}
             </button>
           )}
           {entry?.paid && !entry.session_id && isLive && (
@@ -129,19 +129,19 @@ function MegaTest() {
           )}
           {isDone && entry?.rank && (
             <div className="rounded-xl border border-yellow-400/60 bg-yellow-400/10 px-3 py-2 text-sm text-yellow-100">
-              Rank #{entry.rank} · Prize ₹{Number(entry.prize ?? 0)}
+              Rank #{entry.rank} · Prize 🪙{Number(entry.prize ?? 0)} TC
             </div>
           )}
         </div>
       </div>
 
       <div className="battle-glass p-5">
-        <div className="mb-2 text-xs uppercase tracking-widest text-white/60">Prize pool</div>
+        <div className="mb-2 text-xs uppercase tracking-widest text-white/60">Prize pool (Topper Coins · 1 TC = ₹1)</div>
         <ul className="space-y-1 text-sm">
-          <li>🥇 Rank 1 — ₹100</li>
-          <li>🥈 Rank 2 — ₹50</li>
-          <li>🥉 Rank 3 — ₹25</li>
-          <li>Ranks 4–10 — ₹15 each</li>
+          <li>🥇 Rank 1 — 🪙100 TC</li>
+          <li>🥈 Rank 2 — 🪙50 TC</li>
+          <li>🥉 Rank 3 — 🪙25 TC</li>
+          <li>Ranks 4–10 — 🪙15 TC each</li>
         </ul>
       </div>
     </div>
