@@ -49,6 +49,96 @@ export type Database = {
           },
         ]
       }
+      generated_questions: {
+        Row: {
+          chapter_ids: string[]
+          created_at: string
+          expires_at: string
+          id: string
+          profession: string
+          question_count: number
+          questions: Json
+          user_id: string
+        }
+        Insert: {
+          chapter_ids: string[]
+          created_at?: string
+          expires_at?: string
+          id?: string
+          profession: string
+          question_count: number
+          questions: Json
+          user_id: string
+        }
+        Update: {
+          chapter_ids?: string[]
+          created_at?: string
+          expires_at?: string
+          id?: string
+          profession?: string
+          question_count?: number
+          questions?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      quiz_sessions: {
+        Row: {
+          accuracy: number | null
+          answers: Json
+          chapter_ids: string[]
+          correct_count: number | null
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          incorrect_count: number | null
+          question_count: number
+          questions: Json
+          score: number | null
+          start_time: string
+          submitted_at: string | null
+          time_taken_seconds: number | null
+          timer_enabled: boolean
+          user_id: string
+        }
+        Insert: {
+          accuracy?: number | null
+          answers?: Json
+          chapter_ids: string[]
+          correct_count?: number | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          incorrect_count?: number | null
+          question_count: number
+          questions: Json
+          score?: number | null
+          start_time?: string
+          submitted_at?: string | null
+          time_taken_seconds?: number | null
+          timer_enabled?: boolean
+          user_id: string
+        }
+        Update: {
+          accuracy?: number | null
+          answers?: Json
+          chapter_ids?: string[]
+          correct_count?: number | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          incorrect_count?: number | null
+          question_count?: number
+          questions?: Json
+          score?: number | null
+          start_time?: string
+          submitted_at?: string | null
+          time_taken_seconds?: number | null
+          timer_enabled?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       subjects: {
         Row: {
           code: string
