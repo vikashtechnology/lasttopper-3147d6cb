@@ -2,7 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getQuizSession, submitQuizSession, type QuizQuestion } from "@/lib/learning.functions";
+import {
+  getQuizSession,
+  submitQuizSession,
+  heartbeatSession,
+  type QuizQuestion,
+} from "@/lib/learning.functions";
 import { useQuizStore, type Answer } from "@/store/quiz";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -37,6 +42,7 @@ function QuizPage() {
   const timerEnabled = !!session?.timer_enabled;
   const duration = session?.duration_seconds ?? null;
   const startTimeMs = session?.start_time ? new Date(session.start_time).getTime() : Date.now();
+  const alreadySubmitted = !!session?.submitted_at;
 
   const init = useQuizStore((s) => s.init);
   const setAnswer = useQuizStore((s) => s.setAnswer);
@@ -47,6 +53,31 @@ function QuizPage() {
   useEffect(() => {
     if (session) init(sessionId);
   }, [session, sessionId, init]);
+
+  // Redirect to results if session was auto-submitted server-side while away
+  useEffect(() => {
+    if (alreadySubmitted) {
+      nav({ to: "/results/$sessionId", params: { sessionId }, replace: true });
+    }
+  }, [alreadySubmitted, nav, sessionId]);
+
+  // Heartbeat every 30s while the quiz is open
+  useEffect(() => {
+    if (!session || alreadySubmitted) return;
+    const send = () => {
+      void heartbeatSession({ data: { id: sessionId } }).catch(() => {});
+    };
+    send();
+    const t = setInterval(send, 30_000);
+    const onVis = () => {
+      if (document.visibilityState === "visible") send();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [session, alreadySubmitted, sessionId]);
 
   const [showHint, setShowHint] = useState(false);
   const [submitting, setSubmitting] = useState(false);

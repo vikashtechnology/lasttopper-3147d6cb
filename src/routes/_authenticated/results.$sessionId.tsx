@@ -1,15 +1,35 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   getQuizSession,
   createQuizSession,
+  reportIssue,
   type QuizQuestion,
 } from "@/lib/learning.functions";
 import { Button } from "@/components/ui/button";
 import { Latex } from "@/components/Latex";
-import { CheckCircle2, XCircle, ChevronDown, ChevronUp, Home, Repeat } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  CheckCircle2,
+  XCircle,
+  ChevronDown,
+  ChevronUp,
+  Home,
+  Repeat,
+  Share2,
+  Flag,
+  AlertCircle,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/results/$sessionId")({
   head: () => ({
@@ -40,6 +60,12 @@ function ResultsPage() {
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [starting, setStarting] = useState(false);
+  const [reportFor, setReportFor] = useState<QuizQuestion | null>(null);
+  const [reportReason, setReportReason] = useState("Incorrect answer");
+  const [reportMsg, setReportMsg] = useState("");
+  const [reporting, setReporting] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const scorecardRef = useRef<HTMLDivElement>(null);
 
   const questions = useMemo(
     () => (session?.questions as QuizQuestion[] | undefined) ?? [],
@@ -54,6 +80,7 @@ function ResultsPage() {
   const incorrect = session.incorrect_count ?? total - correct;
   const accuracy = Number(session.accuracy ?? 0);
   const timeTaken = session.time_taken_seconds ?? 0;
+  const wasAuto = !!session.was_auto_submitted;
 
   function toggle(id: string) {
     setExpanded((s) => {
@@ -90,6 +117,65 @@ function ResultsPage() {
     }
   }
 
+  async function shareScorecard() {
+    if (!scorecardRef.current) return;
+    setSharing(true);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const canvas = await html2canvas(scorecardRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+      });
+      const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) throw new Error("Could not create image");
+      const file = new File([blob], `scorecard-${sessionId}.png`, { type: "image/png" });
+      const nav2 = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
+      if (nav2.canShare && nav2.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "My Last Topper scorecard",
+          text: `I scored ${accuracy.toFixed(1)}% (${correct}/${total}) on Last Topper!`,
+        });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `scorecard-${sessionId}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("Scorecard downloaded");
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to share";
+      if (!/aborted/i.test(msg)) toast.error(msg);
+    } finally {
+      setSharing(false);
+    }
+  }
+
+  async function submitReport() {
+    if (!reportFor) return;
+    setReporting(true);
+    try {
+      await reportIssue({
+        data: {
+          session_id: sessionId,
+          question_id: reportFor.id,
+          question_text: reportFor.question,
+          reason: reportReason,
+          message: reportMsg.trim() || undefined,
+        },
+      });
+      toast.success("Report sent. Thank you!");
+      setReportFor(null);
+      setReportMsg("");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to report");
+    } finally {
+      setReporting(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-background">
       <header className="border-b bg-background">
@@ -105,8 +191,20 @@ function ResultsPage() {
       </header>
 
       <section className="mx-auto max-w-3xl px-5 pt-6">
-        <div className="rounded-2xl border bg-card p-5 shadow-sm">
-          <div className="text-sm text-muted-foreground">Accuracy</div>
+        {wasAuto && (
+          <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              This session was <strong>auto-submitted</strong> because the app was inactive too long.
+              Your progress up to that point was saved.
+            </div>
+          </div>
+        )}
+        <div
+          ref={scorecardRef}
+          className="rounded-2xl border bg-card p-5 shadow-sm"
+        >
+          <div className="text-sm text-muted-foreground">Last Topper · Accuracy</div>
           <div className="mt-1 text-4xl font-bold">{accuracy.toFixed(1)}%</div>
           <div className="mt-4 grid grid-cols-4 gap-3 text-center">
             <Stat label="Total" value={total} />
@@ -114,14 +212,17 @@ function ResultsPage() {
             <Stat label="Wrong" value={incorrect} tone="neg" />
             <Stat label="Time" value={formatTime(timeTaken)} />
           </div>
-          <div className="mt-4 flex gap-2">
-            <Button className="flex-1" onClick={practiceIncorrect} disabled={starting || incorrect === 0}>
-              <Repeat className="mr-2 h-4 w-4" /> Practice incorrect
-            </Button>
-            <Button variant="outline" className="flex-1" onClick={() => nav({ to: "/learning" })}>
-              New quiz
-            </Button>
-          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button className="flex-1 min-w-[140px]" onClick={practiceIncorrect} disabled={starting || incorrect === 0}>
+            <Repeat className="mr-2 h-4 w-4" /> Practice incorrect
+          </Button>
+          <Button variant="outline" className="flex-1 min-w-[140px]" onClick={shareScorecard} disabled={sharing}>
+            <Share2 className="mr-2 h-4 w-4" /> {sharing ? "Preparing…" : "Share scorecard"}
+          </Button>
+          <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => nav({ to: "/learning" })}>
+            New quiz
+          </Button>
         </div>
       </section>
 
@@ -178,8 +279,22 @@ function ResultsPage() {
                       ))}
                     </div>
                     <div className="mt-3 rounded-lg bg-muted p-3 text-sm">
-                      <div className="mb-1 text-xs font-semibold text-muted-foreground">Explanation</div>
+                      <div className="mb-1 text-xs font-semibold text-muted-foreground">Step-by-step explanation</div>
                       <Latex className="block">{q.explanation}</Latex>
+                    </div>
+                    <div className="mt-3 flex justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-xs text-muted-foreground"
+                        onClick={() => {
+                          setReportFor(q);
+                          setReportReason("Incorrect answer");
+                          setReportMsg("");
+                        }}
+                      >
+                        <Flag className="mr-1 h-3.5 w-3.5" /> Report issue
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -188,6 +303,50 @@ function ResultsPage() {
           })}
         </ul>
       </section>
+
+      <Dialog open={!!reportFor} onOpenChange={(open) => !open && setReportFor(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Report this question</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs">Reason</Label>
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                {["Incorrect answer", "Unclear wording", "Typo/formatting", "Other"].map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setReportReason(r)}
+                    className={`rounded-md border p-2 text-xs ${
+                      reportReason === r ? "border-primary bg-primary/5" : ""
+                    }`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs" htmlFor="report-msg">Details (optional)</Label>
+              <Textarea
+                id="report-msg"
+                value={reportMsg}
+                onChange={(e) => setReportMsg(e.target.value)}
+                rows={3}
+                placeholder="Tell us more…"
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setReportFor(null)}>Cancel</Button>
+            <Button onClick={submitReport} disabled={reporting}>
+              {reporting ? "Sending…" : "Send report"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

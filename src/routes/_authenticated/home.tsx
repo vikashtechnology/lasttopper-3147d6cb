@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo } from "react";
-import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
-import { getMyProfile } from "@/lib/user.functions";
+import { useEffect } from "react";
+import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getMyProfile, pingActivity } from "@/lib/user.functions";
+import { finalizeStaleSessions } from "@/lib/learning.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserStore, type UserProfile } from "@/store/user";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,9 @@ import {
   Flame,
   Target,
   LogOut,
+  History,
+  BarChart3,
+  AlertOctagon,
 } from "lucide-react";
 
 const profileQuery = {
@@ -58,11 +62,26 @@ function Home() {
     if (data) setProfile(data as UserProfile);
   }, [data, setProfile]);
 
+  // On app open: update streak and finalize any abandoned sessions
+  useQuery({
+    queryKey: ["ping-activity"],
+    queryFn: async () => {
+      const [ping] = await Promise.all([
+        pingActivity(),
+        finalizeStaleSessions().catch(() => ({ finalized: [] as string[] })),
+      ]);
+      await qc.invalidateQueries({ queryKey: ["my-profile"] });
+      return ping;
+    },
+    staleTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
   const p: UserProfile | null = (profile ?? (data as UserProfile | null)) as UserProfile | null;
 
-  const usedToday = 0; // TODO: wire once attempts table exists
+  const usedToday = 0;
   const limit = p?.daily_question_limit ?? 20;
-  const percent = useMemo(() => Math.round((usedToday / limit) * 100), [usedToday, limit]);
+  const percent = Math.round((usedToday / limit) * 100);
   const needsOnboarding = !!p && (!p.phone || !p.profession || !p.onboarded);
 
   async function handleSignOut() {
@@ -124,7 +143,7 @@ function Home() {
       </section>
 
       <section className="mx-auto max-w-3xl px-5 py-6">
-        <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Explore</h2>
+        <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Practice</h2>
         <div className="grid grid-cols-2 gap-4">
           <NavTile
             icon={<BookOpen className="h-5 w-5" />}
@@ -132,8 +151,26 @@ function Home() {
             body="Practice by chapter"
             onClick={() => navigate({ to: "/learning" })}
           />
-          <NavTile icon={<Swords className="h-5 w-5" />} title="Battle" body="1v1 quick match" />
-          <NavTile icon={<Users className="h-5 w-5" />} title="Community" body="Ask & discuss" />
+          <NavTile
+            icon={<AlertOctagon className="h-5 w-5" />}
+            title="Mistake bank"
+            body="Fix what you got wrong"
+            onClick={() => navigate({ to: "/mistakes" })}
+          />
+          <NavTile
+            icon={<BarChart3 className="h-5 w-5" />}
+            title="Mastery"
+            body="Analytics & charts"
+            onClick={() => navigate({ to: "/analytics" })}
+          />
+          <NavTile
+            icon={<History className="h-5 w-5" />}
+            title="History"
+            body="Past attempts"
+            onClick={() => navigate({ to: "/history" })}
+          />
+          <NavTile icon={<Swords className="h-5 w-5" />} title="Battle" body="Coming soon" />
+          <NavTile icon={<Users className="h-5 w-5" />} title="Community" body="Coming soon" />
           <NavTile icon={<UserIcon className="h-5 w-5" />} title="Profile" body="Your stats" />
         </div>
       </section>
