@@ -49,11 +49,12 @@ function WalletPage() {
     if (!code) return;
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const text = `Join me on Last Topper — use my code ${code} at signup and I earn 5 TC (Mega Test only) on your first wallet top-up. ${origin}`;
+    const nav = navigator as Navigator & { share?: (data: { text: string }) => Promise<void> };
     try {
-      if (typeof navigator !== "undefined" && "share" in navigator) {
-        await (navigator as Navigator).share({ text });
+      if (nav.share) {
+        await nav.share({ text });
       } else {
-        await navigator.clipboard.writeText(text);
+        await nav.clipboard.writeText(text);
         toast.success("Copied invite link");
       }
     } catch {
@@ -64,7 +65,7 @@ function WalletPage() {
   const copyCode = async () => {
     const code = ref.data?.code;
     if (!code) return;
-    await navigator.clipboard.writeText(code);
+    await (navigator as Navigator).clipboard.writeText(code);
     toast.success("Code copied");
   };
 
