@@ -12,21 +12,37 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedMistakesRouteImport } from './routes/_authenticated/mistakes'
 import { Route as AuthenticatedLearningRouteImport } from './routes/_authenticated/learning'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
+import { Route as AuthenticatedCommunityRouteImport } from './routes/_authenticated/community'
 import { Route as AuthenticatedBattleRouteImport } from './routes/_authenticated/battle'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
 import { Route as AuthenticatedBattleIndexRouteImport } from './routes/_authenticated/battle.index'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedResultsSessionIdRouteImport } from './routes/_authenticated/results.$sessionId'
 import { Route as AuthenticatedQuizSessionIdRouteImport } from './routes/_authenticated/quiz.$sessionId'
+import { Route as AuthenticatedProfileUserIdRouteImport } from './routes/_authenticated/profile.$userId'
+import { Route as AuthenticatedCommunityGroupsRouteImport } from './routes/_authenticated/community.groups'
+import { Route as AuthenticatedCommunityFeedRouteImport } from './routes/_authenticated/community.feed'
+import { Route as AuthenticatedCommunityDoubtsRouteImport } from './routes/_authenticated/community.doubts'
 import { Route as AuthenticatedBattleWalletRouteImport } from './routes/_authenticated/battle.wallet'
 import { Route as AuthenticatedBattleMegaRouteImport } from './routes/_authenticated/battle.mega'
 import { Route as AuthenticatedBattleLeaderboardRouteImport } from './routes/_authenticated/battle.leaderboard'
 import { Route as AuthenticatedBattleHistoryRouteImport } from './routes/_authenticated/battle.history'
+import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
+import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_authenticated/admin.moderation'
 import { Route as ApiPublicHooksProcessWithdrawalsRouteImport } from './routes/api/public/hooks/process-withdrawals'
 import { Route as ApiPublicHooksMegaTestLifecycleRouteImport } from './routes/api/public/hooks/mega-test-lifecycle'
+import { Route as AuthenticatedCommunityPostPostIdRouteImport } from './routes/_authenticated/community.post.$postId'
+import { Route as AuthenticatedCommunityGroupGroupIdRouteImport } from './routes/_authenticated/community.group.$groupId'
+import { Route as AuthenticatedCommunityForumCategoryIdRouteImport } from './routes/_authenticated/community.forum.$categoryId'
+import { Route as AuthenticatedCommunityDoubtDoubtIdRouteImport } from './routes/_authenticated/community.doubt.$doubtId'
 import { Route as AuthenticatedBattlePlaySessionIdRouteImport } from './routes/_authenticated/battle.play.$sessionId'
 
 const AuthRoute = AuthRouteImport.update({
@@ -43,6 +59,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMistakesRoute = AuthenticatedMistakesRouteImport.update({
   id: '/mistakes',
   path: '/mistakes',
@@ -63,6 +85,11 @@ const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCommunityRoute = AuthenticatedCommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedBattleRoute = AuthenticatedBattleRouteImport.update({
   id: '/battle',
   path: '/battle',
@@ -73,12 +100,28 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCommunityIndexRoute =
+  AuthenticatedCommunityIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedCommunityRoute,
+  } as any)
 const AuthenticatedBattleIndexRoute =
   AuthenticatedBattleIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedBattleRoute,
   } as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedResultsSessionIdRoute =
   AuthenticatedResultsSessionIdRouteImport.update({
     id: '/results/$sessionId',
@@ -90,6 +133,30 @@ const AuthenticatedQuizSessionIdRoute =
     id: '/quiz/$sessionId',
     path: '/quiz/$sessionId',
     getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedProfileUserIdRoute =
+  AuthenticatedProfileUserIdRouteImport.update({
+    id: '/profile/$userId',
+    path: '/profile/$userId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCommunityGroupsRoute =
+  AuthenticatedCommunityGroupsRouteImport.update({
+    id: '/groups',
+    path: '/groups',
+    getParentRoute: () => AuthenticatedCommunityRoute,
+  } as any)
+const AuthenticatedCommunityFeedRoute =
+  AuthenticatedCommunityFeedRouteImport.update({
+    id: '/feed',
+    path: '/feed',
+    getParentRoute: () => AuthenticatedCommunityRoute,
+  } as any)
+const AuthenticatedCommunityDoubtsRoute =
+  AuthenticatedCommunityDoubtsRouteImport.update({
+    id: '/doubts',
+    path: '/doubts',
+    getParentRoute: () => AuthenticatedCommunityRoute,
   } as any)
 const AuthenticatedBattleWalletRoute =
   AuthenticatedBattleWalletRouteImport.update({
@@ -114,6 +181,23 @@ const AuthenticatedBattleHistoryRoute =
     path: '/history',
     getParentRoute: () => AuthenticatedBattleRoute,
   } as any)
+const AuthenticatedAdminWithdrawalsRoute =
+  AuthenticatedAdminWithdrawalsRouteImport.update({
+    id: '/withdrawals',
+    path: '/withdrawals',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminModerationRoute =
+  AuthenticatedAdminModerationRouteImport.update({
+    id: '/moderation',
+    path: '/moderation',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const ApiPublicHooksProcessWithdrawalsRoute =
   ApiPublicHooksProcessWithdrawalsRouteImport.update({
     id: '/api/public/hooks/process-withdrawals',
@@ -126,6 +210,30 @@ const ApiPublicHooksMegaTestLifecycleRoute =
     path: '/api/public/hooks/mega-test-lifecycle',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedCommunityPostPostIdRoute =
+  AuthenticatedCommunityPostPostIdRouteImport.update({
+    id: '/post/$postId',
+    path: '/post/$postId',
+    getParentRoute: () => AuthenticatedCommunityRoute,
+  } as any)
+const AuthenticatedCommunityGroupGroupIdRoute =
+  AuthenticatedCommunityGroupGroupIdRouteImport.update({
+    id: '/group/$groupId',
+    path: '/group/$groupId',
+    getParentRoute: () => AuthenticatedCommunityRoute,
+  } as any)
+const AuthenticatedCommunityForumCategoryIdRoute =
+  AuthenticatedCommunityForumCategoryIdRouteImport.update({
+    id: '/forum/$categoryId',
+    path: '/forum/$categoryId',
+    getParentRoute: () => AuthenticatedCommunityRoute,
+  } as any)
+const AuthenticatedCommunityDoubtDoubtIdRoute =
+  AuthenticatedCommunityDoubtDoubtIdRouteImport.update({
+    id: '/doubt/$doubtId',
+    path: '/doubt/$doubtId',
+    getParentRoute: () => AuthenticatedCommunityRoute,
+  } as any)
 const AuthenticatedBattlePlaySessionIdRoute =
   AuthenticatedBattlePlaySessionIdRouteImport.update({
     id: '/play/$sessionId',
@@ -136,20 +244,36 @@ const AuthenticatedBattlePlaySessionIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/battle': typeof AuthenticatedBattleRouteWithChildren
+  '/community': typeof AuthenticatedCommunityRouteWithChildren
   '/history': typeof AuthenticatedHistoryRoute
   '/home': typeof AuthenticatedHomeRoute
   '/learning': typeof AuthenticatedLearningRoute
   '/mistakes': typeof AuthenticatedMistakesRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
+  '/admin/moderation': typeof AuthenticatedAdminModerationRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/battle/history': typeof AuthenticatedBattleHistoryRoute
   '/battle/leaderboard': typeof AuthenticatedBattleLeaderboardRoute
   '/battle/mega': typeof AuthenticatedBattleMegaRoute
   '/battle/wallet': typeof AuthenticatedBattleWalletRoute
+  '/community/doubts': typeof AuthenticatedCommunityDoubtsRoute
+  '/community/feed': typeof AuthenticatedCommunityFeedRoute
+  '/community/groups': typeof AuthenticatedCommunityGroupsRoute
+  '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/quiz/$sessionId': typeof AuthenticatedQuizSessionIdRoute
   '/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
   '/battle/': typeof AuthenticatedBattleIndexRoute
+  '/community/': typeof AuthenticatedCommunityIndexRoute
   '/battle/play/$sessionId': typeof AuthenticatedBattlePlaySessionIdRoute
+  '/community/doubt/$doubtId': typeof AuthenticatedCommunityDoubtDoubtIdRoute
+  '/community/forum/$categoryId': typeof AuthenticatedCommunityForumCategoryIdRoute
+  '/community/group/$groupId': typeof AuthenticatedCommunityGroupGroupIdRoute
+  '/community/post/$postId': typeof AuthenticatedCommunityPostPostIdRoute
   '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
   '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
 }
@@ -161,14 +285,28 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedHomeRoute
   '/learning': typeof AuthenticatedLearningRoute
   '/mistakes': typeof AuthenticatedMistakesRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
+  '/admin/moderation': typeof AuthenticatedAdminModerationRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/battle/history': typeof AuthenticatedBattleHistoryRoute
   '/battle/leaderboard': typeof AuthenticatedBattleLeaderboardRoute
   '/battle/mega': typeof AuthenticatedBattleMegaRoute
   '/battle/wallet': typeof AuthenticatedBattleWalletRoute
+  '/community/doubts': typeof AuthenticatedCommunityDoubtsRoute
+  '/community/feed': typeof AuthenticatedCommunityFeedRoute
+  '/community/groups': typeof AuthenticatedCommunityGroupsRoute
+  '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/quiz/$sessionId': typeof AuthenticatedQuizSessionIdRoute
   '/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
   '/battle': typeof AuthenticatedBattleIndexRoute
+  '/community': typeof AuthenticatedCommunityIndexRoute
   '/battle/play/$sessionId': typeof AuthenticatedBattlePlaySessionIdRoute
+  '/community/doubt/$doubtId': typeof AuthenticatedCommunityDoubtDoubtIdRoute
+  '/community/forum/$categoryId': typeof AuthenticatedCommunityForumCategoryIdRoute
+  '/community/group/$groupId': typeof AuthenticatedCommunityGroupGroupIdRoute
+  '/community/post/$postId': typeof AuthenticatedCommunityPostPostIdRoute
   '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
   '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
 }
@@ -177,20 +315,36 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/battle': typeof AuthenticatedBattleRouteWithChildren
+  '/_authenticated/community': typeof AuthenticatedCommunityRouteWithChildren
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/learning': typeof AuthenticatedLearningRoute
   '/_authenticated/mistakes': typeof AuthenticatedMistakesRoute
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
+  '/_authenticated/admin/moderation': typeof AuthenticatedAdminModerationRoute
+  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/_authenticated/battle/history': typeof AuthenticatedBattleHistoryRoute
   '/_authenticated/battle/leaderboard': typeof AuthenticatedBattleLeaderboardRoute
   '/_authenticated/battle/mega': typeof AuthenticatedBattleMegaRoute
   '/_authenticated/battle/wallet': typeof AuthenticatedBattleWalletRoute
+  '/_authenticated/community/doubts': typeof AuthenticatedCommunityDoubtsRoute
+  '/_authenticated/community/feed': typeof AuthenticatedCommunityFeedRoute
+  '/_authenticated/community/groups': typeof AuthenticatedCommunityGroupsRoute
+  '/_authenticated/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/_authenticated/quiz/$sessionId': typeof AuthenticatedQuizSessionIdRoute
   '/_authenticated/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/battle/': typeof AuthenticatedBattleIndexRoute
+  '/_authenticated/community/': typeof AuthenticatedCommunityIndexRoute
   '/_authenticated/battle/play/$sessionId': typeof AuthenticatedBattlePlaySessionIdRoute
+  '/_authenticated/community/doubt/$doubtId': typeof AuthenticatedCommunityDoubtDoubtIdRoute
+  '/_authenticated/community/forum/$categoryId': typeof AuthenticatedCommunityForumCategoryIdRoute
+  '/_authenticated/community/group/$groupId': typeof AuthenticatedCommunityGroupGroupIdRoute
+  '/_authenticated/community/post/$postId': typeof AuthenticatedCommunityPostPostIdRoute
   '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
   '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
 }
@@ -199,20 +353,36 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/admin'
     | '/analytics'
     | '/battle'
+    | '/community'
     | '/history'
     | '/home'
     | '/learning'
     | '/mistakes'
+    | '/notifications'
+    | '/admin/moderation'
+    | '/admin/users'
+    | '/admin/withdrawals'
     | '/battle/history'
     | '/battle/leaderboard'
     | '/battle/mega'
     | '/battle/wallet'
+    | '/community/doubts'
+    | '/community/feed'
+    | '/community/groups'
+    | '/profile/$userId'
     | '/quiz/$sessionId'
     | '/results/$sessionId'
+    | '/admin/'
     | '/battle/'
+    | '/community/'
     | '/battle/play/$sessionId'
+    | '/community/doubt/$doubtId'
+    | '/community/forum/$categoryId'
+    | '/community/group/$groupId'
+    | '/community/post/$postId'
     | '/api/public/hooks/mega-test-lifecycle'
     | '/api/public/hooks/process-withdrawals'
   fileRoutesByTo: FileRoutesByTo
@@ -224,14 +394,28 @@ export interface FileRouteTypes {
     | '/home'
     | '/learning'
     | '/mistakes'
+    | '/notifications'
+    | '/admin/moderation'
+    | '/admin/users'
+    | '/admin/withdrawals'
     | '/battle/history'
     | '/battle/leaderboard'
     | '/battle/mega'
     | '/battle/wallet'
+    | '/community/doubts'
+    | '/community/feed'
+    | '/community/groups'
+    | '/profile/$userId'
     | '/quiz/$sessionId'
     | '/results/$sessionId'
+    | '/admin'
     | '/battle'
+    | '/community'
     | '/battle/play/$sessionId'
+    | '/community/doubt/$doubtId'
+    | '/community/forum/$categoryId'
+    | '/community/group/$groupId'
+    | '/community/post/$postId'
     | '/api/public/hooks/mega-test-lifecycle'
     | '/api/public/hooks/process-withdrawals'
   id:
@@ -239,20 +423,36 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/admin'
     | '/_authenticated/analytics'
     | '/_authenticated/battle'
+    | '/_authenticated/community'
     | '/_authenticated/history'
     | '/_authenticated/home'
     | '/_authenticated/learning'
     | '/_authenticated/mistakes'
+    | '/_authenticated/notifications'
+    | '/_authenticated/admin/moderation'
+    | '/_authenticated/admin/users'
+    | '/_authenticated/admin/withdrawals'
     | '/_authenticated/battle/history'
     | '/_authenticated/battle/leaderboard'
     | '/_authenticated/battle/mega'
     | '/_authenticated/battle/wallet'
+    | '/_authenticated/community/doubts'
+    | '/_authenticated/community/feed'
+    | '/_authenticated/community/groups'
+    | '/_authenticated/profile/$userId'
     | '/_authenticated/quiz/$sessionId'
     | '/_authenticated/results/$sessionId'
+    | '/_authenticated/admin/'
     | '/_authenticated/battle/'
+    | '/_authenticated/community/'
     | '/_authenticated/battle/play/$sessionId'
+    | '/_authenticated/community/doubt/$doubtId'
+    | '/_authenticated/community/forum/$categoryId'
+    | '/_authenticated/community/group/$groupId'
+    | '/_authenticated/community/post/$postId'
     | '/api/public/hooks/mega-test-lifecycle'
     | '/api/public/hooks/process-withdrawals'
   fileRoutesById: FileRoutesById
@@ -288,6 +488,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/mistakes': {
       id: '/_authenticated/mistakes'
       path: '/mistakes'
@@ -316,6 +523,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHistoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/community': {
+      id: '/_authenticated/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof AuthenticatedCommunityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/battle': {
       id: '/_authenticated/battle'
       path: '/battle'
@@ -330,12 +544,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/community/': {
+      id: '/_authenticated/community/'
+      path: '/'
+      fullPath: '/community/'
+      preLoaderRoute: typeof AuthenticatedCommunityIndexRouteImport
+      parentRoute: typeof AuthenticatedCommunityRoute
+    }
     '/_authenticated/battle/': {
       id: '/_authenticated/battle/'
       path: '/'
       fullPath: '/battle/'
       preLoaderRoute: typeof AuthenticatedBattleIndexRouteImport
       parentRoute: typeof AuthenticatedBattleRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/results/$sessionId': {
       id: '/_authenticated/results/$sessionId'
@@ -350,6 +585,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/quiz/$sessionId'
       preLoaderRoute: typeof AuthenticatedQuizSessionIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile/$userId': {
+      id: '/_authenticated/profile/$userId'
+      path: '/profile/$userId'
+      fullPath: '/profile/$userId'
+      preLoaderRoute: typeof AuthenticatedProfileUserIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/community/groups': {
+      id: '/_authenticated/community/groups'
+      path: '/groups'
+      fullPath: '/community/groups'
+      preLoaderRoute: typeof AuthenticatedCommunityGroupsRouteImport
+      parentRoute: typeof AuthenticatedCommunityRoute
+    }
+    '/_authenticated/community/feed': {
+      id: '/_authenticated/community/feed'
+      path: '/feed'
+      fullPath: '/community/feed'
+      preLoaderRoute: typeof AuthenticatedCommunityFeedRouteImport
+      parentRoute: typeof AuthenticatedCommunityRoute
+    }
+    '/_authenticated/community/doubts': {
+      id: '/_authenticated/community/doubts'
+      path: '/doubts'
+      fullPath: '/community/doubts'
+      preLoaderRoute: typeof AuthenticatedCommunityDoubtsRouteImport
+      parentRoute: typeof AuthenticatedCommunityRoute
     }
     '/_authenticated/battle/wallet': {
       id: '/_authenticated/battle/wallet'
@@ -379,6 +642,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBattleHistoryRouteImport
       parentRoute: typeof AuthenticatedBattleRoute
     }
+    '/_authenticated/admin/withdrawals': {
+      id: '/_authenticated/admin/withdrawals'
+      path: '/withdrawals'
+      fullPath: '/admin/withdrawals'
+      preLoaderRoute: typeof AuthenticatedAdminWithdrawalsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/users': {
+      id: '/_authenticated/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/moderation': {
+      id: '/_authenticated/admin/moderation'
+      path: '/moderation'
+      fullPath: '/admin/moderation'
+      preLoaderRoute: typeof AuthenticatedAdminModerationRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/api/public/hooks/process-withdrawals': {
       id: '/api/public/hooks/process-withdrawals'
       path: '/api/public/hooks/process-withdrawals'
@@ -393,6 +677,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksMegaTestLifecycleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/community/post/$postId': {
+      id: '/_authenticated/community/post/$postId'
+      path: '/post/$postId'
+      fullPath: '/community/post/$postId'
+      preLoaderRoute: typeof AuthenticatedCommunityPostPostIdRouteImport
+      parentRoute: typeof AuthenticatedCommunityRoute
+    }
+    '/_authenticated/community/group/$groupId': {
+      id: '/_authenticated/community/group/$groupId'
+      path: '/group/$groupId'
+      fullPath: '/community/group/$groupId'
+      preLoaderRoute: typeof AuthenticatedCommunityGroupGroupIdRouteImport
+      parentRoute: typeof AuthenticatedCommunityRoute
+    }
+    '/_authenticated/community/forum/$categoryId': {
+      id: '/_authenticated/community/forum/$categoryId'
+      path: '/forum/$categoryId'
+      fullPath: '/community/forum/$categoryId'
+      preLoaderRoute: typeof AuthenticatedCommunityForumCategoryIdRouteImport
+      parentRoute: typeof AuthenticatedCommunityRoute
+    }
+    '/_authenticated/community/doubt/$doubtId': {
+      id: '/_authenticated/community/doubt/$doubtId'
+      path: '/doubt/$doubtId'
+      fullPath: '/community/doubt/$doubtId'
+      preLoaderRoute: typeof AuthenticatedCommunityDoubtDoubtIdRouteImport
+      parentRoute: typeof AuthenticatedCommunityRoute
+    }
     '/_authenticated/battle/play/$sessionId': {
       id: '/_authenticated/battle/play/$sessionId'
       path: '/play/$sessionId'
@@ -402,6 +714,23 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminModerationRoute: typeof AuthenticatedAdminModerationRoute
+  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+  AuthenticatedAdminWithdrawalsRoute: typeof AuthenticatedAdminWithdrawalsRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminModerationRoute: AuthenticatedAdminModerationRoute,
+  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
+  AuthenticatedAdminWithdrawalsRoute: AuthenticatedAdminWithdrawalsRoute,
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
 interface AuthenticatedBattleRouteChildren {
   AuthenticatedBattleHistoryRoute: typeof AuthenticatedBattleHistoryRoute
@@ -424,24 +753,64 @@ const AuthenticatedBattleRouteChildren: AuthenticatedBattleRouteChildren = {
 const AuthenticatedBattleRouteWithChildren =
   AuthenticatedBattleRoute._addFileChildren(AuthenticatedBattleRouteChildren)
 
+interface AuthenticatedCommunityRouteChildren {
+  AuthenticatedCommunityDoubtsRoute: typeof AuthenticatedCommunityDoubtsRoute
+  AuthenticatedCommunityFeedRoute: typeof AuthenticatedCommunityFeedRoute
+  AuthenticatedCommunityGroupsRoute: typeof AuthenticatedCommunityGroupsRoute
+  AuthenticatedCommunityIndexRoute: typeof AuthenticatedCommunityIndexRoute
+  AuthenticatedCommunityDoubtDoubtIdRoute: typeof AuthenticatedCommunityDoubtDoubtIdRoute
+  AuthenticatedCommunityForumCategoryIdRoute: typeof AuthenticatedCommunityForumCategoryIdRoute
+  AuthenticatedCommunityGroupGroupIdRoute: typeof AuthenticatedCommunityGroupGroupIdRoute
+  AuthenticatedCommunityPostPostIdRoute: typeof AuthenticatedCommunityPostPostIdRoute
+}
+
+const AuthenticatedCommunityRouteChildren: AuthenticatedCommunityRouteChildren =
+  {
+    AuthenticatedCommunityDoubtsRoute: AuthenticatedCommunityDoubtsRoute,
+    AuthenticatedCommunityFeedRoute: AuthenticatedCommunityFeedRoute,
+    AuthenticatedCommunityGroupsRoute: AuthenticatedCommunityGroupsRoute,
+    AuthenticatedCommunityIndexRoute: AuthenticatedCommunityIndexRoute,
+    AuthenticatedCommunityDoubtDoubtIdRoute:
+      AuthenticatedCommunityDoubtDoubtIdRoute,
+    AuthenticatedCommunityForumCategoryIdRoute:
+      AuthenticatedCommunityForumCategoryIdRoute,
+    AuthenticatedCommunityGroupGroupIdRoute:
+      AuthenticatedCommunityGroupGroupIdRoute,
+    AuthenticatedCommunityPostPostIdRoute:
+      AuthenticatedCommunityPostPostIdRoute,
+  }
+
+const AuthenticatedCommunityRouteWithChildren =
+  AuthenticatedCommunityRoute._addFileChildren(
+    AuthenticatedCommunityRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedBattleRoute: typeof AuthenticatedBattleRouteWithChildren
+  AuthenticatedCommunityRoute: typeof AuthenticatedCommunityRouteWithChildren
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedLearningRoute: typeof AuthenticatedLearningRoute
   AuthenticatedMistakesRoute: typeof AuthenticatedMistakesRoute
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
+  AuthenticatedProfileUserIdRoute: typeof AuthenticatedProfileUserIdRoute
   AuthenticatedQuizSessionIdRoute: typeof AuthenticatedQuizSessionIdRoute
   AuthenticatedResultsSessionIdRoute: typeof AuthenticatedResultsSessionIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedBattleRoute: AuthenticatedBattleRouteWithChildren,
+  AuthenticatedCommunityRoute: AuthenticatedCommunityRouteWithChildren,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedLearningRoute: AuthenticatedLearningRoute,
   AuthenticatedMistakesRoute: AuthenticatedMistakesRoute,
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
+  AuthenticatedProfileUserIdRoute: AuthenticatedProfileUserIdRoute,
   AuthenticatedQuizSessionIdRoute: AuthenticatedQuizSessionIdRoute,
   AuthenticatedResultsSessionIdRoute: AuthenticatedResultsSessionIdRoute,
 }
