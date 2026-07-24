@@ -80,16 +80,6 @@ export const getWallet = createServerFn({ method: "GET" })
     return { balance: Number(u?.balance ?? 0), transactions: txns ?? [] };
   });
 
-export const claimSignupBonus = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data: existing } = await context.supabase
-      .from("wallet_transactions")
-      .select("id").eq("user_id", context.userId).eq("category", "bonus").maybeSingle();
-    if (existing) return { already: true as const };
-    const bal = await addTxn(context.supabase, context.userId, "credit", "bonus", 100, "Welcome bonus");
-    return { already: false as const, balance: bal };
-  });
 
 /* ------------------------------ Quick battle ----------------------------- */
 
