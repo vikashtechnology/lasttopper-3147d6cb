@@ -14,7 +14,7 @@ async function callGemini(prompt: string, count: number): Promise<QuizQuestion[]
     body: JSON.stringify({
       model: "google/gemini-3.6-flash",
       messages: [
-        { role: "system", content: "You are an expert exam question generator. Output STRICT JSON only." },
+        { role: "system", content: "You are an NCERT-only exam question generator. Only use content from official NCERT textbooks (Class 11 & 12). Output STRICT JSON only." },
         { role: "user", content: prompt },
       ],
       response_format: { type: "json_object" },
