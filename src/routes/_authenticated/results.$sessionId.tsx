@@ -118,14 +118,79 @@ function ResultsPage() {
   }
 
   async function shareScorecard() {
-    if (!scorecardRef.current) return;
     setSharing(true);
     try {
-      const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(scorecardRef.current, {
-        backgroundColor: "#ffffff",
-        scale: 2,
+      const W = 1080;
+      const H = 1080;
+      const canvas = document.createElement("canvas");
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas not supported");
+
+      // Background gradient
+      const grad = ctx.createLinearGradient(0, 0, W, H);
+      grad.addColorStop(0, "#0f172a");
+      grad.addColorStop(1, "#1e3a8a");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Card
+      ctx.fillStyle = "rgba(255,255,255,0.06)";
+      ctx.strokeStyle = "rgba(255,255,255,0.15)";
+      ctx.lineWidth = 2;
+      const cardX = 80, cardY = 200, cardW = W - 160, cardH = H - 400;
+      const r = 40;
+      ctx.beginPath();
+      ctx.moveTo(cardX + r, cardY);
+      ctx.arcTo(cardX + cardW, cardY, cardX + cardW, cardY + cardH, r);
+      ctx.arcTo(cardX + cardW, cardY + cardH, cardX, cardY + cardH, r);
+      ctx.arcTo(cardX, cardY + cardH, cardX, cardY, r);
+      ctx.arcTo(cardX, cardY, cardX + cardW, cardY, r);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#e2e8f0";
+      ctx.font = "600 42px system-ui, -apple-system, Segoe UI, sans-serif";
+      ctx.fillText("LAST TOPPER", W / 2, 120);
+      ctx.font = "500 28px system-ui, sans-serif";
+      ctx.fillStyle = "#94a3b8";
+      ctx.fillText("Scorecard", W / 2, 168);
+
+      ctx.fillStyle = "#38bdf8";
+      ctx.font = "800 180px system-ui, sans-serif";
+      ctx.fillText(`${accuracy.toFixed(1)}%`, W / 2, 460);
+      ctx.fillStyle = "#cbd5e1";
+      ctx.font = "500 32px system-ui, sans-serif";
+      ctx.fillText("Accuracy", W / 2, 510);
+
+      const stats: Array<[string, string, string]> = [
+        ["Total", String(total), "#e2e8f0"],
+        ["Correct", String(correct), "#22c55e"],
+        ["Wrong", String(incorrect), "#ef4444"],
+        ["Time", formatTime(timeTaken), "#e2e8f0"],
+      ];
+      const sy = 640;
+      const colW = cardW / 4;
+      stats.forEach(([label, value, color], i) => {
+        const cx = cardX + colW * i + colW / 2;
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "500 24px system-ui, sans-serif";
+        ctx.fillText(label, cx, sy);
+        ctx.fillStyle = color;
+        ctx.font = "700 56px system-ui, sans-serif";
+        ctx.fillText(value, cx, sy + 70);
       });
+
+      ctx.fillStyle = "#cbd5e1";
+      ctx.font = "500 28px system-ui, sans-serif";
+      ctx.fillText("Learn · Compete · Earn", W / 2, H - 120);
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = "400 22px system-ui, sans-serif";
+      ctx.fillText("lasttopper.app", W / 2, H - 80);
+
       const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!blob) throw new Error("Could not create image");
       const file = new File([blob], `scorecard-${sessionId}.png`, { type: "image/png" });
