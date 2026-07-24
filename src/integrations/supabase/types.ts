@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      battle_sessions: {
+        Row: {
+          answers: Json
+          correct_count: number
+          created_at: string
+          id: string
+          mega_test_id: string | null
+          mode: string
+          profession: Database["public"]["Enums"]["profession"] | null
+          questions: Json
+          score: number
+          start_time: string
+          submitted_at: string | null
+          time_taken_seconds: number | null
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          correct_count?: number
+          created_at?: string
+          id?: string
+          mega_test_id?: string | null
+          mode: string
+          profession?: Database["public"]["Enums"]["profession"] | null
+          questions: Json
+          score?: number
+          start_time?: string
+          submitted_at?: string | null
+          time_taken_seconds?: number | null
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          correct_count?: number
+          created_at?: string
+          id?: string
+          mega_test_id?: string | null
+          mode?: string
+          profession?: Database["public"]["Enums"]["profession"] | null
+          questions?: Json
+          score?: number
+          start_time?: string
+          submitted_at?: string | null
+          time_taken_seconds?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       chapters: {
         Row: {
           class_level: number | null
@@ -79,6 +127,95 @@ export type Database = {
           question_count?: number
           questions?: Json
           user_id?: string
+        }
+        Relationships: []
+      }
+      mega_test_entries: {
+        Row: {
+          correct_count: number | null
+          created_at: string
+          id: string
+          mega_test_id: string
+          paid: boolean
+          prize: number
+          rank: number | null
+          refunded: boolean
+          score: number | null
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          correct_count?: number | null
+          created_at?: string
+          id?: string
+          mega_test_id: string
+          paid?: boolean
+          prize?: number
+          rank?: number | null
+          refunded?: boolean
+          score?: number | null
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          correct_count?: number | null
+          created_at?: string
+          id?: string
+          mega_test_id?: string
+          paid?: boolean
+          prize?: number
+          rank?: number | null
+          refunded?: boolean
+          score?: number | null
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mega_test_entries_mega_test_id_fkey"
+            columns: ["mega_test_id"]
+            isOneToOne: false
+            referencedRelation: "mega_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mega_tests: {
+        Row: {
+          created_at: string
+          entry_fee: number
+          id: string
+          min_participants: number
+          profession: Database["public"]["Enums"]["profession"]
+          question_count: number
+          questions: Json | null
+          scheduled_end: string
+          scheduled_start: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          entry_fee?: number
+          id?: string
+          min_participants?: number
+          profession: Database["public"]["Enums"]["profession"]
+          question_count?: number
+          questions?: Json | null
+          scheduled_end: string
+          scheduled_start: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          entry_fee?: number
+          id?: string
+          min_participants?: number
+          profession?: Database["public"]["Enums"]["profession"]
+          question_count?: number
+          questions?: Json | null
+          scheduled_end?: string
+          scheduled_start?: string
+          status?: string
         }
         Relationships: []
       }
@@ -208,6 +345,7 @@ export type Database = {
       users: {
         Row: {
           avatar_url: string | null
+          balance: number
           country_code: string
           created_at: string
           daily_question_limit: number
@@ -225,6 +363,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          balance?: number
           country_code?: string
           created_at?: string
           daily_question_limit?: number
@@ -242,6 +381,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          balance?: number
           country_code?: string
           created_at?: string
           daily_question_limit?: number
@@ -256,6 +396,87 @@ export type Database = {
           streak?: number
           total_accuracy?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          category: string
+          created_at: string
+          id: string
+          note: string | null
+          reference_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          category: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          reference_id?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          category?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          reference_id?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      withdrawal_requests: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          amount: number
+          created_at: string
+          id: string
+          ifsc: string | null
+          method: string
+          process_after: string
+          processed_at: string | null
+          status: string
+          upi_id: string | null
+          user_id: string
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          amount: number
+          created_at?: string
+          id?: string
+          ifsc?: string | null
+          method: string
+          process_after?: string
+          processed_at?: string | null
+          status?: string
+          upi_id?: string | null
+          user_id: string
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          ifsc?: string | null
+          method?: string
+          process_after?: string
+          processed_at?: string | null
+          status?: string
+          upi_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }

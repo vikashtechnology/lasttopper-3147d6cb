@@ -169,7 +169,12 @@ function Home() {
             body="Past attempts"
             onClick={() => navigate({ to: "/history" })}
           />
-          <NavTile icon={<Swords className="h-5 w-5" />} title="Battle" body="Coming soon" />
+          <NavTile
+            icon={<Swords className="h-5 w-5" />}
+            title="Battle"
+            body="Live quiz + prizes"
+            onClick={() => navigate({ to: "/battle" })}
+          />
           <NavTile icon={<Users className="h-5 w-5" />} title="Community" body="Coming soon" />
           <NavTile icon={<UserIcon className="h-5 w-5" />} title="Profile" body="Your stats" />
         </div>
