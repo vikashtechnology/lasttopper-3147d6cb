@@ -41,6 +41,7 @@ import { Route as AuthenticatedBattleHistoryRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_authenticated/admin.moderation'
+import { Route as ApiPublicHooksRazorpayRouteImport } from './routes/api/public/hooks/razorpay'
 import { Route as ApiPublicHooksProcessWithdrawalsRouteImport } from './routes/api/public/hooks/process-withdrawals'
 import { Route as ApiPublicHooksMegaTestLifecycleRouteImport } from './routes/api/public/hooks/mega-test-lifecycle'
 import { Route as AuthenticatedCommunityPostPostIdRouteImport } from './routes/_authenticated/community.post.$postId'
@@ -222,6 +223,11 @@ const AuthenticatedAdminModerationRoute =
     path: '/moderation',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const ApiPublicHooksRazorpayRoute = ApiPublicHooksRazorpayRouteImport.update({
+  id: '/api/public/hooks/razorpay',
+  path: '/api/public/hooks/razorpay',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksProcessWithdrawalsRoute =
   ApiPublicHooksProcessWithdrawalsRouteImport.update({
     id: '/api/public/hooks/process-withdrawals',
@@ -304,6 +310,7 @@ export interface FileRoutesByFullPath {
   '/community/post/$postId': typeof AuthenticatedCommunityPostPostIdRoute
   '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
   '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
+  '/api/public/hooks/razorpay': typeof ApiPublicHooksRazorpayRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -341,6 +348,7 @@ export interface FileRoutesByTo {
   '/community/post/$postId': typeof AuthenticatedCommunityPostPostIdRoute
   '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
   '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
+  '/api/public/hooks/razorpay': typeof ApiPublicHooksRazorpayRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -383,6 +391,7 @@ export interface FileRoutesById {
   '/_authenticated/community/post/$postId': typeof AuthenticatedCommunityPostPostIdRoute
   '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
   '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
+  '/api/public/hooks/razorpay': typeof ApiPublicHooksRazorpayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -425,6 +434,7 @@ export interface FileRouteTypes {
     | '/community/post/$postId'
     | '/api/public/hooks/mega-test-lifecycle'
     | '/api/public/hooks/process-withdrawals'
+    | '/api/public/hooks/razorpay'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -462,6 +472,7 @@ export interface FileRouteTypes {
     | '/community/post/$postId'
     | '/api/public/hooks/mega-test-lifecycle'
     | '/api/public/hooks/process-withdrawals'
+    | '/api/public/hooks/razorpay'
   id:
     | '__root__'
     | '/'
@@ -503,6 +514,7 @@ export interface FileRouteTypes {
     | '/_authenticated/community/post/$postId'
     | '/api/public/hooks/mega-test-lifecycle'
     | '/api/public/hooks/process-withdrawals'
+    | '/api/public/hooks/razorpay'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -514,6 +526,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   ApiPublicHooksMegaTestLifecycleRoute: typeof ApiPublicHooksMegaTestLifecycleRoute
   ApiPublicHooksProcessWithdrawalsRoute: typeof ApiPublicHooksProcessWithdrawalsRoute
+  ApiPublicHooksRazorpayRoute: typeof ApiPublicHooksRazorpayRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -742,6 +755,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminModerationRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/api/public/hooks/razorpay': {
+      id: '/api/public/hooks/razorpay'
+      path: '/api/public/hooks/razorpay'
+      fullPath: '/api/public/hooks/razorpay'
+      preLoaderRoute: typeof ApiPublicHooksRazorpayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/process-withdrawals': {
       id: '/api/public/hooks/process-withdrawals'
       path: '/api/public/hooks/process-withdrawals'
@@ -908,6 +928,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ApiPublicHooksMegaTestLifecycleRoute: ApiPublicHooksMegaTestLifecycleRoute,
   ApiPublicHooksProcessWithdrawalsRoute: ApiPublicHooksProcessWithdrawalsRoute,
+  ApiPublicHooksRazorpayRoute: ApiPublicHooksRazorpayRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

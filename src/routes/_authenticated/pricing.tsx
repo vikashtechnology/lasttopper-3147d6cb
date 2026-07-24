@@ -1,8 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { Check, Sparkles, ChevronLeft } from "lucide-react";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, Sparkles, ChevronLeft, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { getMyProfile } from "@/lib/user.functions";
 import { Button } from "@/components/ui/button";
+import { payWithRazorpay } from "@/lib/razorpay-client";
 
 const profileQuery = { queryKey: ["my-profile"], queryFn: () => getMyProfile() } as const;
 
