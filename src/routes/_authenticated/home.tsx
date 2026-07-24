@@ -15,9 +15,6 @@ import { AiChatBubble } from "@/components/chat/AiChatBubble";
 import { Sparkles } from "lucide-react";
 import {
   BookOpen,
-  Swords,
-  Users,
-  User as UserIcon,
   Flame,
   Target,
   LogOut,
