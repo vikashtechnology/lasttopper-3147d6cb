@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Wallet, Gift, ArrowDownToLine } from "lucide-react";
+import { Wallet, ArrowDownToLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getWallet, claimSignupBonus, requestWithdrawal, getWithdrawals } from "@/lib/battle.functions";
+import { getWallet, requestWithdrawal, getWithdrawals } from "@/lib/battle.functions";
 
 export const Route = createFileRoute("/_authenticated/battle/wallet")({
   head: () => ({
@@ -34,14 +34,6 @@ function WalletPage() {
     return () => { void supabase.removeChannel(ch); };
   }, [qc]);
 
-  const claim = useMutation({
-    mutationFn: () => claimSignupBonus(),
-    onSuccess: (res) => {
-      if (res.already) toast.info("Bonus already claimed");
-      else toast.success("₹100 credited!");
-      qc.invalidateQueries({ queryKey: ["wallet"] });
-    },
-  });
 
   const [showForm, setShowForm] = useState(false);
   const [amt, setAmt] = useState<number>(0);
@@ -85,9 +77,6 @@ function WalletPage() {
           <span className="text-xs text-white/50">mock — not real money</span>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
-          <button className="battle-btn inline-flex items-center gap-1.5" onClick={() => claim.mutate()}>
-            <Gift className="h-4 w-4" /> Claim ₹100 bonus
-          </button>
           <button
             className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/80 inline-flex items-center gap-1.5"
             onClick={() => setShowForm((v) => !v)}
