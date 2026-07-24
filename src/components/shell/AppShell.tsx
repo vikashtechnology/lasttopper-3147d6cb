@@ -104,8 +104,8 @@ export function AppShell({
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
           <div className="flex min-w-0 items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground shadow-lg shadow-primary/20">
-              <Swords className="h-4 w-4" />
+            <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-xl shadow-lg shadow-primary/20 ring-1 ring-border">
+              <img src={logoAsset.url} alt="Last Topper" className="h-full w-full object-cover" />
             </div>
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold leading-tight">Last Topper</div>
