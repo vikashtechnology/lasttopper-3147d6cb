@@ -410,6 +410,20 @@ export const finalizeStaleSessions = createServerFn({ method: "POST" })
     return { finalized };
   });
 
+export const getTodayUsage = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const { data } = await context.supabase
+      .from("quiz_sessions")
+      .select("question_count")
+      .eq("user_id", context.userId)
+      .gte("created_at", start.toISOString());
+    const used = (data ?? []).reduce((sum, r) => sum + Number(r.question_count ?? 0), 0);
+    return { used };
+  });
+
 export const getQuizHistory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
