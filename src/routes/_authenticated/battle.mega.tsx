@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_authenticated/battle/mega")({
       { title: "Sunday Mega Test — Last Topper" },
       { name: "description", content: "180 questions, 3 hours, real prizes every Sunday 10AM IST." },
       { property: "og:title", content: "Sunday Mega Test" },
-      { property: "og:description", content: "180q · 3hr · prizes up to ₹100." },
+      { property: "og:description", content: "180q · 3hr · prizes up to 🪙100 Topper Coins." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
