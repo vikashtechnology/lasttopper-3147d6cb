@@ -50,6 +50,8 @@ export const Route = createFileRoute("/_authenticated/learning")({
 function LearningPage() {
   const nav = useNavigate();
   const { data: subjects } = useSuspenseQuery(subjectsQuery);
+  const { data: profile } = useSuspenseQuery(profileQuery);
+  const isPro = !!profile?.is_pro;
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [count, setCount] = useState<20 | 50 | 100>(20);
   const [timerEnabled, setTimerEnabled] = useState(false);
