@@ -57,6 +57,8 @@ function PricingPage() {
       setLoading(false);
     }
   };
+
+  return (
     <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       <header className="sticky top-0 z-10 border-b border-border/70 bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-4xl items-center gap-3 px-5 py-4">
