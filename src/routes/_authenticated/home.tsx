@@ -110,9 +110,24 @@ function Home() {
               {p?.full_name ?? p?.email ?? "Learner"}
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={handleSignOut} aria-label="Sign out">
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {admin.data?.admin && (
+              <Link to="/admin" className="rounded-full p-2 text-muted-foreground hover:text-foreground" aria-label="Admin">
+                <ShieldCheck className="h-4 w-4" />
+              </Link>
+            )}
+            <Link to="/notifications" className="relative rounded-full p-2 text-muted-foreground hover:text-foreground" aria-label="Notifications">
+              <Bell className="h-4 w-4" />
+              {unread.data && unread.data.count > 0 ? (
+                <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                  {unread.data.count}
+                </span>
+              ) : null}
+            </Link>
+            <Button variant="ghost" size="icon" onClick={handleSignOut} aria-label="Sign out">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
