@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_events: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          payload: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          payload?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      badges: {
+        Row: {
+          created_at: string
+          description: string
+          icon: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          icon?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       battle_sessions: {
         Row: {
           answers: Json
@@ -96,6 +147,270 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      doubt_replies: {
+        Row: {
+          body: string
+          created_at: string
+          doubt_id: string
+          id: string
+          image_url: string | null
+          is_accepted: boolean
+          upvote_count: number
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          doubt_id: string
+          id?: string
+          image_url?: string | null
+          is_accepted?: boolean
+          upvote_count?: number
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          doubt_id?: string
+          id?: string
+          image_url?: string | null
+          is_accepted?: boolean
+          upvote_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doubt_replies_doubt_id_fkey"
+            columns: ["doubt_id"]
+            isOneToOne: false
+            referencedRelation: "doubts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doubts: {
+        Row: {
+          body: string
+          chapter_id: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          is_flagged: boolean
+          reply_count: number
+          resolved: boolean
+          subject_id: string | null
+          title: string
+          updated_at: string
+          upvote_count: number
+          user_id: string
+        }
+        Insert: {
+          body: string
+          chapter_id?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_flagged?: boolean
+          reply_count?: number
+          resolved?: boolean
+          subject_id?: string | null
+          title: string
+          updated_at?: string
+          upvote_count?: number
+          user_id: string
+        }
+        Update: {
+          body?: string
+          chapter_id?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_flagged?: boolean
+          reply_count?: number
+          resolved?: boolean
+          subject_id?: string | null
+          title?: string
+          updated_at?: string
+          upvote_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doubts_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doubts_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      forum_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      forum_posts: {
+        Row: {
+          body: string
+          category_id: string
+          created_at: string
+          id: string
+          is_flagged: boolean
+          reply_count: number
+          title: string
+          updated_at: string
+          upvote_count: number
+          user_id: string
+          view_count: number
+        }
+        Insert: {
+          body: string
+          category_id: string
+          created_at?: string
+          id?: string
+          is_flagged?: boolean
+          reply_count?: number
+          title: string
+          updated_at?: string
+          upvote_count?: number
+          user_id: string
+          view_count?: number
+        }
+        Update: {
+          body?: string
+          category_id?: string
+          created_at?: string
+          id?: string
+          is_flagged?: boolean
+          reply_count?: number
+          title?: string
+          updated_at?: string
+          upvote_count?: number
+          user_id?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_posts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "forum_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_replies: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          post_id: string
+          upvote_count: number
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          post_id: string
+          upvote_count?: number
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          upvote_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_replies_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "forum_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_votes: {
+        Row: {
+          created_at: string
+          id: string
+          target_id: string
+          target_type: string
+          user_id: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          target_id: string
+          target_type: string
+          user_id: string
+          value?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          target_id?: string
+          target_type?: string
+          user_id?: string
+          value?: number
+        }
+        Relationships: []
       }
       generated_questions: {
         Row: {
@@ -219,6 +534,72 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          kind: string
+          link: string | null
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          link?: string | null
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          link?: string | null
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      post_reports: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          reason: string
+          reporter_id: string
+          status: string
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          reason: string
+          reporter_id: string
+          status?: string
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          reason?: string
+          reporter_id?: string
+          status?: string
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
       question_reports: {
         Row: {
           created_at: string
@@ -315,6 +696,100 @@ export type Database = {
         }
         Relationships: []
       }
+      study_group_members: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "study_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_group_messages: {
+        Row: {
+          body: string
+          created_at: string
+          group_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          group_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_group_messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "study_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_groups: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_private: boolean
+          member_count: number
+          name: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_private?: boolean
+          member_count?: number
+          name: string
+          owner_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_private?: boolean
+          member_count?: number
+          name?: string
+          owner_id?: string
+        }
+        Relationships: []
+      }
       subjects: {
         Row: {
           code: string
@@ -342,21 +817,74 @@ export type Database = {
         }
         Relationships: []
       }
+      user_badges: {
+        Row: {
+          awarded_at: string
+          badge_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          awarded_at?: string
+          badge_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          awarded_at?: string
+          badge_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           avatar_url: string | null
           balance: number
+          bio: string | null
           country_code: string
           created_at: string
           daily_question_limit: number
           email: string | null
           full_name: string | null
           id: string
+          is_banned: boolean
           last_active_date: string | null
           last_streak_date: string | null
           onboarded: boolean
           phone: string | null
           profession: Database["public"]["Enums"]["profession"] | null
+          reputation: number
           streak: number
           total_accuracy: number
           updated_at: string
@@ -364,17 +892,20 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           balance?: number
+          bio?: string | null
           country_code?: string
           created_at?: string
           daily_question_limit?: number
           email?: string | null
           full_name?: string | null
           id: string
+          is_banned?: boolean
           last_active_date?: string | null
           last_streak_date?: string | null
           onboarded?: boolean
           phone?: string | null
           profession?: Database["public"]["Enums"]["profession"] | null
+          reputation?: number
           streak?: number
           total_accuracy?: number
           updated_at?: string
@@ -382,17 +913,20 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           balance?: number
+          bio?: string | null
           country_code?: string
           created_at?: string
           daily_question_limit?: number
           email?: string | null
           full_name?: string | null
           id?: string
+          is_banned?: boolean
           last_active_date?: string | null
           last_streak_date?: string | null
           onboarded?: boolean
           phone?: string | null
           profession?: Database["public"]["Enums"]["profession"] | null
+          reputation?: number
           streak?: number
           total_accuracy?: number
           updated_at?: string
@@ -485,9 +1019,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_group_member: {
+        Args: { _group: string; _user: string }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       profession: "pcm" | "pcb"
     }
     CompositeTypes: {
@@ -616,6 +1161,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "user"],
       profession: ["pcm", "pcb"],
     },
   },
