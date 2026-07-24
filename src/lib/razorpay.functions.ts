@@ -16,10 +16,13 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  *   4. Webhook /api/public/hooks/razorpay is a redundant safety net
  */
 
-type Purpose = "pro" | "wallet_topup";
+type Purpose = "pro" | "pro_yearly" | "wallet_topup";
+
+const REFERRAL_REWARD_TC = 5;
 
 function amountFor(purpose: Purpose, requested?: number): number {
-  if (purpose === "pro") return 14900; // ₹149 in paise
+  if (purpose === "pro") return 14900; // ₹149 / month
+  if (purpose === "pro_yearly") return 149900; // ₹1499 / year
   if (purpose === "wallet_topup") {
     const amt = Math.floor((requested ?? 0) * 100);
     if (amt < 1000) throw new Error("Minimum top-up is ₹10");
