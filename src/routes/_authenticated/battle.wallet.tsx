@@ -2,9 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Wallet, ArrowDownToLine } from "lucide-react";
+import { Wallet, ArrowDownToLine, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getWallet, requestWithdrawal, getWithdrawals } from "@/lib/battle.functions";
+import { getMyProfile } from "@/lib/user.functions";
+import { payWithRazorpay } from "@/lib/razorpay-client";
 
 export const Route = createFileRoute("/_authenticated/battle/wallet")({
   head: () => ({
