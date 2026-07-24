@@ -73,6 +73,7 @@ function Home() {
       const [ping] = await Promise.all([
         pingActivity(),
         finalizeStaleSessions().catch(() => ({ finalized: [] as string[] })),
+        notifyFirstLogin().catch(() => ({ ok: true })),
       ]);
       await qc.invalidateQueries({ queryKey: ["my-profile"] });
       return ping;
@@ -80,6 +81,9 @@ function Home() {
     staleTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
+
+  const unread = useQuery({ queryKey: ["notif-unread"], queryFn: () => unreadNotificationsCount(), refetchInterval: 30000 });
+  const admin = useQuery({ queryKey: ["am-i-admin"], queryFn: () => amIAdmin() });
 
   const p: UserProfile | null = (profile ?? (data as UserProfile | null)) as UserProfile | null;
 
