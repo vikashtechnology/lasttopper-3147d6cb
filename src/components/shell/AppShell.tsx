@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 type NavItem = { to: string; label: string; icon: ReactNode; params?: Record<string, string> };
 
@@ -110,7 +111,7 @@ export function AppShell({
               <div className="truncate text-xs text-muted-foreground">{header}</div>
             </div>
           </div>
-          <div className="ml-auto flex items-center gap-1">{headerActions}</div>
+          <div className="ml-auto flex items-center gap-1"><ThemeToggle />{headerActions}</div>
         </div>
       </header>
 
