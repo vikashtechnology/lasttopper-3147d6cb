@@ -118,6 +118,20 @@ function QuickBattle() {
     [answers, questions],
   );
 
+  if (start.isPending) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="battle-glass battle-slide-up p-8 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-400/10 text-cyan-300">
+            <Zap className="h-8 w-8 animate-pulse" />
+          </div>
+          <div className="battle-title mt-4 text-2xl">Preparing arena…</div>
+          <p className="mt-2 text-sm text-white/60">Loading 10 fresh NCERT questions</p>
+        </div>
+      </div>
+    );
+  }
+
   if (phase === "idle") {
     return (
       <div className="space-y-6">
@@ -126,11 +140,10 @@ function QuickBattle() {
           <p className="mt-2 text-sm text-white/70">10 questions · 30 seconds each · auto-advance</p>
           <button
             className="battle-btn mt-5 inline-flex items-center gap-2"
-            disabled={start.isPending}
             onClick={() => start.mutate()}
           >
             <Zap className="h-4 w-4" />
-            {start.isPending ? "Loading questions…" : "Enter Arena"}
+            Enter Arena
           </button>
         </div>
         <div className="battle-glass p-5">
@@ -142,6 +155,7 @@ function QuickBattle() {
       </div>
     );
   }
+
 
   if (phase === "countdown") {
     return (
