@@ -82,6 +82,39 @@ export type Database = {
         }
         Relationships: []
       }
+      question_reports: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          question_id: string
+          question_text: string | null
+          reason: string
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          question_id: string
+          question_text?: string | null
+          reason: string
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          question_id?: string
+          question_text?: string | null
+          reason?: string
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       quiz_sessions: {
         Row: {
           accuracy: number | null
@@ -92,6 +125,7 @@ export type Database = {
           duration_seconds: number | null
           id: string
           incorrect_count: number | null
+          last_heartbeat: string | null
           question_count: number
           questions: Json
           score: number | null
@@ -100,6 +134,7 @@ export type Database = {
           time_taken_seconds: number | null
           timer_enabled: boolean
           user_id: string
+          was_auto_submitted: boolean
         }
         Insert: {
           accuracy?: number | null
@@ -110,6 +145,7 @@ export type Database = {
           duration_seconds?: number | null
           id?: string
           incorrect_count?: number | null
+          last_heartbeat?: string | null
           question_count: number
           questions: Json
           score?: number | null
@@ -118,6 +154,7 @@ export type Database = {
           time_taken_seconds?: number | null
           timer_enabled?: boolean
           user_id: string
+          was_auto_submitted?: boolean
         }
         Update: {
           accuracy?: number | null
@@ -128,6 +165,7 @@ export type Database = {
           duration_seconds?: number | null
           id?: string
           incorrect_count?: number | null
+          last_heartbeat?: string | null
           question_count?: number
           questions?: Json
           score?: number | null
@@ -136,6 +174,7 @@ export type Database = {
           time_taken_seconds?: number | null
           timer_enabled?: boolean
           user_id?: string
+          was_auto_submitted?: boolean
         }
         Relationships: []
       }
@@ -175,6 +214,8 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          last_active_date: string | null
+          last_streak_date: string | null
           onboarded: boolean
           phone: string | null
           profession: Database["public"]["Enums"]["profession"] | null
@@ -190,6 +231,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          last_active_date?: string | null
+          last_streak_date?: string | null
           onboarded?: boolean
           phone?: string | null
           profession?: Database["public"]["Enums"]["profession"] | null
@@ -205,6 +248,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          last_active_date?: string | null
+          last_streak_date?: string | null
           onboarded?: boolean
           phone?: string | null
           profession?: Database["public"]["Enums"]["profession"] | null
