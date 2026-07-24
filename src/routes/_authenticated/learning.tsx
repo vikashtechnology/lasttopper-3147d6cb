@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -7,6 +7,7 @@ import {
   generateQuestions,
   createQuizSession,
 } from "@/lib/learning.functions";
+import { getMyProfile } from "@/lib/user.functions";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -19,11 +20,16 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ChevronLeft, Sparkles, Loader2 } from "lucide-react";
+import { ChevronLeft, Sparkles, Loader2, Lock } from "lucide-react";
 
 const subjectsQuery = {
   queryKey: ["subjects-with-chapters"] as const,
   queryFn: () => getSubjectsWithChapters(),
+};
+
+const profileQuery = {
+  queryKey: ["my-profile"] as const,
+  queryFn: () => getMyProfile(),
 };
 
 export const Route = createFileRoute("/_authenticated/learning")({
