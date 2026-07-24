@@ -10,6 +10,7 @@ import { useUserStore, type UserProfile } from "@/store/user";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
+import { AppShell, defaultNavGroups } from "@/components/shell/AppShell";
 import {
   BookOpen,
   Swords,
@@ -23,38 +24,24 @@ import {
   AlertOctagon,
   Bell,
   ShieldCheck,
+  Trophy,
 } from "lucide-react";
 
 const profileQuery = {
-  queryKey: ["my-profile"] as const,
+  queryKey: ["my-profile"],
   queryFn: () => getMyProfile(),
-};
+} as const;
 
 export const Route = createFileRoute("/_authenticated/home")({
-  head: () => ({
-    meta: [
-      { title: "Home — Last Topper" },
-      { name: "description", content: "Your daily practice, streak, and accuracy at a glance." },
-      { property: "og:title", content: "Home — Last Topper" },
-      { property: "og:description", content: "Your daily practice hub." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
   loader: ({ context }) => context.queryClient.ensureQueryData(profileQuery),
-  component: Home,
-  errorComponent: ({ error, reset }) => (
-    <div className="p-6 text-sm">
-      <p className="text-destructive">Failed to load: {error.message}</p>
-      <Button className="mt-3" onClick={reset}>
-        Retry
-      </Button>
-    </div>
+  errorComponent: ({ error }) => (
+    <div className="p-6 text-sm text-red-600">Something went wrong: {String(error)}</div>
   ),
-  notFoundComponent: () => <div className="p-6 text-sm">Not found.</div>,
+  notFoundComponent: () => <div className="p-6">Not found</div>,
+  component: HomePage,
 });
 
-function Home() {
+function HomePage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data } = useSuspenseQuery(profileQuery);
@@ -66,7 +53,6 @@ function Home() {
     if (data) setProfile(data as UserProfile);
   }, [data, setProfile]);
 
-  // On app open: update streak and finalize any abandoned sessions
   useQuery({
     queryKey: ["ping-activity"],
     queryFn: async () => {
@@ -86,7 +72,6 @@ function Home() {
   const admin = useQuery({ queryKey: ["am-i-admin"], queryFn: () => amIAdmin() });
 
   const p: UserProfile | null = (profile ?? (data as UserProfile | null)) as UserProfile | null;
-
   const usedToday = 0;
   const limit = p?.daily_question_limit ?? 20;
   const percent = Math.round((usedToday / limit) * 100);
@@ -100,121 +85,100 @@ function Home() {
     navigate({ to: "/auth", replace: true });
   }
 
-  return (
-    <main className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-background">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4">
-          <div>
-            <div className="text-xs text-muted-foreground">Welcome back</div>
-            <div className="text-base font-semibold">
-              {p?.full_name ?? p?.email ?? "Learner"}
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            {admin.data?.admin && (
-              <Link to="/admin" className="rounded-full p-2 text-muted-foreground hover:text-foreground" aria-label="Admin">
-                <ShieldCheck className="h-4 w-4" />
-              </Link>
-            )}
-            <Link to="/notifications" className="relative rounded-full p-2 text-muted-foreground hover:text-foreground" aria-label="Notifications">
-              <Bell className="h-4 w-4" />
-              {unread.data && unread.data.count > 0 ? (
-                <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
-                  {unread.data.count}
-                </span>
-              ) : null}
-            </Link>
-            <Button variant="ghost" size="icon" onClick={handleSignOut} aria-label="Sign out">
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
+  const groups = defaultNavGroups({ profileUserId: p?.id, admin: admin.data?.admin });
 
-      <section className="mx-auto max-w-3xl px-5 pt-6">
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+  return (
+    <AppShell
+      header={`Welcome back, ${p?.full_name?.split(" ")[0] ?? p?.email?.split("@")[0] ?? "Learner"}`}
+      groups={groups}
+      footerNote={<>© {new Date().getFullYear()} Last Topper — Learn. Compete. Earn.</>}
+      headerActions={
+        <>
+          {admin.data?.admin && (
+            <Link to="/admin" className="rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Admin">
+              <ShieldCheck className="h-4 w-4" />
+            </Link>
+          )}
+          <Link to="/notifications" className="relative rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Notifications">
+            <Bell className="h-4 w-4" />
+            {unread.data && unread.data.count > 0 ? (
+              <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                {unread.data.count}
+              </span>
+            ) : null}
+          </Link>
+          <Button variant="ghost" size="icon" onClick={handleSignOut} aria-label="Sign out">
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </>
+      }
+    >
+      {/* Top row: quota + stats */}
+      <section className="grid gap-4 md:grid-cols-3">
+        <div className="mantis-card p-5 md:col-span-2">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-sm text-muted-foreground">Today's questions</div>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Today's questions</div>
               <div className="mt-1 text-3xl font-bold">
                 {usedToday}
                 <span className="text-base font-medium text-muted-foreground"> / {limit}</span>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">Plan</div>
-              <div className="mt-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                Free
-              </div>
+            <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              Free plan
             </div>
           </div>
           <Progress value={percent} className="mt-4 h-2" />
+          <p className="mt-2 text-xs text-muted-foreground">
+            NCERT-only questions generated by AI — sharp, exam-aligned practice every day.
+          </p>
         </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-4">
-          <StatCard
-            icon={<Flame className="h-4 w-4" />}
-            label="Streak"
-            value={`${p?.streak ?? 0} days`}
-          />
-          <StatCard
-            icon={<Target className="h-4 w-4" />}
-            label="Accuracy"
-            value={`${Math.round(Number(p?.total_accuracy ?? 0))}%`}
-          />
-        </div>
+        <StatCard icon={<Flame className="h-4 w-4" />} label="Streak" value={`${p?.streak ?? 0} days`} />
+        <StatCard icon={<Target className="h-4 w-4" />} label="Accuracy" value={`${Math.round(Number(p?.total_accuracy ?? 0))}%`} />
+        <StatCard icon={<Trophy className="h-4 w-4" />} label="Profession" value={(p?.profession ?? "—").toUpperCase()} />
       </section>
 
-      <section className="mx-auto max-w-3xl px-5 py-6">
-        <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Practice</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <NavTile
-            icon={<BookOpen className="h-5 w-5" />}
-            title="Learning"
-            body="Practice by chapter"
-            onClick={() => navigate({ to: "/learning" })}
-          />
-          <NavTile
-            icon={<AlertOctagon className="h-5 w-5" />}
-            title="Mistake bank"
-            body="Fix what you got wrong"
-            onClick={() => navigate({ to: "/mistakes" })}
-          />
-          <NavTile
-            icon={<BarChart3 className="h-5 w-5" />}
-            title="Mastery"
-            body="Analytics & charts"
-            onClick={() => navigate({ to: "/analytics" })}
-          />
-          <NavTile
-            icon={<History className="h-5 w-5" />}
-            title="History"
-            body="Past attempts"
-            onClick={() => navigate({ to: "/history" })}
-          />
-          <NavTile
-            icon={<Swords className="h-5 w-5" />}
-            title="Battle"
-            body="Live quiz + prizes"
-            onClick={() => navigate({ to: "/battle" })}
-          />
-          <NavTile
-            icon={<Users className="h-5 w-5" />}
-            title="Community"
-            body="Forums, doubts, groups"
-            onClick={() => navigate({ to: "/community" })}
-          />
-          <NavTile
-            icon={<UserIcon className="h-5 w-5" />}
-            title="Profile"
-            body="Your public profile"
-            onClick={() => p && navigate({ to: "/profile/$userId", params: { userId: p.id } })}
-          />
-        </div>
-      </section>
+      {/* Practice */}
+      <SectionHeading title="Practice" hint="Pick a mode to start" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <NavTile icon={<BookOpen className="h-5 w-5" />} title="Learning" body="Practice by chapter" onClick={() => navigate({ to: "/learning" })} />
+        <NavTile icon={<AlertOctagon className="h-5 w-5" />} title="Mistake bank" body="Fix your errors" onClick={() => navigate({ to: "/mistakes" })} />
+        <NavTile icon={<BarChart3 className="h-5 w-5" />} title="Mastery" body="Charts & insights" onClick={() => navigate({ to: "/analytics" })} />
+        <NavTile icon={<History className="h-5 w-5" />} title="History" body="Past attempts" onClick={() => navigate({ to: "/history" })} />
+      </div>
+
+      {/* Compete */}
+      <SectionHeading title="Compete" hint="Play & earn" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <NavTile icon={<Swords className="h-5 w-5" />} title="Battle arena" body="10-question quick battle" onClick={() => navigate({ to: "/battle" })} />
+        <NavTile icon={<Trophy className="h-5 w-5" />} title="Sunday Mega Test" body="₹10 entry · Big prizes" onClick={() => navigate({ to: "/battle/mega" })} />
+        <NavTile icon={<UserIcon className="h-5 w-5" />} title="Wallet" body="Balance & withdrawals" onClick={() => navigate({ to: "/battle/wallet" })} />
+      </div>
+
+      {/* Social */}
+      <SectionHeading title="Social" hint="Learn together" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <NavTile icon={<Users className="h-5 w-5" />} title="Community" body="Forums, doubts, groups" onClick={() => navigate({ to: "/community" })} />
+        <NavTile icon={<Bell className="h-5 w-5" />} title="Notifications" body="Your alerts" onClick={() => navigate({ to: "/notifications" })} />
+        <NavTile
+          icon={<UserIcon className="h-5 w-5" />}
+          title="My profile"
+          body="Public profile & badges"
+          onClick={() => p && navigate({ to: "/profile/$userId", params: { userId: p.id } })}
+        />
+      </div>
 
       <OnboardingFlow open={needsOnboarding} />
-    </main>
+    </AppShell>
+  );
+}
+
+function SectionHeading({ title, hint }: { title: string; hint?: string }) {
+  return (
+    <div className="mb-3 mt-8 flex items-end justify-between">
+      <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+      {hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
+    </div>
   );
 }
 
@@ -228,7 +192,7 @@ function StatCard({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-4">
+    <div className="mantis-card p-4">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         {icon}
         {label}
@@ -253,13 +217,15 @@ function NavTile({
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-col items-start gap-2 rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:bg-accent"
+      className="mantis-tile group flex flex-col items-start gap-3 p-5 text-left"
     >
-      <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+      <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary shadow-inner ring-1 ring-inset ring-primary/10 transition-transform group-hover:scale-105">
         {icon}
       </span>
-      <span className="text-sm font-semibold">{title}</span>
-      <span className="text-xs text-muted-foreground">{body}</span>
+      <div>
+        <div className="text-sm font-semibold">{title}</div>
+        <div className="text-xs text-muted-foreground">{body}</div>
+      </div>
     </button>
   );
 }
