@@ -3,8 +3,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Trophy, Users, Clock, Coins } from "lucide-react";
+import { TopperCoin } from "@/components/TopperCoin";
 import { getUpcomingMegaTest, joinMegaTest, startMegaSession } from "@/lib/battle.functions";
 import { supabase } from "@/integrations/supabase/client";
+
 
 export const Route = createFileRoute("/_authenticated/battle/mega")({
   head: () => ({
@@ -79,8 +81,13 @@ function MegaTest() {
           <Trophy className="h-5 w-5" />
           <span className="text-xs uppercase tracking-widest">Sunday Mega Test</span>
         </div>
-        <h1 className="battle-title mt-2 text-2xl">🪙100 · 🪙50 · 🪙25 · 7×🪙15</h1>
-        <p className="mt-2 text-sm text-white/70">180 questions · 3-hour window · entry 🪙{Number(test.entry_fee)} TC</p>
+        <h1 className="battle-title mt-2 flex flex-wrap items-center gap-x-2 text-2xl">
+          <TopperCoin size={22} />100 · <TopperCoin size={22} />50 · <TopperCoin size={22} />25 · 7×<TopperCoin size={22} />15
+        </h1>
+        <p className="mt-2 inline-flex flex-wrap items-center gap-1 text-sm text-white/70">
+          180 questions · 3-hour window · entry <TopperCoin size={14} />{Number(test.entry_fee)} TC
+        </p>
+
 
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
           <Stat icon={<Users className="h-4 w-4" />} label="Players" value={String(participants)} />
@@ -103,7 +110,10 @@ function MegaTest() {
               onClick={() => join.mutate(test.id)}
             >
               <Coins className="h-4 w-4" />
-              {join.isPending ? "Joining…" : `Join for 🪙${Number(test.entry_fee)} TC`}
+              {join.isPending ? "Joining…" : (
+                <span className="inline-flex items-center gap-1">Join for <TopperCoin size={14} />{Number(test.entry_fee)} TC</span>
+              )}
+
             </button>
           )}
           {entry?.paid && !entry.session_id && isLive && (
@@ -128,8 +138,9 @@ function MegaTest() {
             </div>
           )}
           {isDone && entry?.rank && (
-            <div className="rounded-xl border border-yellow-400/60 bg-yellow-400/10 px-3 py-2 text-sm text-yellow-100">
-              Rank #{entry.rank} · Prize 🪙{Number(entry.prize ?? 0)} TC
+            <div className="inline-flex items-center gap-1 rounded-xl border border-yellow-400/60 bg-yellow-400/10 px-3 py-2 text-sm text-yellow-100">
+              Rank #{entry.rank} · Prize <TopperCoin size={14} />{Number(entry.prize ?? 0)} TC
+
             </div>
           )}
         </div>
@@ -138,11 +149,12 @@ function MegaTest() {
       <div className="battle-glass p-5">
         <div className="mb-2 text-xs uppercase tracking-widest text-white/60">Prize pool (Topper Coins · 1 TC = ₹1)</div>
         <ul className="space-y-1 text-sm">
-          <li>🥇 Rank 1 — 🪙100 TC</li>
-          <li>🥈 Rank 2 — 🪙50 TC</li>
-          <li>🥉 Rank 3 — 🪙25 TC</li>
-          <li>Ranks 4–10 — 🪙15 TC each</li>
+          <li className="inline-flex items-center gap-1">🥇 Rank 1 — <TopperCoin size={14} />100 TC</li>
+          <li className="inline-flex items-center gap-1">🥈 Rank 2 — <TopperCoin size={14} />50 TC</li>
+          <li className="inline-flex items-center gap-1">🥉 Rank 3 — <TopperCoin size={14} />25 TC</li>
+          <li className="inline-flex items-center gap-1">Ranks 4–10 — <TopperCoin size={14} />15 TC each</li>
         </ul>
+
       </div>
     </div>
   );
