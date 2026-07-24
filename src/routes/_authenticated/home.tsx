@@ -198,8 +198,18 @@ function Home() {
             body="Live quiz + prizes"
             onClick={() => navigate({ to: "/battle" })}
           />
-          <NavTile icon={<Users className="h-5 w-5" />} title="Community" body="Coming soon" />
-          <NavTile icon={<UserIcon className="h-5 w-5" />} title="Profile" body="Your stats" />
+          <NavTile
+            icon={<Users className="h-5 w-5" />}
+            title="Community"
+            body="Forums, doubts, groups"
+            onClick={() => navigate({ to: "/community" })}
+          />
+          <NavTile
+            icon={<UserIcon className="h-5 w-5" />}
+            title="Profile"
+            body="Your public profile"
+            onClick={() => p && navigate({ to: "/profile/$userId", params: { userId: p.id } })}
+          />
         </div>
       </section>
 
