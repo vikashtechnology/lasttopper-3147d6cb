@@ -79,8 +79,8 @@ function MegaTest() {
           <Trophy className="h-5 w-5" />
           <span className="text-xs uppercase tracking-widest">Sunday Mega Test</span>
         </div>
-        <h1 className="battle-title mt-2 text-2xl">₹100 · ₹50 · ₹25 · 7×₹15</h1>
-        <p className="mt-2 text-sm text-white/70">180 questions · 3-hour window · entry ₹{Number(test.entry_fee)}</p>
+        <h1 className="battle-title mt-2 text-2xl">🪙100 · 🪙50 · 🪙25 · 7×🪙15</h1>
+        <p className="mt-2 text-sm text-white/70">180 questions · 3-hour window · entry 🪙{Number(test.entry_fee)} TC</p>
 
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
           <Stat icon={<Users className="h-4 w-4" />} label="Players" value={String(participants)} />
