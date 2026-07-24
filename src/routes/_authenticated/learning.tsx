@@ -271,3 +271,24 @@ function LearningPage() {
     </main>
   );
 }
+
+function GeneratingScreen({ count, chapters }: { count: number; chapters: number }) {
+  return (
+    <main className="grid min-h-screen place-items-center bg-gradient-to-br from-background via-background to-muted/40 px-6">
+      <div className="mantis-card w-full max-w-sm p-8 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <Sparkles className="h-8 w-8 animate-pulse" />
+        </div>
+        <h1 className="mt-5 text-xl font-semibold">Generating your quiz…</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Crafting {count} NCERT-aligned questions across {chapters} chapter{chapters === 1 ? "" : "s"}.
+        </p>
+        <div className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Usually takes 5–15 seconds
+        </div>
+      </div>
+    </main>
+  );
+}
+
