@@ -417,7 +417,7 @@ export type Analytics = {
   totalAttempted: number;
   overallAccuracy: number;
   bySubject: Array<{ subject: string; accuracy: number; attempted: number }>;
-  byChapter: Array<{ chapter: string; subject: string; accuracy: number; attempted: number }>;
+  byChapter: Array<{ chapter_id: string; chapter: string; subject: string; accuracy: number; attempted: number }>;
   studyTimeByDay: Array<{ day: string; minutes: number }>;
   weakChapters: Array<{ chapter_id: string; chapter: string; subject: string; accuracy: number; attempted: number }>;
 };
