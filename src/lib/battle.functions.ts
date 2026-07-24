@@ -102,7 +102,7 @@ export const startQuickBattle = createServerFn({ method: "POST" })
     if (!profession) throw new Error("Complete onboarding first");
     const subjectLabel = profession === "pcm"
       ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
-    const prompt = `Generate exactly 10 exam-style MCQ for ${subjectLabel}. Mix chapters and difficulty. Use LaTeX ($...$ / $$...$$) for math. Return STRICT JSON: {"questions":[{"question":"...","options":{"A":"","B":"","C":"","D":""},"correct":"A|B|C|D","hint":"...","explanation":"..."}]}`;
+    const prompt = `Generate exactly 10 exam-style MCQ for ${subjectLabel}. STRICT SOURCE: use ONLY content from official NCERT Class 11 & 12 textbooks — no non-NCERT facts. Mix chapters and difficulty. Use LaTeX ($...$ / $$...$$) for math. Return STRICT JSON: {"questions":[{"question":"...","options":{"A":"","B":"","C":"","D":""},"correct":"A|B|C|D","hint":"...","explanation":"..."}]}`;
     const questions = await callGemini(prompt, 10);
     const { data: row, error } = await context.supabase
       .from("battle_sessions")
