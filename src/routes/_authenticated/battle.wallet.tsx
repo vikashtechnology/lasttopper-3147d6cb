@@ -26,6 +26,31 @@ function WalletPage() {
   const qc = useQueryClient();
   const w = useQuery({ queryKey: ["wallet"], queryFn: () => getWallet() });
   const wr = useQuery({ queryKey: ["withdrawals"], queryFn: () => getWithdrawals() });
+  const profile = useQuery({ queryKey: ["my-profile"], queryFn: () => getMyProfile() });
+  const [topupAmt, setTopupAmt] = useState<number>(100);
+  const [topupLoading, setTopupLoading] = useState(false);
+  const [showTopup, setShowTopup] = useState(false);
+
+  const topup = async () => {
+    if (topupAmt < 10) return toast.error("Minimum ₹10");
+    setTopupLoading(true);
+    try {
+      await payWithRazorpay({
+        purpose: "wallet_topup",
+        amount_inr: topupAmt,
+        name: profile.data?.full_name,
+        email: profile.data?.email,
+      });
+      toast.success(`₹${topupAmt} added to wallet`);
+      setShowTopup(false);
+      qc.invalidateQueries({ queryKey: ["wallet"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Payment failed";
+      if (msg !== "Payment cancelled") toast.error(msg);
+    } finally {
+      setTopupLoading(false);
+    }
+  };
 
   useEffect(() => {
     const ch = supabase
