@@ -38,16 +38,23 @@ const PRO = [
   "Early access to new features",
 ];
 
+type Plan = "monthly" | "yearly";
+
 function PricingPage() {
   const { data: p } = useSuspenseQuery(profileQuery);
   const qc = useQueryClient();
   const isPro = !!p?.is_pro;
+  const [plan, setPlan] = useState<Plan>("yearly");
   const [loading, setLoading] = useState(false);
 
   const subscribe = async () => {
     setLoading(true);
     try {
-      await payWithRazorpay({ purpose: "pro", name: p?.full_name, email: p?.email });
+      await payWithRazorpay({
+        purpose: plan === "yearly" ? "pro_yearly" : "pro",
+        name: p?.full_name,
+        email: p?.email,
+      });
       toast.success("Welcome to Pro! 🎉");
       qc.invalidateQueries({ queryKey: ["my-profile"] });
     } catch (e) {
@@ -57,6 +64,10 @@ function PricingPage() {
       setLoading(false);
     }
   };
+
+  const price = plan === "yearly" ? "₹1499" : "₹149";
+  const period = plan === "yearly" ? "/ year" : "/ month";
+  const cta = plan === "yearly" ? "Subscribe ₹1499/yr" : "Subscribe ₹149/mo";
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -80,8 +91,34 @@ function PricingPage() {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-5 md:grid-cols-2">
-          <Plan
+        <div className="mt-8 flex justify-center">
+          <div className="inline-flex rounded-xl border border-border bg-muted/40 p-1">
+            <button
+              type="button"
+              onClick={() => setPlan("monthly")}
+              className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
+                plan === "monthly" ? "bg-background shadow-sm" : "text-muted-foreground"
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              onClick={() => setPlan("yearly")}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
+                plan === "yearly" ? "bg-background shadow-sm" : "text-muted-foreground"
+              }`}
+            >
+              Yearly
+              <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                Save 16%
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-5 md:grid-cols-2">
+          <PlanCard
             name="Free"
             price="₹0"
             tag="Everyone"
@@ -92,11 +129,11 @@ function PricingPage() {
               </Button>
             }
           />
-          <Plan
+          <PlanCard
             highlight
             name="Pro"
-            price="₹149"
-            period="/ month"
+            price={price}
+            period={period}
             tag="Serious aspirants"
             features={PRO}
             cta={
@@ -107,7 +144,7 @@ function PricingPage() {
               ) : (
                 <Button className="w-full" onClick={subscribe} disabled={loading}>
                   {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                  {loading ? "Opening checkout…" : "Subscribe ₹149/mo"}
+                  {loading ? "Opening checkout…" : cta}
                 </Button>
               )
             }
@@ -122,7 +159,7 @@ function PricingPage() {
   );
 }
 
-function Plan({
+function PlanCard({
   name,
   price,
   period,
@@ -140,11 +177,7 @@ function Plan({
   highlight?: boolean;
 }) {
   return (
-    <div
-      className={`mantis-card p-6 ${
-        highlight ? "ring-2 ring-primary/40" : ""
-      }`}
-    >
+    <div className={`mantis-card p-6 ${highlight ? "ring-2 ring-primary/40" : ""}`}>
       <div className="flex items-center justify-between">
         <div>
           <div className="text-lg font-semibold">{name}</div>
