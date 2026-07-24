@@ -1,0 +1,182 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo } from "react";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { getMyProfile } from "@/lib/user.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { useUserStore, type UserProfile } from "@/store/user";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
+import {
+  BookOpen,
+  Swords,
+  Users,
+  User as UserIcon,
+  Flame,
+  Target,
+  LogOut,
+} from "lucide-react";
+
+const profileQuery = {
+  queryKey: ["my-profile"] as const,
+  queryFn: () => getMyProfile(),
+};
+
+export const Route = createFileRoute("/_authenticated/home")({
+  head: () => ({
+    meta: [
+      { title: "Home — Last Topper" },
+      { name: "description", content: "Your daily practice, streak, and accuracy at a glance." },
+      { property: "og:title", content: "Home — Last Topper" },
+      { property: "og:description", content: "Your daily practice hub." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  loader: ({ context }) => context.queryClient.ensureQueryData(profileQuery),
+  component: Home,
+  errorComponent: ({ error, reset }) => (
+    <div className="p-6 text-sm">
+      <p className="text-destructive">Failed to load: {error.message}</p>
+      <Button className="mt-3" onClick={reset}>
+        Retry
+      </Button>
+    </div>
+  ),
+  notFoundComponent: () => <div className="p-6 text-sm">Not found.</div>,
+});
+
+function Home() {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const { data } = useSuspenseQuery(profileQuery);
+  const setProfile = useUserStore((s) => s.setProfile);
+  const clear = useUserStore((s) => s.clear);
+  const profile = useUserStore((s) => s.profile);
+
+  useEffect(() => {
+    if (data) setProfile(data as UserProfile);
+  }, [data, setProfile]);
+
+  const p: UserProfile | null = (profile ?? (data as UserProfile | null)) as UserProfile | null;
+
+  const usedToday = 0; // TODO: wire once attempts table exists
+  const limit = p?.daily_question_limit ?? 20;
+  const percent = useMemo(() => Math.round((usedToday / limit) * 100), [usedToday, limit]);
+  const needsOnboarding = !!p && (!p.phone || !p.profession || !p.onboarded);
+
+  async function handleSignOut() {
+    await qc.cancelQueries();
+    qc.clear();
+    clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
+
+  return (
+    <main className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border bg-background">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4">
+          <div>
+            <div className="text-xs text-muted-foreground">Welcome back</div>
+            <div className="text-base font-semibold">
+              {p?.full_name ?? p?.email ?? "Learner"}
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" onClick={handleSignOut} aria-label="Sign out">
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
+      </header>
+
+      <section className="mx-auto max-w-3xl px-5 pt-6">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm text-muted-foreground">Today's questions</div>
+              <div className="mt-1 text-3xl font-bold">
+                {usedToday}
+                <span className="text-base font-medium text-muted-foreground"> / {limit}</span>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Plan</div>
+              <div className="mt-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                Free
+              </div>
+            </div>
+          </div>
+          <Progress value={percent} className="mt-4 h-2" />
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-4">
+          <StatCard
+            icon={<Flame className="h-4 w-4" />}
+            label="Streak"
+            value={`${p?.streak ?? 0} days`}
+          />
+          <StatCard
+            icon={<Target className="h-4 w-4" />}
+            label="Accuracy"
+            value={`${Math.round(Number(p?.total_accuracy ?? 0))}%`}
+          />
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-3xl px-5 py-6">
+        <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Explore</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <NavTile icon={<BookOpen className="h-5 w-5" />} title="Learning" body="Practice by chapter" />
+          <NavTile icon={<Swords className="h-5 w-5" />} title="Battle" body="1v1 quick match" />
+          <NavTile icon={<Users className="h-5 w-5" />} title="Community" body="Ask & discuss" />
+          <NavTile icon={<UserIcon className="h-5 w-5" />} title="Profile" body="Your stats" />
+        </div>
+      </section>
+
+      <OnboardingFlow open={needsOnboarding} />
+    </main>
+  );
+}
+
+function StatCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        {icon}
+        {label}
+      </div>
+      <div className="mt-2 text-xl font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function NavTile({
+  icon,
+  title,
+  body,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+}) {
+  return (
+    <button
+      type="button"
+      className="flex flex-col items-start gap-2 rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:bg-accent"
+    >
+      <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        {icon}
+      </span>
+      <span className="text-sm font-semibold">{title}</span>
+      <span className="text-xs text-muted-foreground">{body}</span>
+    </button>
+  );
+}
