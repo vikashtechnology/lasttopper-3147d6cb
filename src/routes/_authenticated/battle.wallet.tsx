@@ -34,14 +34,6 @@ function WalletPage() {
     return () => { void supabase.removeChannel(ch); };
   }, [qc]);
 
-  const claim = useMutation({
-    mutationFn: () => claimSignupBonus(),
-    onSuccess: (res) => {
-      if (res.already) toast.info("Bonus already claimed");
-      else toast.success("₹100 credited!");
-      qc.invalidateQueries({ queryKey: ["wallet"] });
-    },
-  });
 
   const [showForm, setShowForm] = useState(false);
   const [amt, setAmt] = useState<number>(0);
