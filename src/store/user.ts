@@ -15,6 +15,8 @@ export type UserProfile = {
   daily_question_limit: number;
   streak: number;
   total_accuracy: number;
+  is_pro?: boolean;
+  pro_since?: string | null;
 };
 
 type UserState = {
