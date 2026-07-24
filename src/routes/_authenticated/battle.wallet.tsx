@@ -97,10 +97,11 @@ function WalletPage() {
       <div className="battle-glass battle-slide-up p-6">
         <div className="flex items-center gap-2 text-white/70">
           <Wallet className="h-4 w-4" />
-          <span className="text-xs uppercase tracking-widest">Balance</span>
+          <span className="text-xs uppercase tracking-widest">Topper Coin balance</span>
         </div>
         <div className="mt-2 flex items-baseline gap-2">
           <span className="battle-title text-4xl">🪙{bal.toFixed(2)} TC</span>
+          <span className="text-xs text-white/50">1 TC = ₹1</span>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           <button
