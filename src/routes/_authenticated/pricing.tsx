@@ -1,8 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { Check, Sparkles, ChevronLeft } from "lucide-react";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, Sparkles, ChevronLeft, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { getMyProfile } from "@/lib/user.functions";
 import { Button } from "@/components/ui/button";
+import { payWithRazorpay } from "@/lib/razorpay-client";
 
 const profileQuery = { queryKey: ["my-profile"], queryFn: () => getMyProfile() } as const;
 
@@ -37,7 +40,23 @@ const PRO = [
 
 function PricingPage() {
   const { data: p } = useSuspenseQuery(profileQuery);
+  const qc = useQueryClient();
   const isPro = !!p?.is_pro;
+  const [loading, setLoading] = useState(false);
+
+  const subscribe = async () => {
+    setLoading(true);
+    try {
+      await payWithRazorpay({ purpose: "pro", name: p?.full_name, email: p?.email });
+      toast.success("Welcome to Pro! 🎉");
+      qc.invalidateQueries({ queryKey: ["my-profile"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Payment failed";
+      if (msg !== "Payment cancelled") toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -86,8 +105,9 @@ function PricingPage() {
                   <Sparkles className="mr-2 h-4 w-4" /> You're Pro
                 </Button>
               ) : (
-                <Button className="w-full" disabled>
-                  Checkout coming soon
+                <Button className="w-full" onClick={subscribe} disabled={loading}>
+                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                  {loading ? "Opening checkout…" : "Subscribe ₹149/mo"}
                 </Button>
               )
             }

@@ -2,9 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Wallet, ArrowDownToLine } from "lucide-react";
+import { Wallet, ArrowDownToLine, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getWallet, requestWithdrawal, getWithdrawals } from "@/lib/battle.functions";
+import { getMyProfile } from "@/lib/user.functions";
+import { payWithRazorpay } from "@/lib/razorpay-client";
 
 export const Route = createFileRoute("/_authenticated/battle/wallet")({
   head: () => ({
@@ -24,6 +26,31 @@ function WalletPage() {
   const qc = useQueryClient();
   const w = useQuery({ queryKey: ["wallet"], queryFn: () => getWallet() });
   const wr = useQuery({ queryKey: ["withdrawals"], queryFn: () => getWithdrawals() });
+  const profile = useQuery({ queryKey: ["my-profile"], queryFn: () => getMyProfile() });
+  const [topupAmt, setTopupAmt] = useState<number>(100);
+  const [topupLoading, setTopupLoading] = useState(false);
+  const [showTopup, setShowTopup] = useState(false);
+
+  const topup = async () => {
+    if (topupAmt < 10) return toast.error("Minimum ₹10");
+    setTopupLoading(true);
+    try {
+      await payWithRazorpay({
+        purpose: "wallet_topup",
+        amount_inr: topupAmt,
+        name: profile.data?.full_name,
+        email: profile.data?.email,
+      });
+      toast.success(`₹${topupAmt} added to wallet`);
+      setShowTopup(false);
+      qc.invalidateQueries({ queryKey: ["wallet"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Payment failed";
+      if (msg !== "Payment cancelled") toast.error(msg);
+    } finally {
+      setTopupLoading(false);
+    }
+  };
 
   useEffect(() => {
     const ch = supabase
@@ -74,9 +101,14 @@ function WalletPage() {
         </div>
         <div className="mt-2 flex items-baseline gap-2">
           <span className="battle-title text-4xl">₹{bal.toFixed(2)}</span>
-          <span className="text-xs text-white/50">mock — not real money</span>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            className="rounded-xl border border-cyan-400/60 bg-cyan-400/10 px-4 py-2 text-sm text-cyan-100 inline-flex items-center gap-1.5"
+            onClick={() => setShowTopup((v) => !v)}
+          >
+            <Plus className="h-4 w-4" /> Add money
+          </button>
           <button
             className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/80 inline-flex items-center gap-1.5"
             onClick={() => setShowForm((v) => !v)}
@@ -85,6 +117,29 @@ function WalletPage() {
           </button>
         </div>
       </div>
+
+      {showTopup && (
+        <div className="battle-glass p-5 space-y-3 text-sm">
+          <div className="text-xs uppercase tracking-widest text-white/60">Add money via Razorpay</div>
+          <div className="flex flex-wrap gap-2">
+            {[50, 100, 200, 500].map((v) => (
+              <button
+                key={v}
+                onClick={() => setTopupAmt(v)}
+                className={`rounded-lg border px-3 py-1.5 text-xs ${topupAmt === v ? "border-cyan-400/60 bg-cyan-400/10" : "border-white/15"}`}
+              >₹{v}</button>
+            ))}
+          </div>
+          <input
+            className="w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2"
+            type="number" min={10} max={5000} placeholder="Amount (₹)"
+            value={topupAmt || ""} onChange={(e) => setTopupAmt(Number(e.target.value))}
+          />
+          <button className="battle-btn w-full" disabled={topupLoading} onClick={topup}>
+            {topupLoading ? "Opening checkout…" : `Pay ₹${topupAmt}`}
+          </button>
+        </div>
+      )}
 
       {showForm && (
         <div className="battle-glass p-5 space-y-3 text-sm">
