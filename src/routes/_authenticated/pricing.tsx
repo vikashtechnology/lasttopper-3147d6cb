@@ -105,8 +105,9 @@ function PricingPage() {
                   <Sparkles className="mr-2 h-4 w-4" /> You're Pro
                 </Button>
               ) : (
-                <Button className="w-full" disabled>
-                  Checkout coming soon
+                <Button className="w-full" onClick={subscribe} disabled={loading}>
+                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                  {loading ? "Opening checkout…" : "Subscribe ₹149/mo"}
                 </Button>
               )
             }
