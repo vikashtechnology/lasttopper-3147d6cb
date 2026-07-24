@@ -18,6 +18,7 @@ import {
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import logoAsset from "@/assets/last-topper-logo.jpg.asset.json";
 
 type NavItem = { to: string; label: string; icon: ReactNode; params?: Record<string, string> };
 
