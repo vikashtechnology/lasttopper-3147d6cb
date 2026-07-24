@@ -14,7 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chapters: {
+        Row: {
+          class_level: number | null
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          subject_id: string
+        }
+        Insert: {
+          class_level?: number | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          subject_id: string
+        }
+        Update: {
+          class_level?: number | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          subject_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chapters_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subjects: {
+        Row: {
+          code: string
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          profession: Database["public"]["Enums"]["profession"]
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          profession: Database["public"]["Enums"]["profession"]
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          profession?: Database["public"]["Enums"]["profession"]
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          avatar_url: string | null
+          country_code: string
+          created_at: string
+          daily_question_limit: number
+          email: string | null
+          full_name: string | null
+          id: string
+          onboarded: boolean
+          phone: string | null
+          profession: Database["public"]["Enums"]["profession"] | null
+          streak: number
+          total_accuracy: number
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          country_code?: string
+          created_at?: string
+          daily_question_limit?: number
+          email?: string | null
+          full_name?: string | null
+          id: string
+          onboarded?: boolean
+          phone?: string | null
+          profession?: Database["public"]["Enums"]["profession"] | null
+          streak?: number
+          total_accuracy?: number
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          country_code?: string
+          created_at?: string
+          daily_question_limit?: number
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          onboarded?: boolean
+          phone?: string | null
+          profession?: Database["public"]["Enums"]["profession"] | null
+          streak?: number
+          total_accuracy?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +132,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      profession: "pcm" | "pcb"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +259,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      profession: ["pcm", "pcb"],
+    },
   },
 } as const
