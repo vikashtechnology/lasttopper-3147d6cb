@@ -277,7 +277,7 @@ export const startMegaSession = createServerFn({ method: "POST" })
     if (!questions) {
       const label = test.profession === "pcm"
         ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
-      const prompt = `Generate exactly 60 exam-style MCQ for ${label}. Mix chapters, difficulties. Use LaTeX. Return STRICT JSON: {"questions":[{"question":"","options":{"A":"","B":"","C":"","D":""},"correct":"A","hint":"","explanation":""}]}`;
+      const prompt = `Generate exactly 60 exam-style MCQ for ${label}. STRICT SOURCE: use ONLY content from official NCERT Class 11 & 12 textbooks. Mix chapters, difficulties. Use LaTeX. Return STRICT JSON: {"questions":[{"question":"","options":{"A":"","B":"","C":"","D":""},"correct":"A","hint":"","explanation":""}]}`;
       const parts = await Promise.all([callGemini(prompt, 60), callGemini(prompt, 60), callGemini(prompt, 60)]);
       questions = parts.flat().slice(0, 180);
       await context.supabase.from("mega_tests")
