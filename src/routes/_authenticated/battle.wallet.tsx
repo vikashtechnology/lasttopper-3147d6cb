@@ -28,9 +28,45 @@ function WalletPage() {
   const w = useQuery({ queryKey: ["wallet"], queryFn: () => getWallet() });
   const wr = useQuery({ queryKey: ["withdrawals"], queryFn: () => getWithdrawals() });
   const profile = useQuery({ queryKey: ["my-profile"], queryFn: () => getMyProfile() });
+  const ref = useQuery({ queryKey: ["referral"], queryFn: () => getMyReferral() });
   const [topupAmt, setTopupAmt] = useState<number>(100);
   const [topupLoading, setTopupLoading] = useState(false);
   const [showTopup, setShowTopup] = useState(false);
+  const [codeInput, setCodeInput] = useState("");
+
+  const applyRef = useMutation({
+    mutationFn: (code: string) => applyReferralCode({ data: { code } }),
+    onSuccess: () => {
+      toast.success("Referral applied — top up to reward your friend!");
+      setCodeInput("");
+      qc.invalidateQueries({ queryKey: ["referral"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const shareCode = async () => {
+    const code = ref.data?.code;
+    if (!code) return;
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const text = `Join me on Last Topper — use my code ${code} at signup and I earn 5 TC (Mega Test only) on your first wallet top-up. ${origin}`;
+    try {
+      if (typeof navigator !== "undefined" && "share" in navigator) {
+        await (navigator as Navigator).share({ text });
+      } else {
+        await navigator.clipboard.writeText(text);
+        toast.success("Copied invite link");
+      }
+    } catch {
+      /* user cancelled */
+    }
+  };
+
+  const copyCode = async () => {
+    const code = ref.data?.code;
+    if (!code) return;
+    await navigator.clipboard.writeText(code);
+    toast.success("Code copied");
+  };
 
   const topup = async () => {
     if (topupAmt < 10) return toast.error("Minimum 🪙10 TC");
