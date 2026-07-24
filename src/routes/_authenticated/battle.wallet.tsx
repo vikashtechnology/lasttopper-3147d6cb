@@ -77,9 +77,6 @@ function WalletPage() {
           <span className="text-xs text-white/50">mock — not real money</span>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
-          <button className="battle-btn inline-flex items-center gap-1.5" onClick={() => claim.mutate()}>
-            <Gift className="h-4 w-4" /> Claim ₹100 bonus
-          </button>
           <button
             className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/80 inline-flex items-center gap-1.5"
             onClick={() => setShowForm((v) => !v)}
