@@ -1,8 +1,10 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMyProfile, pingActivity } from "@/lib/user.functions";
 import { finalizeStaleSessions } from "@/lib/learning.functions";
+import { notifyFirstLogin, unreadNotificationsCount } from "@/lib/community.functions";
+import { amIAdmin } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserStore, type UserProfile } from "@/store/user";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,8 @@ import {
   History,
   BarChart3,
   AlertOctagon,
+  Bell,
+  ShieldCheck,
 } from "lucide-react";
 
 const profileQuery = {
