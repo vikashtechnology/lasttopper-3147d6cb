@@ -189,7 +189,7 @@ export const generateQuestions = createServerFn({ method: "POST" })
       chapter_ids: data.chapter_ids,
       profession,
       question_count: data.question_count,
-      questions: questions as unknown as object,
+      questions: questions as unknown as never,
     });
 
     return { questions, cached: false };
