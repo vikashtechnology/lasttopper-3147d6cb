@@ -103,7 +103,7 @@ function MegaTest() {
               onClick={() => join.mutate(test.id)}
             >
               <Coins className="h-4 w-4" />
-              {join.isPending ? "Joining…" : `Join for ₹${Number(test.entry_fee)}`}
+              {join.isPending ? "Joining…" : `Join for 🪙${Number(test.entry_fee)} TC`}
             </button>
           )}
           {entry?.paid && !entry.session_id && isLive && (
