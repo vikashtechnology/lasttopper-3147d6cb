@@ -116,7 +116,7 @@ function AnalyticsPage() {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="subject" fontSize={11} />
                   <YAxis domain={[0, 100]} fontSize={11} />
-                  <Tooltip formatter={(v: number) => `${v}%`} />
+                  <Tooltip formatter={(v) => `${v}%`} />
                   <Bar dataKey="accuracy" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -162,7 +162,7 @@ function AnalyticsPage() {
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="day" fontSize={10} tickFormatter={(d) => d.slice(5)} />
                   <YAxis fontSize={11} />
-                  <Tooltip formatter={(v: number) => `${v} min`} />
+                  <Tooltip formatter={(v) => `${v} min`} />
                   <Line type="monotone" dataKey="minutes" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
