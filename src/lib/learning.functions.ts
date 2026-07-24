@@ -77,11 +77,17 @@ async function callGeminiForQuestions(
   const subjectLabel = profession === "pcm" ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
   const prompt = `Generate exactly ${count} exam-style multiple-choice questions for ${subjectLabel}, distributed across these chapters: ${chapterNames.join(", ")}.
 
+STRICT SOURCE POLICY:
+- Every question, option, hint and explanation MUST be grounded strictly in the official NCERT textbook syllabus for the given chapters and class (NCERT Class 11 & 12 for JEE/NEET).
+- Do NOT invent facts or use content that is not present in NCERT.
+- If a chapter is not covered in NCERT, skip it and rebalance to NCERT chapters only.
+- Prefer NCERT terminology, definitions, and formula conventions.
+
 Rules:
-- Cover a mix of easy, medium, and hard difficulty.
-- Use LaTeX for all math/formulas, wrapped in single $...$ for inline and $$...$$ for display.
+- Cover a mix of easy, medium, and hard difficulty (roughly 30/40/30).
+- Use LaTeX for all math/formulas: single $...$ for inline, $$...$$ for display.
 - 4 options labeled A, B, C, D — exactly one correct.
-- Provide a short hint (1 sentence) and a clear step-by-step explanation.
+- Provide a short hint (1 sentence) and a clear step-by-step explanation that cites the NCERT chapter/topic where relevant.
 - Return STRICT JSON only, no markdown, matching this schema:
 {"questions":[{"chapter":"<chapter name>","question":"...","options":{"A":"...","B":"...","C":"...","D":"..."},"correct":"A|B|C|D","hint":"...","explanation":"..."}]}`;
 
@@ -94,7 +100,7 @@ Rules:
     body: JSON.stringify({
       model: "google/gemini-3.6-flash",
       messages: [
-        { role: "system", content: "You are an expert exam question generator. Output STRICT JSON only." },
+        { role: "system", content: "You are an NCERT-only exam question generator. You must only use content that appears in official NCERT textbooks. Output STRICT JSON only." },
         { role: "user", content: prompt },
       ],
       response_format: { type: "json_object" },

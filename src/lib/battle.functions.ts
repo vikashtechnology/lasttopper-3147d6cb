@@ -14,7 +14,7 @@ async function callGemini(prompt: string, count: number): Promise<QuizQuestion[]
     body: JSON.stringify({
       model: "google/gemini-3.6-flash",
       messages: [
-        { role: "system", content: "You are an expert exam question generator. Output STRICT JSON only." },
+        { role: "system", content: "You are an NCERT-only exam question generator. Only use content from official NCERT textbooks (Class 11 & 12). Output STRICT JSON only." },
         { role: "user", content: prompt },
       ],
       response_format: { type: "json_object" },
@@ -102,7 +102,7 @@ export const startQuickBattle = createServerFn({ method: "POST" })
     if (!profession) throw new Error("Complete onboarding first");
     const subjectLabel = profession === "pcm"
       ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
-    const prompt = `Generate exactly 10 exam-style MCQ for ${subjectLabel}. Mix chapters and difficulty. Use LaTeX ($...$ / $$...$$) for math. Return STRICT JSON: {"questions":[{"question":"...","options":{"A":"","B":"","C":"","D":""},"correct":"A|B|C|D","hint":"...","explanation":"..."}]}`;
+    const prompt = `Generate exactly 10 exam-style MCQ for ${subjectLabel}. STRICT SOURCE: use ONLY content from official NCERT Class 11 & 12 textbooks — no non-NCERT facts. Mix chapters and difficulty. Use LaTeX ($...$ / $$...$$) for math. Return STRICT JSON: {"questions":[{"question":"...","options":{"A":"","B":"","C":"","D":""},"correct":"A|B|C|D","hint":"...","explanation":"..."}]}`;
     const questions = await callGemini(prompt, 10);
     const { data: row, error } = await context.supabase
       .from("battle_sessions")
@@ -277,7 +277,7 @@ export const startMegaSession = createServerFn({ method: "POST" })
     if (!questions) {
       const label = test.profession === "pcm"
         ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
-      const prompt = `Generate exactly 60 exam-style MCQ for ${label}. Mix chapters, difficulties. Use LaTeX. Return STRICT JSON: {"questions":[{"question":"","options":{"A":"","B":"","C":"","D":""},"correct":"A","hint":"","explanation":""}]}`;
+      const prompt = `Generate exactly 60 exam-style MCQ for ${label}. STRICT SOURCE: use ONLY content from official NCERT Class 11 & 12 textbooks. Mix chapters, difficulties. Use LaTeX. Return STRICT JSON: {"questions":[{"question":"","options":{"A":"","B":"","C":"","D":""},"correct":"A","hint":"","explanation":""}]}`;
       const parts = await Promise.all([callGemini(prompt, 60), callGemini(prompt, 60), callGemini(prompt, 60)]);
       questions = parts.flat().slice(0, 180);
       await context.supabase.from("mega_tests")
