@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -73,18 +74,8 @@ function LearningPage() {
     });
   }
 
-  // Simple adaptive-distribution preview: boost first-selected (weak) chapters.
-  const distribution = useMemo(() => {
-    if (chapterIds.length === 0) return [] as { name: string; q: number }[];
-    const base = Math.floor(count / chapterIds.length);
-    const extras = count - base * chapterIds.length;
-    return chapterIds.map((id, i) => {
-      const chapter = subjects
-        .flatMap((s) => s.chapters)
-        .find((c) => c.id === id);
-      return { name: chapter?.name ?? "?", q: base + (i < extras ? 1 : 0) };
-    });
-  }, [chapterIds, count, subjects]);
+
+
 
   async function handleStart() {
     if (chapterIds.length === 0) {
@@ -134,8 +125,11 @@ function LearningPage() {
     }
   }
 
+  if (busy) return <GeneratingScreen count={count} chapters={chapterIds.length} />;
+
   return (
     <main className="min-h-screen bg-background">
+
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
           <Button variant="ghost" size="icon" onClick={() => nav({ to: "/home" })} aria-label="Back">
@@ -257,19 +251,7 @@ function LearningPage() {
             </div>
           )}
 
-          {distribution.length > 0 && (
-            <div className="mt-5">
-              <div className="text-sm font-semibold">Adaptive distribution</div>
-              <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                {distribution.map((d, i) => (
-                  <li key={i} className="flex justify-between">
-                    <span className="truncate pr-2">{d.name}</span>
-                    <span>{d.q} Q</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+
         </div>
 
         <Button className="mt-5 h-12 w-full text-base" onClick={handleStart} disabled={busy}>
@@ -289,3 +271,24 @@ function LearningPage() {
     </main>
   );
 }
+
+function GeneratingScreen({ count, chapters }: { count: number; chapters: number }) {
+  return (
+    <main className="grid min-h-screen place-items-center bg-gradient-to-br from-background via-background to-muted/40 px-6">
+      <div className="mantis-card w-full max-w-sm p-8 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <Sparkles className="h-8 w-8 animate-pulse" />
+        </div>
+        <h1 className="mt-5 text-xl font-semibold">Generating your quiz…</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Crafting {count} NCERT-aligned questions across {chapters} chapter{chapters === 1 ? "" : "s"}.
+        </p>
+        <div className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Usually takes 5–15 seconds
+        </div>
+      </div>
+    </main>
+  );
+}
+

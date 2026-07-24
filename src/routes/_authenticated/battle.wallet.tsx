@@ -3,11 +3,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Wallet, ArrowDownToLine, Plus, Gift, Copy, Share2 } from "lucide-react";
+import { TopperCoin } from "@/components/TopperCoin";
 import { supabase } from "@/integrations/supabase/client";
 import { getWallet, requestWithdrawal, getWithdrawals } from "@/lib/battle.functions";
 import { getMyProfile } from "@/lib/user.functions";
 import { getMyReferral, applyReferralCode } from "@/lib/referral.functions";
 import { payWithRazorpay } from "@/lib/razorpay-client";
+
 
 export const Route = createFileRoute("/_authenticated/battle/wallet")({
   head: () => ({
@@ -138,14 +140,15 @@ function WalletPage() {
           <span className="text-xs uppercase tracking-widest">Topper Coin balance</span>
         </div>
         <div className="mt-2 flex items-baseline gap-2">
-          <span className="battle-title text-4xl">🪙{bal.toFixed(2)} TC</span>
+          <span className="battle-title inline-flex items-center gap-1.5 text-4xl"><TopperCoin size={32} />{bal.toFixed(2)} TC</span>
           <span className="text-xs text-white/50">1 TC = ₹1</span>
         </div>
         {(ref.data?.mega_credits ?? 0) > 0 && (
           <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-fuchsia-400/10 px-2 py-0.5 text-[11px] text-fuchsia-200">
-            <Gift className="h-3 w-3" /> 🪙{ref.data?.mega_credits} referral credits · Mega Test only
+            <Gift className="h-3 w-3" /> <TopperCoin size={12} />{ref.data?.mega_credits} referral credits · Mega Test only
           </div>
         )}
+
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             className="rounded-xl border border-cyan-400/60 bg-cyan-400/10 px-4 py-2 text-sm text-cyan-100 inline-flex items-center gap-1.5"
@@ -169,8 +172,9 @@ function WalletPage() {
         </div>
         <p className="text-xs text-white/60">
           Share your code. When your friend signs up and makes their first wallet top-up, you get
-          🪙5 TC — usable only for the Sunday Mega Test.
+          <span className="inline-flex items-center gap-0.5"> <TopperCoin size={12} />5 TC</span> — usable only for the Sunday Mega Test.
         </p>
+
         {ref.data?.code && (
           <div className="flex items-center gap-2">
             <code className="flex-1 rounded-lg border border-white/15 bg-black/40 px-3 py-2 font-mono tracking-widest">
@@ -217,8 +221,8 @@ function WalletPage() {
               <button
                 key={v}
                 onClick={() => setTopupAmt(v)}
-                className={`rounded-lg border px-3 py-1.5 text-xs ${topupAmt === v ? "border-cyan-400/60 bg-cyan-400/10" : "border-white/15"}`}
-              >🪙{v}</button>
+                className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs ${topupAmt === v ? "border-cyan-400/60 bg-cyan-400/10" : "border-white/15"}`}
+              ><TopperCoin size={12} />{v}</button>
             ))}
           </div>
           <input
@@ -227,8 +231,11 @@ function WalletPage() {
             value={topupAmt || ""} onChange={(e) => setTopupAmt(Number(e.target.value))}
           />
           <button className="battle-btn w-full" disabled={topupLoading} onClick={topup}>
-            {topupLoading ? "Opening checkout…" : `Pay ₹${topupAmt} · get 🪙${topupAmt} TC`}
+            {topupLoading ? "Opening checkout…" : (
+              <span className="inline-flex items-center gap-1">Pay ₹{topupAmt} · get <TopperCoin size={14} />{topupAmt} TC</span>
+            )}
           </button>
+
         </div>
       )}
 
@@ -277,7 +284,7 @@ function WalletPage() {
             {(wr.data ?? []).map((r) => (
               <li key={r.id} className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
                 <div>
-                  <div className="font-medium">🪙{Number(r.amount).toFixed(2)} TC · {r.method.toUpperCase()}</div>
+                  <div className="inline-flex items-center gap-1 font-medium"><TopperCoin size={14} />{Number(r.amount).toFixed(2)} TC · {r.method.toUpperCase()}</div>
                   <div className="text-xs text-white/50">
                     {r.status === "pending"
                       ? `Processes at ${new Date(r.process_after).toLocaleTimeString()}`
@@ -303,8 +310,9 @@ function WalletPage() {
                   <div className="font-medium">{t.note ?? t.category}</div>
                   <div className="text-xs text-white/50">{new Date(t.created_at).toLocaleString()}</div>
                 </div>
-                <span className={t.type === "credit" ? "text-emerald-300" : "text-red-300"}>
-                  {t.type === "credit" ? "+" : "−"}🪙{Number(t.amount).toFixed(2)}
+                <span className={`inline-flex items-center gap-0.5 ${t.type === "credit" ? "text-emerald-300" : "text-red-300"}`}>
+                  {t.type === "credit" ? "+" : "−"}<TopperCoin size={12} />{Number(t.amount).toFixed(2)}
+
                 </span>
               </li>
             ))}
