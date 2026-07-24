@@ -879,10 +879,12 @@ export type Database = {
           full_name: string | null
           id: string
           is_banned: boolean
+          is_pro: boolean
           last_active_date: string | null
           last_streak_date: string | null
           onboarded: boolean
           phone: string | null
+          pro_since: string | null
           profession: Database["public"]["Enums"]["profession"] | null
           reputation: number
           streak: number
@@ -900,10 +902,12 @@ export type Database = {
           full_name?: string | null
           id: string
           is_banned?: boolean
+          is_pro?: boolean
           last_active_date?: string | null
           last_streak_date?: string | null
           onboarded?: boolean
           phone?: string | null
+          pro_since?: string | null
           profession?: Database["public"]["Enums"]["profession"] | null
           reputation?: number
           streak?: number
@@ -921,10 +925,12 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_banned?: boolean
+          is_pro?: boolean
           last_active_date?: string | null
           last_streak_date?: string | null
           onboarded?: boolean
           phone?: string | null
+          pro_since?: string | null
           profession?: Database["public"]["Enums"]["profession"] | null
           reputation?: number
           streak?: number
