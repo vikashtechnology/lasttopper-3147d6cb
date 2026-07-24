@@ -40,9 +40,23 @@ const PRO = [
 
 function PricingPage() {
   const { data: p } = useSuspenseQuery(profileQuery);
+  const qc = useQueryClient();
   const isPro = !!p?.is_pro;
+  const [loading, setLoading] = useState(false);
 
-  return (
+  const subscribe = async () => {
+    setLoading(true);
+    try {
+      await payWithRazorpay({ purpose: "pro", name: p?.full_name, email: p?.email });
+      toast.success("Welcome to Pro! 🎉");
+      qc.invalidateQueries({ queryKey: ["my-profile"] });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Payment failed";
+      if (msg !== "Payment cancelled") toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
     <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       <header className="sticky top-0 z-10 border-b border-border/70 bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-4xl items-center gap-3 px-5 py-4">
