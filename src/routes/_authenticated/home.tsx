@@ -1,8 +1,10 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMyProfile, pingActivity } from "@/lib/user.functions";
 import { finalizeStaleSessions } from "@/lib/learning.functions";
+import { notifyFirstLogin, unreadNotificationsCount } from "@/lib/community.functions";
+import { amIAdmin } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserStore, type UserProfile } from "@/store/user";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,8 @@ import {
   History,
   BarChart3,
   AlertOctagon,
+  Bell,
+  ShieldCheck,
 } from "lucide-react";
 
 const profileQuery = {
@@ -69,6 +73,7 @@ function Home() {
       const [ping] = await Promise.all([
         pingActivity(),
         finalizeStaleSessions().catch(() => ({ finalized: [] as string[] })),
+        notifyFirstLogin().catch(() => ({ ok: true })),
       ]);
       await qc.invalidateQueries({ queryKey: ["my-profile"] });
       return ping;
@@ -76,6 +81,9 @@ function Home() {
     staleTime: 60 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
+
+  const unread = useQuery({ queryKey: ["notif-unread"], queryFn: () => unreadNotificationsCount(), refetchInterval: 30000 });
+  const admin = useQuery({ queryKey: ["am-i-admin"], queryFn: () => amIAdmin() });
 
   const p: UserProfile | null = (profile ?? (data as UserProfile | null)) as UserProfile | null;
 
@@ -102,9 +110,24 @@ function Home() {
               {p?.full_name ?? p?.email ?? "Learner"}
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={handleSignOut} aria-label="Sign out">
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {admin.data?.admin && (
+              <Link to="/admin" className="rounded-full p-2 text-muted-foreground hover:text-foreground" aria-label="Admin">
+                <ShieldCheck className="h-4 w-4" />
+              </Link>
+            )}
+            <Link to="/notifications" className="relative rounded-full p-2 text-muted-foreground hover:text-foreground" aria-label="Notifications">
+              <Bell className="h-4 w-4" />
+              {unread.data && unread.data.count > 0 ? (
+                <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                  {unread.data.count}
+                </span>
+              ) : null}
+            </Link>
+            <Button variant="ghost" size="icon" onClick={handleSignOut} aria-label="Sign out">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -175,8 +198,18 @@ function Home() {
             body="Live quiz + prizes"
             onClick={() => navigate({ to: "/battle" })}
           />
-          <NavTile icon={<Users className="h-5 w-5" />} title="Community" body="Coming soon" />
-          <NavTile icon={<UserIcon className="h-5 w-5" />} title="Profile" body="Your stats" />
+          <NavTile
+            icon={<Users className="h-5 w-5" />}
+            title="Community"
+            body="Forums, doubts, groups"
+            onClick={() => navigate({ to: "/community" })}
+          />
+          <NavTile
+            icon={<UserIcon className="h-5 w-5" />}
+            title="Profile"
+            body="Your public profile"
+            onClick={() => p && navigate({ to: "/profile/$userId", params: { userId: p.id } })}
+          />
         </div>
       </section>
 
