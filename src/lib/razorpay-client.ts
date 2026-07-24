@@ -41,10 +41,11 @@ function loadCheckout(): Promise<void> {
 
 export type PayArgs =
   | { purpose: "pro"; name?: string | null; email?: string | null; description?: string }
+  | { purpose: "pro_yearly"; name?: string | null; email?: string | null; description?: string }
   | { purpose: "wallet_topup"; amount_inr: number; name?: string | null; email?: string | null; description?: string };
 
 export async function payWithRazorpay(args: PayArgs): Promise<{
-  purpose: "pro" | "wallet_topup";
+  purpose: "pro" | "pro_yearly" | "wallet_topup";
   balance?: number;
 }> {
   await loadCheckout();
@@ -52,7 +53,7 @@ export async function payWithRazorpay(args: PayArgs): Promise<{
     data:
       args.purpose === "wallet_topup"
         ? { purpose: "wallet_topup", amount_inr: args.amount_inr }
-        : { purpose: "pro" },
+        : { purpose: args.purpose },
   });
 
   return new Promise((resolve, reject) => {
@@ -62,7 +63,7 @@ export async function payWithRazorpay(args: PayArgs): Promise<{
       amount: order.amount,
       currency: order.currency,
       name: "Last Topper",
-      description: args.description ?? (args.purpose === "pro" ? "Pro subscription" : "Wallet top-up"),
+      description: args.description ?? (args.purpose === "wallet_topup" ? "Wallet top-up" : args.purpose === "pro_yearly" ? "Pro yearly subscription" : "Pro monthly subscription"),
       prefill: { name: args.name ?? undefined, email: args.email ?? undefined },
       theme: { color: "#4f46e5" },
       handler: async (r) => {

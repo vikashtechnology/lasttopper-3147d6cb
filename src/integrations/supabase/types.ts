@@ -886,6 +886,7 @@ export type Database = {
           onboarded: boolean
           phone: string | null
           pro_since: string | null
+          pro_until: string | null
           profession: Database["public"]["Enums"]["profession"] | null
           referral_code: string | null
           referral_credited: boolean
@@ -913,6 +914,7 @@ export type Database = {
           onboarded?: boolean
           phone?: string | null
           pro_since?: string | null
+          pro_until?: string | null
           profession?: Database["public"]["Enums"]["profession"] | null
           referral_code?: string | null
           referral_credited?: boolean
@@ -940,6 +942,7 @@ export type Database = {
           onboarded?: boolean
           phone?: string | null
           pro_since?: string | null
+          pro_until?: string | null
           profession?: Database["public"]["Enums"]["profession"] | null
           referral_code?: string | null
           referral_credited?: boolean
