@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -73,18 +74,8 @@ function LearningPage() {
     });
   }
 
-  // Simple adaptive-distribution preview: boost first-selected (weak) chapters.
-  const distribution = useMemo(() => {
-    if (chapterIds.length === 0) return [] as { name: string; q: number }[];
-    const base = Math.floor(count / chapterIds.length);
-    const extras = count - base * chapterIds.length;
-    return chapterIds.map((id, i) => {
-      const chapter = subjects
-        .flatMap((s) => s.chapters)
-        .find((c) => c.id === id);
-      return { name: chapter?.name ?? "?", q: base + (i < extras ? 1 : 0) };
-    });
-  }, [chapterIds, count, subjects]);
+
+
 
   async function handleStart() {
     if (chapterIds.length === 0) {
