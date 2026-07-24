@@ -156,27 +156,6 @@ function HomePage() {
         <NavTile icon={<History className="h-5 w-5" />} title="History" body="Past attempts" onClick={() => navigate({ to: "/history" })} />
       </div>
 
-      {/* Compete */}
-      <SectionHeading title="Compete" hint="Play & earn" />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <NavTile icon={<Swords className="h-5 w-5" />} title="Battle arena" body="10-question quick battle" onClick={() => navigate({ to: "/battle" })} />
-        <NavTile icon={<Trophy className="h-5 w-5" />} title="Sunday Mega Test" body="₹10 entry · Big prizes" onClick={() => navigate({ to: "/battle/mega" })} />
-        <NavTile icon={<UserIcon className="h-5 w-5" />} title="Wallet" body="Balance & withdrawals" onClick={() => navigate({ to: "/battle/wallet" })} />
-      </div>
-
-      {/* Social */}
-      <SectionHeading title="Social" hint="Learn together" />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <NavTile icon={<Users className="h-5 w-5" />} title="Community" body="Forums, doubts, groups" onClick={() => navigate({ to: "/community" })} />
-        <NavTile icon={<Bell className="h-5 w-5" />} title="Notifications" body="Your alerts" onClick={() => navigate({ to: "/notifications" })} />
-        <NavTile
-          icon={<UserIcon className="h-5 w-5" />}
-          title="My profile"
-          body="Public profile & badges"
-          onClick={() => p && navigate({ to: "/profile/$userId", params: { userId: p.id } })}
-        />
-      </div>
-
       <OnboardingFlow open={needsOnboarding} />
       <AiChatBubble />
     </AppShell>
