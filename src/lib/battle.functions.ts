@@ -42,10 +42,14 @@ async function callGemini(prompt: string, count: number): Promise<QuizQuestion[]
 
 /* --------------------------------- Wallet -------------------------------- */
 
-type SupabaseClient = Parameters<Parameters<typeof requireSupabaseAuth>[0]["next"]>[0]["context"]["supabase"];
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
+type AuthedSupabase = SupabaseClient<Database>;
+// (createClient imported only for the type — dead code eliminated)
+void createClient;
 
 async function addTxn(
-  supabase: SupabaseClient,
+  supabase: AuthedSupabase,
   userId: string,
   type: "credit" | "debit",
   category: string,
