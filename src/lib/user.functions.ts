@@ -8,7 +8,7 @@ export const getMyProfile = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("users")
       .select(
-        "id, email, full_name, avatar_url, country_code, phone, profession, onboarded, daily_question_limit, streak, total_accuracy",
+        "id, email, full_name, avatar_url, country_code, phone, profession, onboarded, daily_question_limit, streak, total_accuracy, is_pro, pro_since",
       )
       .eq("id", context.userId)
       .maybeSingle();
