@@ -66,10 +66,11 @@ const generateSchema = z.object({
   question_count: z.union([z.literal(20), z.literal(50), z.literal(100)]),
 });
 
-async function callGeminiForQuestions(
+async function callGeminiBatch(
   chapterNames: string[],
   profession: string,
   count: number,
+  batchIndex: number,
 ): Promise<QuizQuestion[]> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("Missing LOVABLE_API_KEY");
@@ -88,6 +89,7 @@ Rules:
 - Use LaTeX for all math/formulas: single $...$ for inline, $$...$$ for display.
 - 4 options labeled A, B, C, D — exactly one correct.
 - Provide a short hint (1 sentence) and a clear step-by-step explanation that cites the NCERT chapter/topic where relevant.
+- This is batch #${batchIndex + 1}; produce a fresh set of questions.
 - Return STRICT JSON only, no markdown, matching this schema:
 {"questions":[{"chapter":"<chapter name>","question":"...","options":{"A":"...","B":"...","C":"...","D":"..."},"correct":"A|B|C|D","hint":"...","explanation":"..."}]}`;
 
@@ -98,7 +100,7 @@ Rules:
       Authorization: `Bearer ${key}`,
     },
     body: JSON.stringify({
-      model: "google/gemini-3.6-flash",
+      model: "google/gemini-2.5-flash",
       messages: [
         { role: "system", content: "You are an NCERT-only exam question generator. You must only use content that appears in official NCERT textbooks. Output STRICT JSON only." },
         { role: "user", content: prompt },
@@ -109,9 +111,7 @@ Rules:
 
   if (!resp.ok) {
     const body = await resp.text();
-    if (resp.status === 429 || resp.status === 402) {
-      throw new Error("AI_BUSY");
-    }
+    if (resp.status === 429 || resp.status === 402) throw new Error("AI_BUSY");
     throw new Error(`AI gateway error ${resp.status}: ${body}`);
   }
 
@@ -126,7 +126,7 @@ Rules:
 
   const raw = parsed.questions ?? [];
   return raw.slice(0, count).map((q, i) => ({
-    id: `q_${Date.now()}_${i}`,
+    id: `q_${Date.now()}_${batchIndex}_${i}`,
     chapter_id: "",
     question: q.question,
     options: q.options,
@@ -134,6 +134,46 @@ Rules:
     hint: q.hint,
     explanation: q.explanation,
   }));
+}
+
+async function callGeminiForQuestions(
+  chapterNames: string[],
+  profession: string,
+  count: number,
+): Promise<QuizQuestion[]> {
+  // Batch large requests so a single slow/oversized response doesn't tank the whole set.
+  const BATCH = 25;
+  const batches: number[] = [];
+  let remaining = count;
+  while (remaining > 0) {
+    const n = Math.min(BATCH, remaining);
+    batches.push(n);
+    remaining -= n;
+  }
+
+  const results: QuizQuestion[][] = [];
+  for (let i = 0; i < batches.length; i++) {
+    let lastErr: unknown;
+    let got: QuizQuestion[] | null = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        got = await callGeminiBatch(chapterNames, profession, batches[i], i);
+        if (got.length > 0) break;
+      } catch (e) {
+        lastErr = e;
+        if (e instanceof Error && e.message === "AI_BUSY") throw e;
+      }
+    }
+    if (!got || got.length === 0) {
+      if (results.length === 0) {
+        throw lastErr instanceof Error ? lastErr : new Error("AI returned no questions");
+      }
+      break;
+    }
+    results.push(got);
+  }
+
+  return results.flat().slice(0, count);
 }
 
 export const generateQuestions = createServerFn({ method: "POST" })
@@ -368,6 +408,20 @@ export const finalizeStaleSessions = createServerFn({ method: "POST" })
       finalized.push(s.id as string);
     }
     return { finalized };
+  });
+
+export const getTodayUsage = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const { data } = await context.supabase
+      .from("quiz_sessions")
+      .select("question_count")
+      .eq("user_id", context.userId)
+      .gte("created_at", start.toISOString());
+    const used = (data ?? []).reduce((sum, r) => sum + Number(r.question_count ?? 0), 0);
+    return { used };
   });
 
 export const getQuizHistory = createServerFn({ method: "GET" })

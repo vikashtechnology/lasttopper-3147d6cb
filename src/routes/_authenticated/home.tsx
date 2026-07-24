@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMyProfile, pingActivity } from "@/lib/user.functions";
-import { finalizeStaleSessions } from "@/lib/learning.functions";
+import { finalizeStaleSessions, getTodayUsage } from "@/lib/learning.functions";
 import { notifyFirstLogin, unreadNotificationsCount } from "@/lib/community.functions";
 import { amIAdmin } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,11 +69,12 @@ function HomePage() {
 
   const unread = useQuery({ queryKey: ["notif-unread"], queryFn: () => unreadNotificationsCount(), refetchInterval: 30000 });
   const admin = useQuery({ queryKey: ["am-i-admin"], queryFn: () => amIAdmin() });
+  const todayUsage = useQuery({ queryKey: ["today-usage"], queryFn: () => getTodayUsage(), refetchInterval: 30000, refetchOnWindowFocus: true });
 
   const p: UserProfile | null = (profile ?? (data as UserProfile | null)) as UserProfile | null;
-  const usedToday = 0;
+  const usedToday = todayUsage.data?.used ?? 0;
   const limit = p?.daily_question_limit ?? 20;
-  const percent = Math.round((usedToday / limit) * 100);
+  const percent = Math.min(100, Math.round((usedToday / limit) * 100));
   const needsOnboarding = !!p && (!p.phone || !p.profession || !p.onboarded);
 
   async function handleSignOut() {
