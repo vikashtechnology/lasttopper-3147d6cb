@@ -882,10 +882,15 @@ export type Database = {
           is_pro: boolean
           last_active_date: string | null
           last_streak_date: string | null
+          mega_credits: number
           onboarded: boolean
           phone: string | null
           pro_since: string | null
+          pro_until: string | null
           profession: Database["public"]["Enums"]["profession"] | null
+          referral_code: string | null
+          referral_credited: boolean
+          referred_by: string | null
           reputation: number
           streak: number
           total_accuracy: number
@@ -905,10 +910,15 @@ export type Database = {
           is_pro?: boolean
           last_active_date?: string | null
           last_streak_date?: string | null
+          mega_credits?: number
           onboarded?: boolean
           phone?: string | null
           pro_since?: string | null
+          pro_until?: string | null
           profession?: Database["public"]["Enums"]["profession"] | null
+          referral_code?: string | null
+          referral_credited?: boolean
+          referred_by?: string | null
           reputation?: number
           streak?: number
           total_accuracy?: number
@@ -928,16 +938,29 @@ export type Database = {
           is_pro?: boolean
           last_active_date?: string | null
           last_streak_date?: string | null
+          mega_credits?: number
           onboarded?: boolean
           phone?: string | null
           pro_since?: string | null
+          pro_until?: string | null
           profession?: Database["public"]["Enums"]["profession"] | null
+          referral_code?: string | null
+          referral_credited?: boolean
+          referred_by?: string | null
           reputation?: number
           streak?: number
           total_accuracy?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "users_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wallet_transactions: {
         Row: {

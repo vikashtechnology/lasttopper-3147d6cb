@@ -51,20 +51,22 @@ export const Route = createFileRoute("/api/public/hooks/razorpay")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        if (purpose === "pro") {
+        if (purpose === "pro" || purpose === "pro_yearly") {
           const { data: u } = await supabaseAdmin
-            .from("users").select("is_pro").eq("id", userId).maybeSingle();
-          if (!u?.is_pro) {
-            await supabaseAdmin
-              .from("users")
-              .update({ is_pro: true, pro_since: new Date().toISOString() })
-              .eq("id", userId);
-          }
+            .from("users").select("is_pro, pro_until").eq("id", userId).maybeSingle();
+          const days = purpose === "pro_yearly" ? 365 : 30;
+          const base = u?.pro_until && new Date(u.pro_until as string).getTime() > Date.now()
+            ? new Date(u.pro_until as string).getTime()
+            : Date.now();
+          const until = new Date(base + days * 86400_000).toISOString();
+          await supabaseAdmin
+            .from("users")
+            .update({ is_pro: true, pro_since: new Date().toISOString(), pro_until: until })
+            .eq("id", userId);
           return new Response("ok");
         }
 
         if (purpose === "wallet_topup") {
-          // Idempotency: skip if we already recorded this payment id.
           const note = `Wallet top-up via Razorpay (${paymentId})`;
           const { data: existing } = await supabaseAdmin
             .from("wallet_transactions").select("id").eq("note", note).maybeSingle();
@@ -72,7 +74,7 @@ export const Route = createFileRoute("/api/public/hooks/razorpay")({
           const inr = Math.floor((p?.amount ?? 0) / 100);
           if (inr <= 0) return new Response("ok");
           const { data: u } = await supabaseAdmin
-            .from("users").select("balance").eq("id", userId).maybeSingle();
+            .from("users").select("balance, referred_by, referral_credited").eq("id", userId).maybeSingle();
           const cur = Number(u?.balance ?? 0);
           const next = cur + inr;
           await supabaseAdmin.from("users").update({ balance: next }).eq("id", userId);
@@ -80,6 +82,22 @@ export const Route = createFileRoute("/api/public/hooks/razorpay")({
             user_id: userId, type: "credit", category: "topup",
             amount: inr, balance_after: next, note, reference_id: null,
           });
+          // Referral reward on first ever top-up: 5 TC to the referrer, usable only for Mega Test.
+          if (u?.referred_by && !u.referral_credited) {
+            const REFERRAL_TC = 5;
+            const { data: ref } = await supabaseAdmin
+              .from("users").select("mega_credits").eq("id", u.referred_by).maybeSingle();
+            const curMc = Number(ref?.mega_credits ?? 0);
+            await supabaseAdmin.from("users")
+              .update({ mega_credits: curMc + REFERRAL_TC }).eq("id", u.referred_by);
+            await supabaseAdmin.from("users")
+              .update({ referral_credited: true }).eq("id", userId);
+            await supabaseAdmin.from("wallet_transactions").insert({
+              user_id: u.referred_by, type: "credit", category: "referral",
+              amount: REFERRAL_TC, balance_after: curMc + REFERRAL_TC,
+              note: "Referral reward (Mega Test only)", reference_id: null,
+            });
+          }
           return new Response("ok");
         }
 

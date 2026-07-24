@@ -14,6 +14,7 @@ import {
 import { Atom, Dna, Timer, Brain, BookMarked } from "lucide-react";
 import { toast } from "sonner";
 import { updatePhone, setProfession, completeOnboarding } from "@/lib/user.functions";
+import { applyReferralCode } from "@/lib/referral.functions";
 import { useUserStore, type Profession } from "@/store/user";
 
 const COUNTRY_CODES = ["+91", "+1", "+44", "+61", "+971", "+65", "+81"];
@@ -29,6 +30,7 @@ export function OnboardingFlow({ open }: { open: boolean }) {
   const [saving, setSaving] = useState(false);
   const [prof, setProf] = useState<Profession | null>(profile?.profession ?? null);
   const [tutorialStep, setTutorialStep] = useState(0);
+  const [refCode, setRefCode] = useState("");
 
   async function submitPhone() {
     if (!/^\d{6,15}$/.test(phone)) {
@@ -39,6 +41,15 @@ export function OnboardingFlow({ open }: { open: boolean }) {
     try {
       await updatePhone({ data: { country_code: country, phone } });
       patch({ country_code: country, phone });
+      const code = refCode.trim().toUpperCase();
+      if (code.length >= 4) {
+        try {
+          await applyReferralCode({ data: { code } });
+          toast.success("Referral code applied");
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Invalid referral code");
+        }
+      }
       setStep("profession");
     } catch (e) {
       console.error(e);
@@ -122,6 +133,16 @@ export function OnboardingFlow({ open }: { open: boolean }) {
                     placeholder="9876543210"
                   />
                 </div>
+              </div>
+              <div className="mt-4">
+                <Label className="text-xs">Referral code (optional)</Label>
+                <Input
+                  className="mt-1 font-mono uppercase tracking-widest"
+                  value={refCode}
+                  onChange={(e) => setRefCode(e.target.value.toUpperCase())}
+                  placeholder="e.g. ABCD1234"
+                  maxLength={16}
+                />
               </div>
               <Button className="mt-6 w-full" onClick={submitPhone} disabled={saving}>
                 {saving ? "Saving…" : "Continue"}

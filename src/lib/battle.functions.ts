@@ -70,14 +70,18 @@ export const getWallet = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data: u } = await context.supabase
-      .from("users").select("balance").eq("id", context.userId).maybeSingle();
+      .from("users").select("balance, mega_credits").eq("id", context.userId).maybeSingle();
     const { data: txns } = await context.supabase
       .from("wallet_transactions")
       .select("id, type, category, amount, balance_after, note, created_at")
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false })
       .limit(50);
-    return { balance: Number(u?.balance ?? 0), transactions: txns ?? [] };
+    return {
+      balance: Number(u?.balance ?? 0),
+      mega_credits: Number(u?.mega_credits ?? 0),
+      transactions: txns ?? [],
+    };
   });
 
 
@@ -236,14 +240,38 @@ export const joinMegaTest = createServerFn({ method: "POST" })
       .eq("mega_test_id", data.mega_test_id).eq("user_id", context.userId).maybeSingle();
     if (existing?.paid) return { already: true as const };
     const fee = Number(test.entry_fee);
-    const bal = await addTxn(context.supabase, context.userId, "debit", "entry_fee", fee, "Sunday Mega Test entry", data.mega_test_id);
+
+    // Spend Mega-Test-only credits (from referrals) first, then wallet balance.
+    const { data: u } = await context.supabase
+      .from("users").select("balance, mega_credits").eq("id", context.userId).maybeSingle();
+    const megaCr = Number(u?.mega_credits ?? 0);
+    const bal = Number(u?.balance ?? 0);
+    const useFromCredits = Math.min(megaCr, fee);
+    const useFromBalance = fee - useFromCredits;
+    if (useFromBalance > bal) throw new Error("Insufficient balance");
+
+    if (useFromCredits > 0) {
+      await context.supabase
+        .from("users").update({ mega_credits: megaCr - useFromCredits }).eq("id", context.userId);
+      await context.supabase.from("wallet_transactions").insert({
+        user_id: context.userId, type: "debit", category: "entry_fee",
+        amount: useFromCredits, balance_after: bal,
+        note: `Sunday Mega Test entry (referral credits)`, reference_id: data.mega_test_id,
+      });
+    }
+    if (useFromBalance > 0) {
+      await addTxn(
+        context.supabase, context.userId, "debit", "entry_fee",
+        useFromBalance, "Sunday Mega Test entry", data.mega_test_id,
+      );
+    }
     if (existing) {
       await context.supabase.from("mega_test_entries").update({ paid: true }).eq("id", existing.id);
     } else {
       await context.supabase.from("mega_test_entries")
         .insert({ mega_test_id: data.mega_test_id, user_id: context.userId, paid: true });
     }
-    return { already: false as const, balance: bal };
+    return { already: false as const };
   });
 
 export const startMegaSession = createServerFn({ method: "POST" })
