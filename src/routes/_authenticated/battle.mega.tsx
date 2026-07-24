@@ -129,19 +129,19 @@ function MegaTest() {
           )}
           {isDone && entry?.rank && (
             <div className="rounded-xl border border-yellow-400/60 bg-yellow-400/10 px-3 py-2 text-sm text-yellow-100">
-              Rank #{entry.rank} · Prize ₹{Number(entry.prize ?? 0)}
+              Rank #{entry.rank} · Prize 🪙{Number(entry.prize ?? 0)} TC
             </div>
           )}
         </div>
       </div>
 
       <div className="battle-glass p-5">
-        <div className="mb-2 text-xs uppercase tracking-widest text-white/60">Prize pool</div>
+        <div className="mb-2 text-xs uppercase tracking-widest text-white/60">Prize pool (Topper Coins · 1 TC = ₹1)</div>
         <ul className="space-y-1 text-sm">
-          <li>🥇 Rank 1 — ₹100</li>
-          <li>🥈 Rank 2 — ₹50</li>
-          <li>🥉 Rank 3 — ₹25</li>
-          <li>Ranks 4–10 — ₹15 each</li>
+          <li>🥇 Rank 1 — 🪙100 TC</li>
+          <li>🥈 Rank 2 — 🪙50 TC</li>
+          <li>🥉 Rank 3 — 🪙25 TC</li>
+          <li>Ranks 4–10 — 🪙15 TC each</li>
         </ul>
       </div>
     </div>
