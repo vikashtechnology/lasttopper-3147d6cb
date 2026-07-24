@@ -16,9 +16,18 @@ import { Route as AuthenticatedMistakesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedLearningRouteImport } from './routes/_authenticated/learning'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
+import { Route as AuthenticatedBattleRouteImport } from './routes/_authenticated/battle'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedBattleIndexRouteImport } from './routes/_authenticated/battle.index'
 import { Route as AuthenticatedResultsSessionIdRouteImport } from './routes/_authenticated/results.$sessionId'
 import { Route as AuthenticatedQuizSessionIdRouteImport } from './routes/_authenticated/quiz.$sessionId'
+import { Route as AuthenticatedBattleWalletRouteImport } from './routes/_authenticated/battle.wallet'
+import { Route as AuthenticatedBattleMegaRouteImport } from './routes/_authenticated/battle.mega'
+import { Route as AuthenticatedBattleLeaderboardRouteImport } from './routes/_authenticated/battle.leaderboard'
+import { Route as AuthenticatedBattleHistoryRouteImport } from './routes/_authenticated/battle.history'
+import { Route as ApiPublicHooksProcessWithdrawalsRouteImport } from './routes/api/public/hooks/process-withdrawals'
+import { Route as ApiPublicHooksMegaTestLifecycleRouteImport } from './routes/api/public/hooks/mega-test-lifecycle'
+import { Route as AuthenticatedBattlePlaySessionIdRouteImport } from './routes/_authenticated/battle.play.$sessionId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -54,11 +63,22 @@ const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBattleRoute = AuthenticatedBattleRouteImport.update({
+  id: '/battle',
+  path: '/battle',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBattleIndexRoute =
+  AuthenticatedBattleIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedBattleRoute,
+  } as any)
 const AuthenticatedResultsSessionIdRoute =
   AuthenticatedResultsSessionIdRouteImport.update({
     id: '/results/$sessionId',
@@ -71,17 +91,67 @@ const AuthenticatedQuizSessionIdRoute =
     path: '/quiz/$sessionId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedBattleWalletRoute =
+  AuthenticatedBattleWalletRouteImport.update({
+    id: '/wallet',
+    path: '/wallet',
+    getParentRoute: () => AuthenticatedBattleRoute,
+  } as any)
+const AuthenticatedBattleMegaRoute = AuthenticatedBattleMegaRouteImport.update({
+  id: '/mega',
+  path: '/mega',
+  getParentRoute: () => AuthenticatedBattleRoute,
+} as any)
+const AuthenticatedBattleLeaderboardRoute =
+  AuthenticatedBattleLeaderboardRouteImport.update({
+    id: '/leaderboard',
+    path: '/leaderboard',
+    getParentRoute: () => AuthenticatedBattleRoute,
+  } as any)
+const AuthenticatedBattleHistoryRoute =
+  AuthenticatedBattleHistoryRouteImport.update({
+    id: '/history',
+    path: '/history',
+    getParentRoute: () => AuthenticatedBattleRoute,
+  } as any)
+const ApiPublicHooksProcessWithdrawalsRoute =
+  ApiPublicHooksProcessWithdrawalsRouteImport.update({
+    id: '/api/public/hooks/process-withdrawals',
+    path: '/api/public/hooks/process-withdrawals',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksMegaTestLifecycleRoute =
+  ApiPublicHooksMegaTestLifecycleRouteImport.update({
+    id: '/api/public/hooks/mega-test-lifecycle',
+    path: '/api/public/hooks/mega-test-lifecycle',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedBattlePlaySessionIdRoute =
+  AuthenticatedBattlePlaySessionIdRouteImport.update({
+    id: '/play/$sessionId',
+    path: '/play/$sessionId',
+    getParentRoute: () => AuthenticatedBattleRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/battle': typeof AuthenticatedBattleRouteWithChildren
   '/history': typeof AuthenticatedHistoryRoute
   '/home': typeof AuthenticatedHomeRoute
   '/learning': typeof AuthenticatedLearningRoute
   '/mistakes': typeof AuthenticatedMistakesRoute
+  '/battle/history': typeof AuthenticatedBattleHistoryRoute
+  '/battle/leaderboard': typeof AuthenticatedBattleLeaderboardRoute
+  '/battle/mega': typeof AuthenticatedBattleMegaRoute
+  '/battle/wallet': typeof AuthenticatedBattleWalletRoute
   '/quiz/$sessionId': typeof AuthenticatedQuizSessionIdRoute
   '/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
+  '/battle/': typeof AuthenticatedBattleIndexRoute
+  '/battle/play/$sessionId': typeof AuthenticatedBattlePlaySessionIdRoute
+  '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
+  '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -91,8 +161,16 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedHomeRoute
   '/learning': typeof AuthenticatedLearningRoute
   '/mistakes': typeof AuthenticatedMistakesRoute
+  '/battle/history': typeof AuthenticatedBattleHistoryRoute
+  '/battle/leaderboard': typeof AuthenticatedBattleLeaderboardRoute
+  '/battle/mega': typeof AuthenticatedBattleMegaRoute
+  '/battle/wallet': typeof AuthenticatedBattleWalletRoute
   '/quiz/$sessionId': typeof AuthenticatedQuizSessionIdRoute
   '/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
+  '/battle': typeof AuthenticatedBattleIndexRoute
+  '/battle/play/$sessionId': typeof AuthenticatedBattlePlaySessionIdRoute
+  '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
+  '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -100,12 +178,21 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
+  '/_authenticated/battle': typeof AuthenticatedBattleRouteWithChildren
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/learning': typeof AuthenticatedLearningRoute
   '/_authenticated/mistakes': typeof AuthenticatedMistakesRoute
+  '/_authenticated/battle/history': typeof AuthenticatedBattleHistoryRoute
+  '/_authenticated/battle/leaderboard': typeof AuthenticatedBattleLeaderboardRoute
+  '/_authenticated/battle/mega': typeof AuthenticatedBattleMegaRoute
+  '/_authenticated/battle/wallet': typeof AuthenticatedBattleWalletRoute
   '/_authenticated/quiz/$sessionId': typeof AuthenticatedQuizSessionIdRoute
   '/_authenticated/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
+  '/_authenticated/battle/': typeof AuthenticatedBattleIndexRoute
+  '/_authenticated/battle/play/$sessionId': typeof AuthenticatedBattlePlaySessionIdRoute
+  '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
+  '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -113,12 +200,21 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/analytics'
+    | '/battle'
     | '/history'
     | '/home'
     | '/learning'
     | '/mistakes'
+    | '/battle/history'
+    | '/battle/leaderboard'
+    | '/battle/mega'
+    | '/battle/wallet'
     | '/quiz/$sessionId'
     | '/results/$sessionId'
+    | '/battle/'
+    | '/battle/play/$sessionId'
+    | '/api/public/hooks/mega-test-lifecycle'
+    | '/api/public/hooks/process-withdrawals'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -128,26 +224,45 @@ export interface FileRouteTypes {
     | '/home'
     | '/learning'
     | '/mistakes'
+    | '/battle/history'
+    | '/battle/leaderboard'
+    | '/battle/mega'
+    | '/battle/wallet'
     | '/quiz/$sessionId'
     | '/results/$sessionId'
+    | '/battle'
+    | '/battle/play/$sessionId'
+    | '/api/public/hooks/mega-test-lifecycle'
+    | '/api/public/hooks/process-withdrawals'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/analytics'
+    | '/_authenticated/battle'
     | '/_authenticated/history'
     | '/_authenticated/home'
     | '/_authenticated/learning'
     | '/_authenticated/mistakes'
+    | '/_authenticated/battle/history'
+    | '/_authenticated/battle/leaderboard'
+    | '/_authenticated/battle/mega'
+    | '/_authenticated/battle/wallet'
     | '/_authenticated/quiz/$sessionId'
     | '/_authenticated/results/$sessionId'
+    | '/_authenticated/battle/'
+    | '/_authenticated/battle/play/$sessionId'
+    | '/api/public/hooks/mega-test-lifecycle'
+    | '/api/public/hooks/process-withdrawals'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ApiPublicHooksMegaTestLifecycleRoute: typeof ApiPublicHooksMegaTestLifecycleRoute
+  ApiPublicHooksProcessWithdrawalsRoute: typeof ApiPublicHooksProcessWithdrawalsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -201,12 +316,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHistoryRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/battle': {
+      id: '/_authenticated/battle'
+      path: '/battle'
+      fullPath: '/battle'
+      preLoaderRoute: typeof AuthenticatedBattleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/analytics': {
       id: '/_authenticated/analytics'
       path: '/analytics'
       fullPath: '/analytics'
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/battle/': {
+      id: '/_authenticated/battle/'
+      path: '/'
+      fullPath: '/battle/'
+      preLoaderRoute: typeof AuthenticatedBattleIndexRouteImport
+      parentRoute: typeof AuthenticatedBattleRoute
     }
     '/_authenticated/results/$sessionId': {
       id: '/_authenticated/results/$sessionId'
@@ -222,11 +351,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedQuizSessionIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/battle/wallet': {
+      id: '/_authenticated/battle/wallet'
+      path: '/wallet'
+      fullPath: '/battle/wallet'
+      preLoaderRoute: typeof AuthenticatedBattleWalletRouteImport
+      parentRoute: typeof AuthenticatedBattleRoute
+    }
+    '/_authenticated/battle/mega': {
+      id: '/_authenticated/battle/mega'
+      path: '/mega'
+      fullPath: '/battle/mega'
+      preLoaderRoute: typeof AuthenticatedBattleMegaRouteImport
+      parentRoute: typeof AuthenticatedBattleRoute
+    }
+    '/_authenticated/battle/leaderboard': {
+      id: '/_authenticated/battle/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/battle/leaderboard'
+      preLoaderRoute: typeof AuthenticatedBattleLeaderboardRouteImport
+      parentRoute: typeof AuthenticatedBattleRoute
+    }
+    '/_authenticated/battle/history': {
+      id: '/_authenticated/battle/history'
+      path: '/history'
+      fullPath: '/battle/history'
+      preLoaderRoute: typeof AuthenticatedBattleHistoryRouteImport
+      parentRoute: typeof AuthenticatedBattleRoute
+    }
+    '/api/public/hooks/process-withdrawals': {
+      id: '/api/public/hooks/process-withdrawals'
+      path: '/api/public/hooks/process-withdrawals'
+      fullPath: '/api/public/hooks/process-withdrawals'
+      preLoaderRoute: typeof ApiPublicHooksProcessWithdrawalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/mega-test-lifecycle': {
+      id: '/api/public/hooks/mega-test-lifecycle'
+      path: '/api/public/hooks/mega-test-lifecycle'
+      fullPath: '/api/public/hooks/mega-test-lifecycle'
+      preLoaderRoute: typeof ApiPublicHooksMegaTestLifecycleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/battle/play/$sessionId': {
+      id: '/_authenticated/battle/play/$sessionId'
+      path: '/play/$sessionId'
+      fullPath: '/battle/play/$sessionId'
+      preLoaderRoute: typeof AuthenticatedBattlePlaySessionIdRouteImport
+      parentRoute: typeof AuthenticatedBattleRoute
+    }
   }
 }
 
+interface AuthenticatedBattleRouteChildren {
+  AuthenticatedBattleHistoryRoute: typeof AuthenticatedBattleHistoryRoute
+  AuthenticatedBattleLeaderboardRoute: typeof AuthenticatedBattleLeaderboardRoute
+  AuthenticatedBattleMegaRoute: typeof AuthenticatedBattleMegaRoute
+  AuthenticatedBattleWalletRoute: typeof AuthenticatedBattleWalletRoute
+  AuthenticatedBattleIndexRoute: typeof AuthenticatedBattleIndexRoute
+  AuthenticatedBattlePlaySessionIdRoute: typeof AuthenticatedBattlePlaySessionIdRoute
+}
+
+const AuthenticatedBattleRouteChildren: AuthenticatedBattleRouteChildren = {
+  AuthenticatedBattleHistoryRoute: AuthenticatedBattleHistoryRoute,
+  AuthenticatedBattleLeaderboardRoute: AuthenticatedBattleLeaderboardRoute,
+  AuthenticatedBattleMegaRoute: AuthenticatedBattleMegaRoute,
+  AuthenticatedBattleWalletRoute: AuthenticatedBattleWalletRoute,
+  AuthenticatedBattleIndexRoute: AuthenticatedBattleIndexRoute,
+  AuthenticatedBattlePlaySessionIdRoute: AuthenticatedBattlePlaySessionIdRoute,
+}
+
+const AuthenticatedBattleRouteWithChildren =
+  AuthenticatedBattleRoute._addFileChildren(AuthenticatedBattleRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
+  AuthenticatedBattleRoute: typeof AuthenticatedBattleRouteWithChildren
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedLearningRoute: typeof AuthenticatedLearningRoute
@@ -237,6 +437,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
+  AuthenticatedBattleRoute: AuthenticatedBattleRouteWithChildren,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedLearningRoute: AuthenticatedLearningRoute,
@@ -252,6 +453,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ApiPublicHooksMegaTestLifecycleRoute: ApiPublicHooksMegaTestLifecycleRoute,
+  ApiPublicHooksProcessWithdrawalsRoute: ApiPublicHooksProcessWithdrawalsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
