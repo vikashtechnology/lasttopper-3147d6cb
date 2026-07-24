@@ -57,3 +57,35 @@ export const completeOnboarding = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+// Update daily streak on app open. Increment when last_streak_date is yesterday;
+// reset to 1 when gap > 1 day; no-op when already updated today.
+export const pingActivity = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: u } = await context.supabase
+      .from("users")
+      .select("streak, last_streak_date")
+      .eq("id", context.userId)
+      .maybeSingle();
+
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+    const last = u?.last_streak_date ? new Date(u.last_streak_date as string) : null;
+    const streak = u?.streak ?? 0;
+
+    let nextStreak = streak;
+    if (!last) nextStreak = 1;
+    else {
+      const diffDays = Math.floor((Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) - Date.UTC(last.getUTCFullYear(), last.getUTCMonth(), last.getUTCDate())) / 86400000);
+      if (diffDays === 0) return { streak };
+      if (diffDays === 1) nextStreak = streak + 1;
+      else nextStreak = 1;
+    }
+
+    await context.supabase
+      .from("users")
+      .update({ streak: nextStreak, last_streak_date: todayStr, last_active_date: todayStr })
+      .eq("id", context.userId);
+    return { streak: nextStreak };
+  });
