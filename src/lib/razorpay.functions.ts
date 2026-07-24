@@ -39,7 +39,7 @@ export const getRazorpayKeyId = createServerFn({ method: "GET" }).handler(async 
 });
 
 const createOrderSchema = z.object({
-  purpose: z.enum(["pro", "wallet_topup"]),
+  purpose: z.enum(["pro", "pro_yearly", "wallet_topup"]),
   amount_inr: z.number().positive().optional(),
 });
 
@@ -78,7 +78,7 @@ const verifySchema = z.object({
   razorpay_order_id: z.string().min(1),
   razorpay_payment_id: z.string().min(1),
   razorpay_signature: z.string().min(1),
-  purpose: z.enum(["pro", "wallet_topup"]),
+  purpose: z.enum(["pro", "pro_yearly", "wallet_topup"]),
   amount_inr: z.number().positive().optional(),
 });
 
@@ -100,19 +100,21 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
       throw new Error("Invalid payment signature");
     }
 
-    if (data.purpose === "pro") {
+    if (data.purpose === "pro" || data.purpose === "pro_yearly") {
+      const days = data.purpose === "pro_yearly" ? 365 : 30;
+      const until = new Date(Date.now() + days * 86400_000).toISOString();
       await context.supabase
         .from("users")
-        .update({ is_pro: true, pro_since: new Date().toISOString() })
+        .update({ is_pro: true, pro_since: new Date().toISOString(), pro_until: until })
         .eq("id", context.userId);
-      return { ok: true as const, purpose: "pro" as const };
+      return { ok: true as const, purpose: data.purpose };
     }
 
     // wallet_topup
     const amount = data.amount_inr ?? 0;
     if (amount <= 0) throw new Error("Invalid amount");
     const { data: u } = await context.supabase
-      .from("users").select("balance").eq("id", context.userId).maybeSingle();
+      .from("users").select("balance, referred_by, referral_credited").eq("id", context.userId).maybeSingle();
     const cur = Number(u?.balance ?? 0);
     const next = cur + amount;
     await context.supabase.from("users").update({ balance: next }).eq("id", context.userId);
@@ -125,5 +127,24 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
       note: `Wallet top-up via Razorpay (${data.razorpay_payment_id})`,
       reference_id: null,
     });
+
+    // Referral reward: first-ever top-up credits referrer with 5 mega-test-only TC.
+    if (u?.referred_by && !u.referral_credited) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: ref } = await supabaseAdmin
+        .from("users").select("mega_credits").eq("id", u.referred_by).maybeSingle();
+      const cur2 = Number(ref?.mega_credits ?? 0);
+      await supabaseAdmin
+        .from("users")
+        .update({ mega_credits: cur2 + REFERRAL_REWARD_TC })
+        .eq("id", u.referred_by);
+      await supabaseAdmin.from("users")
+        .update({ referral_credited: true }).eq("id", context.userId);
+      await supabaseAdmin.from("wallet_transactions").insert({
+        user_id: u.referred_by, type: "credit", category: "referral",
+        amount: REFERRAL_REWARD_TC, balance_after: cur2 + REFERRAL_REWARD_TC,
+        note: "Referral reward (Mega Test only)", reference_id: null,
+      });
+    }
     return { ok: true as const, purpose: "wallet_topup" as const, balance: next };
   });
