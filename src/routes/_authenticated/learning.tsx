@@ -91,6 +91,12 @@ function LearningPage() {
       toast.error("Pick at least 1 chapter");
       return;
     }
+    if (count > 20 && !isPro) {
+      toast.error("50 & 100 question sets are a Pro feature.", {
+        action: { label: "Upgrade", onClick: () => nav({ to: "/pricing" }) },
+      });
+      return;
+    }
     setBusy(true);
     try {
       const gen = await generateQuestions({
