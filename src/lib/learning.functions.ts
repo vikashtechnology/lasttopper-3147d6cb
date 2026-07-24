@@ -142,11 +142,14 @@ export const generateQuestions = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: profile } = await context.supabase
       .from("users")
-      .select("profession")
+      .select("profession, is_pro")
       .eq("id", context.userId)
       .maybeSingle();
     const profession = profile?.profession;
     if (!profession) throw new Error("Complete onboarding first");
+    if (data.question_count > 20 && !profile?.is_pro) {
+      throw new Error("PRO_REQUIRED");
+    }
 
     const { data: cached } = await context.supabase
       .from("generated_questions")

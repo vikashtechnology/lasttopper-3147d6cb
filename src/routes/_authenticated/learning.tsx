@@ -103,7 +103,14 @@ function LearningPage() {
       });
       nav({ to: "/quiz/$sessionId", params: { sessionId: session.id } });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to start quiz");
+      const msg = e instanceof Error ? e.message : "Failed to start quiz";
+      if (msg.includes("PRO_REQUIRED")) {
+        toast.error("50 & 100 question sets are a Pro feature.", {
+          action: { label: "Upgrade", onClick: () => nav({ to: "/pricing" }) },
+        });
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setBusy(false);
     }
