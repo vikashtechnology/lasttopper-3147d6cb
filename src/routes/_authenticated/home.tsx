@@ -126,7 +126,12 @@ function Home() {
       <section className="mx-auto max-w-3xl px-5 py-6">
         <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Explore</h2>
         <div className="grid grid-cols-2 gap-4">
-          <NavTile icon={<BookOpen className="h-5 w-5" />} title="Learning" body="Practice by chapter" />
+          <NavTile
+            icon={<BookOpen className="h-5 w-5" />}
+            title="Learning"
+            body="Practice by chapter"
+            onClick={() => navigate({ to: "/learning" })}
+          />
           <NavTile icon={<Swords className="h-5 w-5" />} title="Battle" body="1v1 quick match" />
           <NavTile icon={<Users className="h-5 w-5" />} title="Community" body="Ask & discuss" />
           <NavTile icon={<UserIcon className="h-5 w-5" />} title="Profile" body="Your stats" />
@@ -162,14 +167,17 @@ function NavTile({
   icon,
   title,
   body,
+  onClick,
 }: {
   icon: React.ReactNode;
   title: string;
   body: string;
+  onClick?: () => void;
 }) {
   return (
     <button
       type="button"
+      onClick={onClick}
       className="flex flex-col items-start gap-2 rounded-2xl border border-border bg-card p-4 text-left transition-colors hover:bg-accent"
     >
       <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
