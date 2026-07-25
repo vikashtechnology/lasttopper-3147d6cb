@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { sendSignupAlert } from "@/lib/telegram-signup";
 
 export const getMyProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -8,12 +9,65 @@ export const getMyProfile = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("users")
       .select(
-        "id, email, full_name, avatar_url, country_code, phone, profession, onboarded, daily_question_limit, streak, total_accuracy, is_pro, pro_since",
+        "id, email, full_name, avatar_url, country_code, phone, profession, onboarded, daily_question_limit, streak, total_accuracy, is_pro, pro_since, date_of_birth, terms_accepted_at",
       )
       .eq("id", context.userId)
       .maybeSingle();
     if (error) throw error;
     return data;
+  });
+
+const signupSchema = z.object({
+  full_name: z.string().trim().min(2).max(80),
+  country_code: z.string().min(1).max(6),
+  phone: z.string().regex(/^\d{6,15}$/),
+  date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  accept_terms: z.literal(true),
+});
+
+export const saveSignupDetails = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => signupSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    // Validate DOB (>= 8 years old, <= 100)
+    const dob = new Date(data.date_of_birth + "T00:00:00Z");
+    const now = new Date();
+    const ageMs = now.getTime() - dob.getTime();
+    const years = ageMs / (365.25 * 24 * 3600 * 1000);
+    if (Number.isNaN(years) || years < 8 || years > 100) {
+      throw new Error("Please enter a valid date of birth.");
+    }
+
+    // Enforce uniqueness of phone across accounts
+    const { data: existing, error: qErr } = await context.supabase
+      .from("users")
+      .select("id")
+      .eq("phone", data.phone)
+      .neq("id", context.userId)
+      .maybeSingle();
+    if (qErr) throw qErr;
+    if (existing) {
+      throw new Error("This phone number is already linked to another account.");
+    }
+
+    const { error } = await context.supabase
+      .from("users")
+      .update({
+        full_name: data.full_name,
+        country_code: data.country_code,
+        phone: data.phone,
+        date_of_birth: data.date_of_birth,
+        terms_accepted_at: new Date().toISOString(),
+      })
+      .eq("id", context.userId);
+    if (error) {
+      const msg = String((error as { message?: string }).message ?? "");
+      if (msg.includes("users_phone_unique") || msg.includes("duplicate key")) {
+        throw new Error("This phone number is already linked to another account.");
+      }
+      throw error;
+    }
+    return { ok: true };
   });
 
 const phoneSchema = z.object({
@@ -25,6 +79,15 @@ export const updatePhone = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => phoneSchema.parse(data))
   .handler(async ({ data, context }) => {
+    const { data: existing, error: qErr } = await context.supabase
+      .from("users")
+      .select("id")
+      .eq("phone", data.phone)
+      .neq("id", context.userId)
+      .maybeSingle();
+    if (qErr) throw qErr;
+    if (existing) throw new Error("This phone number is already linked to another account.");
+
     const { error } = await context.supabase
       .from("users")
       .update({ country_code: data.country_code, phone: data.phone })
@@ -50,11 +113,43 @@ export const setProfession = createServerFn({ method: "POST" })
 export const completeOnboarding = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { data: u } = await context.supabase
+      .from("users")
+      .select(
+        "email, full_name, country_code, phone, profession, date_of_birth, terms_accepted_at, signup_alert_sent_at, created_at",
+      )
+      .eq("id", context.userId)
+      .maybeSingle();
+
     const { error } = await context.supabase
       .from("users")
       .update({ onboarded: true })
       .eq("id", context.userId);
     if (error) throw error;
+
+    // One-time signup verification alert to the dedicated bot
+    if (u && !u.signup_alert_sent_at) {
+      const esc = (s: unknown) =>
+        String(s ?? "—")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      const msg =
+        `🆕 <b>New Signup Verified</b>\n` +
+        `👤 <b>Name:</b> ${esc(u.full_name)}\n` +
+        `📧 <b>Email:</b> ${esc(u.email)}\n` +
+        `📱 <b>Phone:</b> ${esc(u.country_code)} ${esc(u.phone)}\n` +
+        `🎂 <b>DOB:</b> ${esc(u.date_of_birth)}\n` +
+        `🎯 <b>Track:</b> ${esc((u.profession ?? "").toString().toUpperCase())}\n` +
+        `✅ <b>Terms accepted:</b> ${esc(u.terms_accepted_at)}\n` +
+        `🆔 <code>${esc(context.userId)}</code>`;
+      await sendSignupAlert(msg);
+      await context.supabase
+        .from("users")
+        .update({ signup_alert_sent_at: new Date().toISOString() })
+        .eq("id", context.userId);
+    }
+
     return { ok: true };
   });
 
