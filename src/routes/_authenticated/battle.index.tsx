@@ -111,9 +111,22 @@ function QuickBattle() {
     const next = { ...answers };
     if (letter) next[q.id] = letter;
     setAnswers(next);
-    if (idx + 1 >= questions.length) submit.mutate(next);
+    if (idx + 1 >= QUICK_TOTAL) submit.mutate(next);
     else setIdx((i) => i + 1);
   }
+
+  // Progressive prefetch of the next 5 while player is answering the first 5
+  const fetchingRef = useRef(false);
+  useEffect(() => {
+    if (phase !== "playing" || !sessionId) return;
+    if (questions.length >= QUICK_TOTAL || fetchingRef.current) return;
+    if (idx < questions.length - 2) return;
+    fetchingRef.current = true;
+    extendQuickBattle({ data: { id: sessionId } })
+      .then((r) => { if (r.questions?.length) setQuestions(r.questions); })
+      .catch((e: Error) => toast.error(e.message || "Failed to load more"))
+      .finally(() => { fetchingRef.current = false; });
+  }, [idx, questions.length, phase, sessionId]);
 
   const cur = questions[idx];
   const correctCount = useMemo(
