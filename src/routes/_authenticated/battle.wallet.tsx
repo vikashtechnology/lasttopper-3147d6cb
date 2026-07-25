@@ -348,6 +348,14 @@ function WalletPage() {
           </ul>
         )}
       </div>
+
+      <footer className="mt-4 flex items-center justify-center gap-4 pb-6 text-xs text-white/50">
+        <Link to="/terms" className="hover:text-white/80 hover:underline">Terms</Link>
+        <span aria-hidden>•</span>
+        <Link to="/privacy" className="hover:text-white/80 hover:underline">Privacy Policy</Link>
+        <span aria-hidden>•</span>
+        <Link to="/refund" className="hover:text-white/80 hover:underline">Refund Policy</Link>
+      </footer>
     </div>
   );
 }
