@@ -214,28 +214,42 @@ function WalletPage() {
 
 
       {showTopup && (
-        <div className="battle-glass p-5 space-y-3 text-sm">
-          <div className="text-xs uppercase tracking-widest text-white/60">Add money via Razorpay</div>
-          <div className="flex flex-wrap gap-2">
-            {[50, 100, 200, 500].map((v) => (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => !topupLoading && setShowTopup(false)}
+        >
+          <div
+            className="battle-glass w-full max-w-md p-5 space-y-3 text-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <div className="text-xs uppercase tracking-widest text-white/60">Add money via Razorpay</div>
               <button
-                key={v}
-                onClick={() => setTopupAmt(v)}
-                className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs ${topupAmt === v ? "border-cyan-400/60 bg-cyan-400/10" : "border-white/15"}`}
-              ><TopperCoin size={12} />{v}</button>
-            ))}
+                onClick={() => !topupLoading && setShowTopup(false)}
+                className="rounded-md border border-white/15 px-2 py-0.5 text-xs text-white/70"
+                aria-label="Close"
+              >✕</button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[50, 100, 200, 500].map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setTopupAmt(v)}
+                  className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs ${topupAmt === v ? "border-cyan-400/60 bg-cyan-400/10" : "border-white/15"}`}
+                ><TopperCoin size={12} />{v}</button>
+              ))}
+            </div>
+            <input
+              className="w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2"
+              type="number" min={10} max={5000} placeholder="Amount (Topper Coins)"
+              value={topupAmt || ""} onChange={(e) => setTopupAmt(Number(e.target.value))}
+            />
+            <button className="battle-btn w-full" disabled={topupLoading} onClick={topup}>
+              {topupLoading ? "Opening checkout…" : (
+                <span className="inline-flex items-center gap-1">Pay ₹{topupAmt} · get <TopperCoin size={14} />{topupAmt} TC</span>
+              )}
+            </button>
           </div>
-          <input
-            className="w-full rounded-lg border border-white/15 bg-black/40 px-3 py-2"
-            type="number" min={10} max={5000} placeholder="Amount (Topper Coins)"
-            value={topupAmt || ""} onChange={(e) => setTopupAmt(Number(e.target.value))}
-          />
-          <button className="battle-btn w-full" disabled={topupLoading} onClick={topup}>
-            {topupLoading ? "Opening checkout…" : (
-              <span className="inline-flex items-center gap-1">Pay ₹{topupAmt} · get <TopperCoin size={14} />{topupAmt} TC</span>
-            )}
-          </button>
-
         </div>
       )}
 
