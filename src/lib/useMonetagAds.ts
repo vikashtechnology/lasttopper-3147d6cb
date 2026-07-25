@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 const ZONE_ID = 11392378;
-const SW_PATH = "/monetag-sw.js";
+const SW_PATH = "/sw.js";
 const TAG_SRC = `https://5gvci.com/act/files/tag.min.js?z=${ZONE_ID}`;
 
 /** Loads the Monetag ad tag + registers their service worker. Home-only. */
