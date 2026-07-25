@@ -201,7 +201,6 @@ function ResultsPage() {
       const code = ref.data?.code;
       const inviteUrl = code ? `${origin}/?ref=${code}` : origin;
       const shareText = `I scored ${accuracy.toFixed(1)}% (${correct}/${total}) on Last Topper! Join me${code ? ` with code ${code}` : ""}: ${inviteUrl}`;
-      const file = new File([blob], `scorecard-${sessionId}.png`, { type: "image/png" });
       const nav2 = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
       if (nav2.canShare && nav2.canShare({ files: [file] })) {
         await navigator.share({
