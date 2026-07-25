@@ -186,11 +186,22 @@ function QuickBattle() {
     );
   }
 
+  if (phase === "playing" && !cur) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="battle-glass p-6 text-center text-sm text-white/70">
+          <Loader2 className="mx-auto h-6 w-6 animate-spin text-cyan-300" />
+          <div className="mt-3">Loading next questions…</div>
+        </div>
+      </div>
+    );
+  }
+
   if (phase === "playing" && cur) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between text-sm text-white/70">
-          <span>Q {idx + 1} / {questions.length}</span>
+          <span>Q {idx + 1} / {QUICK_TOTAL}</span>
           <span className="inline-flex items-center gap-1.5">
             <Timer className="h-4 w-4 text-cyan-300" />
             <span className={tick <= 5 ? "text-red-400" : "text-white"}>{tick}s</span>
