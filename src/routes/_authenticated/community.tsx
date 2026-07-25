@@ -26,6 +26,7 @@ export const Route = createFileRoute("/_authenticated/community")({
 });
 
 function CommunityLayout() {
+  useMonetagAds();
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const unread = useQuery({ queryKey: ["notif-unread"], queryFn: () => unreadNotificationsCount(), refetchInterval: 30000 });
