@@ -259,6 +259,27 @@ html:not(.dark) .battle-theme [class*="bg-white\\/"] { background-color: rgba(30
 }
 .battle-theme .battle-slide-up { animation: battle-slide-up 260ms ease-out; }
 
+/* Modal panel — solid surface with a soft glow. Works in both themes. */
+.battle-modal {
+  background: #ffffff;
+  border: 1px solid rgba(124, 58, 237, 0.18);
+  border-radius: 1rem;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset,
+    0 20px 60px -12px rgba(139, 92, 246, 0.35),
+    0 0 80px -10px rgba(34, 211, 238, 0.35);
+  color: #1e1b4b;
+}
+.dark .battle-modal {
+  background: #0f1023;
+  border-color: rgba(167, 139, 250, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 20px 60px -12px rgba(139, 92, 246, 0.55),
+    0 0 80px -10px rgba(34, 211, 238, 0.4);
+  color: #e5e7ff;
+}
+
 /* -------------------------------------------------------------
  * Mantis-inspired elevated surfaces (used in dashboard shell).
  * ------------------------------------------------------------- */
