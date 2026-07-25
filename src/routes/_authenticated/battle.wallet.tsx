@@ -109,6 +109,7 @@ function WalletPage() {
   const [acc, setAcc] = useState("");
   const [ifsc, setIfsc] = useState("");
   const [name, setName] = useState("");
+  const [bankName, setBankName] = useState("");
 
   const req = useMutation({
     mutationFn: () => requestWithdrawal({
@@ -118,12 +119,13 @@ function WalletPage() {
         account_name: method === "bank" ? name : undefined,
         account_number: method === "bank" ? acc : undefined,
         ifsc: method === "bank" ? ifsc : undefined,
+        bank_name: method === "bank" ? bankName : undefined,
       },
     }),
     onSuccess: () => {
       toast.success("Withdrawal requested — processes in 20 min");
       setShowForm(false);
-      setAmt(0); setUpi(""); setAcc(""); setIfsc(""); setName("");
+      setAmt(0); setUpi(""); setAcc(""); setIfsc(""); setName(""); setBankName("");
       qc.invalidateQueries({ queryKey: ["wallet"] });
       qc.invalidateQueries({ queryKey: ["withdrawals"] });
     },
