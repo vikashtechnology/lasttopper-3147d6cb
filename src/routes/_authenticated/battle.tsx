@@ -17,12 +17,12 @@ export const Route = createFileRoute("/_authenticated/battle")({
     <div className="battle-theme flex min-h-screen items-center justify-center p-6 text-sm">
       <div className="battle-glass max-w-md p-6 text-center">
         <p className="battle-title text-lg">Arena offline</p>
-        <p className="mt-2 text-white/70">{error.message}</p>
+        <p className="mt-2 opacity-70">{error.message}</p>
         <button className="battle-btn mt-4" onClick={reset}>Retry</button>
       </div>
     </div>
   ),
-  notFoundComponent: () => <div className="battle-theme p-6 text-white">Not found</div>,
+  notFoundComponent: () => <div className="battle-theme p-6">Not found</div>,
 });
 
 function BattleLayout() {
