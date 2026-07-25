@@ -165,7 +165,7 @@ function QuizPage() {
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div className="text-xs font-medium text-muted-foreground">
-            Q {idx + 1} / {questions.length}
+            Q {idx + 1} / {targetCount}
           </div>
           {remaining != null ? (
             <div className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
@@ -176,7 +176,7 @@ function QuizPage() {
             <div className="w-16" />
           )}
         </div>
-        <Progress value={((idx + 1) / questions.length) * 100} className="h-1 rounded-none" />
+        <Progress value={((idx + 1) / targetCount) * 100} className="h-1 rounded-none" />
       </header>
 
       <section className="mx-auto w-full max-w-3xl flex-1 px-5 py-6">
@@ -242,11 +242,18 @@ function QuizPage() {
             <ChevronLeft className="mr-1 h-4 w-4" /> Prev
           </Button>
           <div className="text-xs text-muted-foreground">
-            {answeredCount} / {questions.length} answered
+            {answeredCount} / {targetCount} answered
           </div>
-          {idx < questions.length - 1 ? (
-            <Button onClick={() => setIndex(sessionId, idx + 1)}>
-              Next <ChevronRight className="ml-1 h-4 w-4" />
+          {idx < targetCount - 1 ? (
+            <Button
+              onClick={() => setIndex(sessionId, idx + 1)}
+              disabled={idx + 1 >= questions.length}
+            >
+              {idx + 1 >= questions.length ? (
+                <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Loading</>
+              ) : (
+                <>Next <ChevronRight className="ml-1 h-4 w-4" /></>
+              )}
             </Button>
           ) : (
             <Button onClick={() => handleSubmit(false)} disabled={submitting}>
