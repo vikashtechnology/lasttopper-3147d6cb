@@ -59,6 +59,7 @@ function ResultsPage() {
     queryKey: ["quiz-session", sessionId],
     queryFn: () => getQuizSession({ data: { id: sessionId } }),
   });
+  const ref = useQuery({ queryKey: ["referral"], queryFn: () => getMyReferral() });
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [starting, setStarting] = useState(false);
