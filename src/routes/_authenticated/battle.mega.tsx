@@ -38,12 +38,15 @@ function MegaTest() {
 
   useEffect(() => {
     const ch = supabase
-      .channel("mega-entries")
+      .channel("mega-live")
       .on("postgres_changes", { event: "*", schema: "public", table: "mega_test_entries" },
+        () => qc.invalidateQueries({ queryKey: ["mega-test"] }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "mega_tests" },
         () => qc.invalidateQueries({ queryKey: ["mega-test"] }))
       .subscribe();
     return () => { void supabase.removeChannel(ch); };
   }, [qc]);
+
 
   const join = useMutation({
     mutationFn: (id: string) => joinMegaTest({ data: { mega_test_id: id } }),
