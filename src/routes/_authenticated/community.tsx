@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tan
 import { ArrowLeft, MessageSquare, HelpCircle, Users, Activity, Bell } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { unreadNotificationsCount } from "@/lib/community.functions";
+import { useMonetagAds } from "@/lib/useMonetagAds";
 
 export const Route = createFileRoute("/_authenticated/community")({
   head: () => ({
