@@ -91,6 +91,21 @@ function QuizPage() {
   const idx = state?.currentIndex ?? 0;
   const answers = state?.answers ?? {};
   const q = questions[idx];
+  const needsMore = !alreadySubmitted && questions.length < targetCount;
+  const fetchingRef = useRef(false);
+
+  // Progressive prefetch: when we near the end of loaded questions, fetch next batch.
+  useEffect(() => {
+    if (!needsMore || fetchingRef.current) return;
+    if (idx < questions.length - 2 && questions.length > 0) return;
+    fetchingRef.current = true;
+    extendQuizSession({ data: { id: sessionId } })
+      .then((r) => {
+        if (r.added > 0) qc.invalidateQueries({ queryKey: ["quiz-session", sessionId] });
+      })
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to load more"))
+      .finally(() => { fetchingRef.current = false; });
+  }, [idx, questions.length, needsMore, sessionId, qc]);
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
