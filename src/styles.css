@@ -240,6 +240,13 @@
 }
 @media print { .battle-theme { display: none !important; } }
 
+/* Light-mode legibility: many battle pages use hardcoded white text/borders.
+   Remap them to the theme foreground when not in dark mode. */
+html:not(.dark) .battle-theme [class*="text-white"] { color: var(--battle-fg); }
+html:not(.dark) .battle-theme [class*="border-white"] { border-color: var(--battle-border); }
+html:not(.dark) .battle-theme [class*="bg-white\\/"] { background-color: rgba(30, 27, 75, 0.06); }
+
+
 
 @keyframes battle-pulse {
   0%, 100% { transform: scale(1); opacity: 1; }
