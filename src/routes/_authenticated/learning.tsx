@@ -5,11 +5,11 @@ import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   getSubjectsWithChapters,
-  generateQuestions,
-  createQuizSession,
+  startProgressiveQuiz,
   getTodayUsage,
 } from "@/lib/learning.functions";
 import { getMyProfile } from "@/lib/user.functions";
+import { useHideAds } from "@/lib/useHideAds";
 import { ProUpgradeDialog } from "@/components/ProUpgradeDialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
