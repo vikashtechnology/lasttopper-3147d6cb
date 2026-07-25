@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { useMonetagAds } from "@/lib/useMonetagAds";
 import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMyProfile, pingActivity } from "@/lib/user.functions";
 import { finalizeStaleSessions, getTodayUsage } from "@/lib/learning.functions";
