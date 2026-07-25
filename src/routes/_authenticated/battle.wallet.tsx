@@ -165,44 +165,43 @@ function WalletPage() {
         </div>
       </div>
 
-      <div className="battle-glass p-5 space-y-3 text-sm">
-        <div className="flex items-center gap-2 text-white/70">
-          <Gift className="h-4 w-4" />
-          <span className="text-xs uppercase tracking-widest">Refer & earn — 5 TC per friend</span>
+      <div className="battle-glass p-3 space-y-2 text-xs">
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          <Gift className="h-3.5 w-3.5" />
+          <span className="text-[10px] uppercase tracking-widest">Refer & earn — 5 TC per friend</span>
         </div>
-        <p className="text-xs text-white/60">
-          Share your code. When your friend signs up and makes their first wallet top-up, you get
-          <span className="inline-flex items-center gap-0.5"> <TopperCoin size={12} />5 TC</span> — usable only for the Sunday Mega Test.
+        <p className="text-[11px] text-muted-foreground leading-snug">
+          Friend signs up + first top-up → you get <TopperCoin size={10} className="inline" /> 5 TC (Mega Test only).
         </p>
 
         {ref.data?.code && (
-          <div className="flex items-center gap-2">
-            <code className="flex-1 rounded-lg border border-white/15 bg-black/40 px-3 py-2 font-mono tracking-widest">
+          <div className="flex items-center gap-1.5">
+            <code className="flex-1 rounded-md border border-border bg-background/60 px-2 py-1 font-mono text-xs tracking-widest">
               {ref.data.code}
             </code>
-            <button onClick={copyCode} className="rounded-lg border border-white/15 p-2" aria-label="Copy code">
-              <Copy className="h-4 w-4" />
+            <button onClick={copyCode} className="rounded-md border border-border p-1.5" aria-label="Copy code">
+              <Copy className="h-3.5 w-3.5" />
             </button>
-            <button onClick={shareCode} className="rounded-lg border border-white/15 p-2" aria-label="Share">
-              <Share2 className="h-4 w-4" />
+            <button onClick={shareCode} className="rounded-md border border-border p-1.5" aria-label="Share">
+              <Share2 className="h-3.5 w-3.5" />
             </button>
           </div>
         )}
-        <div className="flex gap-3 text-xs text-white/60">
-          <span>Invited: <b className="text-white/80">{ref.data?.invited ?? 0}</b></span>
-          <span>Converted: <b className="text-white/80">{ref.data?.converted ?? 0}</b></span>
+        <div className="flex gap-3 text-[11px] text-muted-foreground">
+          <span>Invited: <b className="text-foreground">{ref.data?.invited ?? 0}</b></span>
+          <span>Converted: <b className="text-foreground">{ref.data?.converted ?? 0}</b></span>
         </div>
         {!ref.data?.referred_by && (
-          <div className="flex items-center gap-2 border-t border-white/10 pt-3">
+          <div className="flex items-center gap-1.5 border-t border-border pt-2">
             <input
-              className="flex-1 rounded-lg border border-white/15 bg-black/40 px-3 py-2 font-mono uppercase tracking-widest"
+              className="flex-1 rounded-md border border-border bg-background/60 px-2 py-1 font-mono text-xs uppercase tracking-widest"
               placeholder="Have a code?"
               value={codeInput}
               onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
               maxLength={16}
             />
             <button
-              className="rounded-lg border border-cyan-400/60 bg-cyan-400/10 px-3 py-2 text-cyan-100"
+              className="rounded-md border border-cyan-500/60 bg-cyan-500/10 px-2.5 py-1 text-xs text-cyan-700 dark:text-cyan-100"
               disabled={applyRef.isPending || codeInput.length < 4}
               onClick={() => applyRef.mutate(codeInput)}
             >
