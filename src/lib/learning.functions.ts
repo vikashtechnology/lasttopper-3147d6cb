@@ -241,6 +241,108 @@ export const generateQuestions = createServerFn({ method: "POST" })
     return { questions, cached: false };
   });
 
+/* ---------------- Progressive (5-at-a-time) generation ---------------- */
+
+const startProgressiveSchema = z.object({
+  chapter_ids: z.array(z.string().uuid()).min(1),
+  target_count: z.union([z.literal(20), z.literal(50), z.literal(100)]),
+  timer_enabled: z.boolean(),
+  duration_seconds: z.number().int().positive().nullable(),
+});
+
+const PROG_BATCH = 5;
+
+async function generateBatchForSession(
+  supabase: import("@supabase/supabase-js").SupabaseClient<import("@/integrations/supabase/types").Database>,
+  userId: string,
+  chapterIds: string[],
+  count: number,
+  batchIndex: number,
+): Promise<QuizQuestion[]> {
+  const { data: profile } = await supabase
+    .from("users").select("profession").eq("id", userId).maybeSingle();
+  const profession = profile?.profession;
+  if (!profession) throw new Error("Complete onboarding first");
+  const { data: chapters } = await supabase
+    .from("chapters").select("id, name").in("id", chapterIds);
+  const nameById = new Map((chapters ?? []).map((c) => [c.id, c.name] as const));
+  const chapterNames = chapterIds.map((id) => nameById.get(id) ?? "").filter(Boolean);
+  const qs = await callGeminiBatch(chapterNames, profession, count, batchIndex);
+  return qs.map((q, i) => ({
+    ...q,
+    id: `q_${Date.now()}_${batchIndex}_${i}`,
+    chapter_id: chapterIds[i % chapterIds.length],
+  }));
+}
+
+export const startProgressiveQuiz = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => startProgressiveSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: profile } = await context.supabase
+      .from("users").select("is_pro").eq("id", context.userId).maybeSingle();
+    if (data.target_count > 20 && !profile?.is_pro) throw new Error("PRO_REQUIRED");
+
+    const firstCount = Math.min(PROG_BATCH, data.target_count);
+    let first: QuizQuestion[];
+    try {
+      first = await generateBatchForSession(
+        context.supabase, context.userId, data.chapter_ids, firstCount, 0,
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg === "AI_BUSY") throw new Error("AI is busy — please try again in a minute.");
+      throw e;
+    }
+
+    const nowIso = new Date().toISOString();
+    const { data: row, error } = await context.supabase
+      .from("quiz_sessions")
+      .insert({
+        user_id: context.userId,
+        chapter_ids: data.chapter_ids,
+        question_count: data.target_count,
+        questions: first as unknown as never,
+        timer_enabled: data.timer_enabled,
+        duration_seconds: data.duration_seconds,
+        start_time: nowIso,
+        last_heartbeat: nowIso,
+      })
+      .select("id").single();
+    if (error) throw error;
+    return { id: row.id as string, generated: first.length, target: data.target_count };
+  });
+
+export const extendQuizSession = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: s, error } = await context.supabase
+      .from("quiz_sessions")
+      .select("questions, question_count, chapter_ids, submitted_at")
+      .eq("id", data.id).eq("user_id", context.userId).maybeSingle();
+    if (error) throw error;
+    if (!s) throw new Error("Session not found");
+    if (s.submitted_at) return { done: true as const, added: 0, total: (s.questions as QuizQuestion[]).length };
+    const cur = (s.questions as QuizQuestion[]) ?? [];
+    const target = Number(s.question_count ?? 0);
+    if (cur.length >= target) return { done: true as const, added: 0, total: cur.length };
+
+    const remaining = target - cur.length;
+    const n = Math.min(PROG_BATCH, remaining);
+    const batchIdx = Math.floor(cur.length / PROG_BATCH);
+    const chapterIds = (s.chapter_ids as string[]) ?? [];
+    const more = await generateBatchForSession(
+      context.supabase, context.userId, chapterIds, n, batchIdx,
+    );
+    const next = [...cur, ...more];
+    await context.supabase
+      .from("quiz_sessions")
+      .update({ questions: next as unknown as never })
+      .eq("id", data.id).eq("user_id", context.userId);
+    return { done: next.length >= target, added: more.length, total: next.length };
+  });
+
 const createSessionSchema = z.object({
   chapter_ids: z.array(z.string().uuid()).min(1),
   question_count: z.number().int().positive(),
