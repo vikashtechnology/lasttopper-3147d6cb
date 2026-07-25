@@ -1009,6 +1009,7 @@ export type Database = {
           method: string
           process_after: string
           processed_at: string | null
+          short_code: number
           status: string
           upi_id: string | null
           user_id: string
@@ -1023,6 +1024,7 @@ export type Database = {
           method: string
           process_after?: string
           processed_at?: string | null
+          short_code?: number
           status?: string
           upi_id?: string | null
           user_id: string
@@ -1037,6 +1039,7 @@ export type Database = {
           method?: string
           process_after?: string
           processed_at?: string | null
+          short_code?: number
           status?: string
           upi_id?: string | null
           user_id?: string

@@ -342,7 +342,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
         upi_id: data.upi_id ?? null, account_name: data.account_name ?? null,
         account_number: data.account_number ?? null, ifsc: data.ifsc ?? null,
       })
-      .select("id, process_after").single();
+      .select("id, process_after, short_code").single();
     if (error) throw error;
     try {
       const chat = process.env.REPORT_TELEGRAM_CHAT_ID;
@@ -360,14 +360,17 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
             chat_id: chat,
             parse_mode: "HTML",
             text: [
-              `💸 <b>Withdrawal request</b>`,
+              `💸 <b>Withdrawal request #${row.short_code}</b>`,
               `User: ${u?.full_name ?? u?.email ?? context.userId}`,
               `Amount: ₹${data.amount}`,
               `Method: ${data.method.toUpperCase()}`,
               data.method === "upi"
                 ? `UPI ID: <code>${data.upi_id ?? "-"}</code>`
                 : `Account Name: ${data.account_name ?? "-"}\nAccount No: <code>${data.account_number ?? "-"}</code>\nIFSC: <code>${data.ifsc ?? "-"}</code>`,
-              `Request ID: ${row.id}`,
+              ``,
+              `Reply with:`,
+              `<code>/approve id=${row.short_code}</code>`,
+              `<code>/reject id=${row.short_code}</code>  (auto-refunds wallet)`,
             ].join("\n"),
           }),
 
