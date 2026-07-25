@@ -17,7 +17,7 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: null,
-      filename: "sw.js",
+      filename: "pwa-sw.js",
       devOptions: { enabled: false },
       includeAssets: ["favicon.ico", "app-icon-512.png"],
       manifest: false,

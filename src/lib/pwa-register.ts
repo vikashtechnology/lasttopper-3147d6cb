@@ -1,6 +1,6 @@
 // Guarded service worker registration. Only registers in production, on the
 // live app, outside iframes and Lovable preview hosts. Supports ?sw=off kill switch.
-const SW_URL = "/sw.js";
+const SW_URL = "/pwa-sw.js";
 
 function isPreviewHost(host: string): boolean {
   return (
