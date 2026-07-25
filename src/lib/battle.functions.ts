@@ -324,6 +324,7 @@ const withdrawSchema = z.object({
   account_name: z.string().optional(),
   account_number: z.string().optional(),
   ifsc: z.string().optional(),
+  bank_name: z.string().optional(),
 });
 
 export const requestWithdrawal = createServerFn({ method: "POST" })
