@@ -875,6 +875,7 @@ export type Database = {
           country_code: string
           created_at: string
           daily_question_limit: number
+          date_of_birth: string | null
           email: string | null
           full_name: string | null
           id: string
@@ -892,7 +893,9 @@ export type Database = {
           referral_credited: boolean
           referred_by: string | null
           reputation: number
+          signup_alert_sent_at: string | null
           streak: number
+          terms_accepted_at: string | null
           total_accuracy: number
           updated_at: string
         }
@@ -903,6 +906,7 @@ export type Database = {
           country_code?: string
           created_at?: string
           daily_question_limit?: number
+          date_of_birth?: string | null
           email?: string | null
           full_name?: string | null
           id: string
@@ -920,7 +924,9 @@ export type Database = {
           referral_credited?: boolean
           referred_by?: string | null
           reputation?: number
+          signup_alert_sent_at?: string | null
           streak?: number
+          terms_accepted_at?: string | null
           total_accuracy?: number
           updated_at?: string
         }
@@ -931,6 +937,7 @@ export type Database = {
           country_code?: string
           created_at?: string
           daily_question_limit?: number
+          date_of_birth?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
@@ -948,7 +955,9 @@ export type Database = {
           referral_credited?: boolean
           referred_by?: string | null
           reputation?: number
+          signup_alert_sent_at?: string | null
           streak?: number
+          terms_accepted_at?: string | null
           total_accuracy?: number
           updated_at?: string
         }
