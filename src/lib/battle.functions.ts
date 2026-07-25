@@ -87,6 +87,17 @@ export const getWallet = createServerFn({ method: "GET" })
 
 /* ------------------------------ Quick battle ----------------------------- */
 
+const QUICK_TOTAL = 10;
+const QUICK_BATCH = 5;
+
+async function generateQuickBatch(profession: string, count: number, batchIdx: number): Promise<QuizQuestion[]> {
+  const subjectLabel = profession === "pcm"
+    ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
+  const prompt = `Generate exactly ${count} exam-style MCQ for ${subjectLabel}. STRICT SOURCE: use ONLY content from official NCERT Class 11 & 12 textbooks — no non-NCERT facts. Mix chapters and difficulty. Use LaTeX ($...$ / $$...$$) for math. Return STRICT JSON: {"questions":[{"question":"...","options":{"A":"","B":"","C":"","D":""},"correct":"A|B|C|D","hint":"...","explanation":"..."}]}`;
+  const qs = await callGemini(prompt, count);
+  return qs.map((q, i) => ({ ...q, id: `bq_${Date.now()}_${batchIdx}_${i}` }));
+}
+
 export const startQuickBattle = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -94,16 +105,34 @@ export const startQuickBattle = createServerFn({ method: "POST" })
       .from("users").select("profession").eq("id", context.userId).maybeSingle();
     const profession = profile?.profession;
     if (!profession) throw new Error("Complete onboarding first");
-    const subjectLabel = profession === "pcm"
-      ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
-    const prompt = `Generate exactly 10 exam-style MCQ for ${subjectLabel}. STRICT SOURCE: use ONLY content from official NCERT Class 11 & 12 textbooks — no non-NCERT facts. Mix chapters and difficulty. Use LaTeX ($...$ / $$...$$) for math. Return STRICT JSON: {"questions":[{"question":"...","options":{"A":"","B":"","C":"","D":""},"correct":"A|B|C|D","hint":"...","explanation":"..."}]}`;
-    const questions = await callGemini(prompt, 10);
+    const first = await generateQuickBatch(profession, QUICK_BATCH, 0);
     const { data: row, error } = await context.supabase
       .from("battle_sessions")
-      .insert({ user_id: context.userId, mode: "quick", profession, questions: questions as unknown as never })
+      .insert({ user_id: context.userId, mode: "quick", profession, questions: first as unknown as never })
       .select("id").single();
     if (error) throw error;
-    return { id: row.id as string, questions };
+    return { id: row.id as string, questions: first, target: QUICK_TOTAL };
+  });
+
+export const extendQuickBattle = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: s } = await context.supabase
+      .from("battle_sessions").select("questions, profession, submitted_at, mode")
+      .eq("id", data.id).eq("user_id", context.userId).maybeSingle();
+    if (!s) throw new Error("Not found");
+    if (s.submitted_at || s.mode !== "quick") return { done: true as const, questions: (s?.questions as QuizQuestion[]) ?? [] };
+    const cur = (s.questions as QuizQuestion[]) ?? [];
+    if (cur.length >= QUICK_TOTAL) return { done: true as const, questions: cur };
+    const n = Math.min(QUICK_BATCH, QUICK_TOTAL - cur.length);
+    const batchIdx = Math.floor(cur.length / QUICK_BATCH);
+    const more = await generateQuickBatch(s.profession as string, n, batchIdx);
+    const next = [...cur, ...more];
+    await context.supabase.from("battle_sessions")
+      .update({ questions: next as unknown as never })
+      .eq("id", data.id).eq("user_id", context.userId);
+    return { done: next.length >= QUICK_TOTAL, questions: next };
   });
 
 const submitBattleSchema = z.object({
