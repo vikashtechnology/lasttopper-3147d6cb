@@ -342,6 +342,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
         user_id: context.userId, amount: data.amount, method: data.method,
         upi_id: data.upi_id ?? null, account_name: data.account_name ?? null,
         account_number: data.account_number ?? null, ifsc: data.ifsc ?? null,
+        bank_name: data.bank_name ?? null,
       })
       .select("id, process_after, short_code").single();
     if (error) throw error;
