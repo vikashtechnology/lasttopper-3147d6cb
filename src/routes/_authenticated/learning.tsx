@@ -226,9 +226,8 @@ function LearningPage() {
             onValueChange={(v) => {
               const n = Number(v) as 20 | 50 | 100;
               if (n > 20 && !isPro) {
-                toast.error("50 & 100 question sets are a Pro feature.", {
-                  action: { label: "Upgrade", onClick: () => nav({ to: "/pricing" }) },
-                });
+                setProReason("50 & 100 question sets are a Pro feature.");
+                setProOpen(true);
                 return;
               }
               setCount(n);
