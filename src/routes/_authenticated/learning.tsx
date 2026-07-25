@@ -291,6 +291,7 @@ function LearningPage() {
           )}
         </Button>
       </section>
+      <ProUpgradeDialog open={proOpen} onOpenChange={setProOpen} reason={proReason} />
     </main>
   );
 }
