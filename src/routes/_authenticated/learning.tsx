@@ -112,6 +112,7 @@ function LearningPage() {
       setProOpen(true);
       return;
     }
+    setBusy(true);
     try {
       const gen = await generateQuestions({
         data: { chapter_ids: chapterIds, question_count: count },
