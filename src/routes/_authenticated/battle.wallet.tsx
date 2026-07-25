@@ -218,7 +218,7 @@ function WalletPage() {
           onClick={() => !topupLoading && setShowTopup(false)}
         >
           <div
-            className="battle-glass w-full max-w-md p-5 space-y-3 text-sm animate-scale-in"
+            className="battle-modal w-full max-w-md p-5 space-y-3 text-sm animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
@@ -258,7 +258,7 @@ function WalletPage() {
           onClick={() => !req.isPending && setShowForm(false)}
         >
           <div
-            className="battle-glass w-full max-w-md p-5 space-y-3 text-sm animate-scale-in"
+            className="battle-modal w-full max-w-md p-5 space-y-3 text-sm animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
