@@ -151,30 +151,29 @@ async function callGeminiForQuestions(
     remaining -= n;
   }
 
-  const results: QuizQuestion[][] = [];
-  for (let i = 0; i < batches.length; i++) {
-    let lastErr: unknown;
-    let got: QuizQuestion[] | null = null;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        got = await callGeminiBatch(chapterNames, profession, batches[i], i);
-        if (got.length > 0) break;
-      } catch (e) {
-        lastErr = e;
-        if (e instanceof Error && e.message === "AI_BUSY") throw e;
+  // Run batches in parallel with per-batch retry for much faster 50/100 generation.
+  const settled = await Promise.all(
+    batches.map(async (n, i) => {
+      let lastErr: unknown;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const got = await callGeminiBatch(chapterNames, profession, n, i);
+          if (got.length > 0) return got;
+        } catch (e) {
+          lastErr = e;
+          if (e instanceof Error && e.message === "AI_BUSY") throw e;
+        }
       }
-    }
-    if (!got || got.length === 0) {
-      if (results.length === 0) {
-        throw lastErr instanceof Error ? lastErr : new Error("AI returned no questions");
-      }
-      break;
-    }
-    results.push(got);
-  }
+      if (lastErr instanceof Error) throw lastErr;
+      return [] as QuizQuestion[];
+    }),
+  );
 
-  return results.flat().slice(0, count);
+  const results = settled.flat();
+  if (results.length === 0) throw new Error("AI returned no questions");
+  return results.slice(0, count);
 }
+
 
 export const generateQuestions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
