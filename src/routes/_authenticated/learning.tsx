@@ -55,6 +55,7 @@ export const Route = createFileRoute("/_authenticated/learning")({
 });
 
 function LearningPage() {
+  useHideAds();
   const nav = useNavigate();
   const { data: subjects } = useSuspenseQuery(subjectsQuery);
   const { data: profile } = useSuspenseQuery(profileQuery);
@@ -114,22 +115,10 @@ function LearningPage() {
     }
     setBusy(true);
     try {
-      const gen = await generateQuestions({
-        data: { chapter_ids: chapterIds, question_count: count },
-      });
-      if ("error" in gen && gen.error) {
-        toast.error(gen.error);
-        return;
-      }
-      if (!gen.questions || gen.questions.length === 0) {
-        toast.error("No questions generated. Try again.");
-        return;
-      }
-      const session = await createQuizSession({
+      const session = await startProgressiveQuiz({
         data: {
           chapter_ids: chapterIds,
-          question_count: gen.questions.length,
-          questions: gen.questions,
+          target_count: count,
           timer_enabled: timerEnabled,
           duration_seconds: timerEnabled ? timerMinutes * 60 : null,
         },
