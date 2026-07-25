@@ -1,14 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   getQuizSession,
   submitQuizSession,
   heartbeatSession,
+  extendQuizSession,
   type QuizQuestion,
 } from "@/lib/learning.functions";
 import { useQuizStore, type Answer } from "@/store/quiz";
+import { useHideAds } from "@/lib/useHideAds";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Latex } from "@/components/Latex";
@@ -29,8 +31,10 @@ export const Route = createFileRoute("/_authenticated/quiz/$sessionId")({
 });
 
 function QuizPage() {
+  useHideAds();
   const { sessionId } = Route.useParams();
   const nav = useNavigate();
+  const qc = useQueryClient();
 
   const { data: session, isLoading } = useQuery({
     queryKey: ["quiz-session", sessionId],
@@ -39,6 +43,7 @@ function QuizPage() {
   });
 
   const questions = (session?.questions as QuizQuestion[] | undefined) ?? [];
+  const targetCount = session?.question_count ?? questions.length;
   const timerEnabled = !!session?.timer_enabled;
   const duration = session?.duration_seconds ?? null;
   const startTimeMs = session?.start_time ? new Date(session.start_time).getTime() : Date.now();
