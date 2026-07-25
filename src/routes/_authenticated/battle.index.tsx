@@ -231,7 +231,7 @@ function QuickBattle() {
       <div className="battle-glass battle-slide-up p-6 text-center">
         <div className="battle-title text-3xl">Victory</div>
         <div className="mt-3 text-5xl font-black text-cyan-300">{correctCount * 10}</div>
-        <div className="mt-1 text-sm text-white/70">{correctCount} / {questions.length} correct</div>
+        <div className="mt-1 text-sm text-white/70">{correctCount} / {QUICK_TOTAL} correct</div>
         <div className="mt-5 flex justify-center gap-2">
           <button className="battle-btn" onClick={() => start.mutate()}>Play again</button>
           <button
