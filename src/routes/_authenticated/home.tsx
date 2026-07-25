@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { useMonetagAds } from "@/lib/useMonetagAds";
 import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMyProfile, pingActivity } from "@/lib/user.functions";
 import { finalizeStaleSessions, getTodayUsage } from "@/lib/learning.functions";
@@ -42,6 +43,7 @@ export const Route = createFileRoute("/_authenticated/home")({
 
 function HomePage() {
   const navigate = useNavigate();
+  useMonetagAds();
   const qc = useQueryClient();
   const { data } = useSuspenseQuery(profileQuery);
   const setProfile = useUserStore((s) => s.setProfile);
