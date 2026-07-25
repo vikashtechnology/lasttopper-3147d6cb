@@ -95,11 +95,22 @@ function WalletPage() {
   useEffect(() => {
     const ch = supabase
       .channel("wallet-live")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "wallet_transactions" },
+      .on("postgres_changes", { event: "*", schema: "public", table: "wallet_transactions" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["wallet"] });
+          qc.invalidateQueries({ queryKey: ["referral"] });
+        })
+      .on("postgres_changes", { event: "*", schema: "public", table: "withdrawal_requests" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["withdrawals"] });
+          qc.invalidateQueries({ queryKey: ["wallet"] });
+        })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "users" },
         () => qc.invalidateQueries({ queryKey: ["wallet"] }))
       .subscribe();
     return () => { void supabase.removeChannel(ch); };
   }, [qc]);
+
 
 
   const [showForm, setShowForm] = useState(false);
