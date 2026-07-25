@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   getQuizSession,
@@ -8,6 +8,8 @@ import {
   reportIssue,
   type QuizQuestion,
 } from "@/lib/learning.functions";
+import { getMyReferral } from "@/lib/referral.functions";
+
 import { Button } from "@/components/ui/button";
 import { Latex } from "@/components/Latex";
 import {
