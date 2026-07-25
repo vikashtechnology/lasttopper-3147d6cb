@@ -41,6 +41,7 @@ import { Route as AuthenticatedBattleHistoryRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_authenticated/admin.moderation'
+import { Route as ApiPublicHooksTelegramWithdrawalRouteImport } from './routes/api/public/hooks/telegram-withdrawal'
 import { Route as ApiPublicHooksRazorpayRouteImport } from './routes/api/public/hooks/razorpay'
 import { Route as ApiPublicHooksProcessWithdrawalsRouteImport } from './routes/api/public/hooks/process-withdrawals'
 import { Route as ApiPublicHooksMegaTestLifecycleRouteImport } from './routes/api/public/hooks/mega-test-lifecycle'
@@ -223,6 +224,12 @@ const AuthenticatedAdminModerationRoute =
     path: '/moderation',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const ApiPublicHooksTelegramWithdrawalRoute =
+  ApiPublicHooksTelegramWithdrawalRouteImport.update({
+    id: '/api/public/hooks/telegram-withdrawal',
+    path: '/api/public/hooks/telegram-withdrawal',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksRazorpayRoute = ApiPublicHooksRazorpayRouteImport.update({
   id: '/api/public/hooks/razorpay',
   path: '/api/public/hooks/razorpay',
@@ -311,6 +318,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
   '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
   '/api/public/hooks/razorpay': typeof ApiPublicHooksRazorpayRoute
+  '/api/public/hooks/telegram-withdrawal': typeof ApiPublicHooksTelegramWithdrawalRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -349,6 +357,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
   '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
   '/api/public/hooks/razorpay': typeof ApiPublicHooksRazorpayRoute
+  '/api/public/hooks/telegram-withdrawal': typeof ApiPublicHooksTelegramWithdrawalRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -392,6 +401,7 @@ export interface FileRoutesById {
   '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
   '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
   '/api/public/hooks/razorpay': typeof ApiPublicHooksRazorpayRoute
+  '/api/public/hooks/telegram-withdrawal': typeof ApiPublicHooksTelegramWithdrawalRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -435,6 +445,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/mega-test-lifecycle'
     | '/api/public/hooks/process-withdrawals'
     | '/api/public/hooks/razorpay'
+    | '/api/public/hooks/telegram-withdrawal'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -473,6 +484,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/mega-test-lifecycle'
     | '/api/public/hooks/process-withdrawals'
     | '/api/public/hooks/razorpay'
+    | '/api/public/hooks/telegram-withdrawal'
   id:
     | '__root__'
     | '/'
@@ -515,6 +527,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/mega-test-lifecycle'
     | '/api/public/hooks/process-withdrawals'
     | '/api/public/hooks/razorpay'
+    | '/api/public/hooks/telegram-withdrawal'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -527,6 +540,7 @@ export interface RootRouteChildren {
   ApiPublicHooksMegaTestLifecycleRoute: typeof ApiPublicHooksMegaTestLifecycleRoute
   ApiPublicHooksProcessWithdrawalsRoute: typeof ApiPublicHooksProcessWithdrawalsRoute
   ApiPublicHooksRazorpayRoute: typeof ApiPublicHooksRazorpayRoute
+  ApiPublicHooksTelegramWithdrawalRoute: typeof ApiPublicHooksTelegramWithdrawalRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -755,6 +769,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminModerationRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/api/public/hooks/telegram-withdrawal': {
+      id: '/api/public/hooks/telegram-withdrawal'
+      path: '/api/public/hooks/telegram-withdrawal'
+      fullPath: '/api/public/hooks/telegram-withdrawal'
+      preLoaderRoute: typeof ApiPublicHooksTelegramWithdrawalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/razorpay': {
       id: '/api/public/hooks/razorpay'
       path: '/api/public/hooks/razorpay'
@@ -929,6 +950,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksMegaTestLifecycleRoute: ApiPublicHooksMegaTestLifecycleRoute,
   ApiPublicHooksProcessWithdrawalsRoute: ApiPublicHooksProcessWithdrawalsRoute,
   ApiPublicHooksRazorpayRoute: ApiPublicHooksRazorpayRoute,
+  ApiPublicHooksTelegramWithdrawalRoute: ApiPublicHooksTelegramWithdrawalRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
