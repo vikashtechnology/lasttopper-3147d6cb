@@ -109,6 +109,7 @@ function WalletPage() {
   const [acc, setAcc] = useState("");
   const [ifsc, setIfsc] = useState("");
   const [name, setName] = useState("");
+  const [bankName, setBankName] = useState("");
 
   const req = useMutation({
     mutationFn: () => requestWithdrawal({
@@ -118,12 +119,13 @@ function WalletPage() {
         account_name: method === "bank" ? name : undefined,
         account_number: method === "bank" ? acc : undefined,
         ifsc: method === "bank" ? ifsc : undefined,
+        bank_name: method === "bank" ? bankName : undefined,
       },
     }),
     onSuccess: () => {
       toast.success("Withdrawal requested — processes in 20 min");
       setShowForm(false);
-      setAmt(0); setUpi(""); setAcc(""); setIfsc(""); setName("");
+      setAmt(0); setUpi(""); setAcc(""); setIfsc(""); setName(""); setBankName("");
       qc.invalidateQueries({ queryKey: ["wallet"] });
       qc.invalidateQueries({ queryKey: ["withdrawals"] });
     },
@@ -288,14 +290,33 @@ function WalletPage() {
               <input className="w-full rounded-lg border border-border bg-background/60 px-3 py-2" placeholder="you@upi" value={upi} onChange={(e) => setUpi(e.target.value)} />
             ) : (
               <>
-                <input className="w-full rounded-lg border border-border bg-background/60 px-3 py-2" placeholder="Account name" value={name} onChange={(e) => setName(e.target.value)} />
+                <select
+                  className="w-full rounded-lg border border-border bg-background/60 px-3 py-2"
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                >
+                  <option value="">Select bank</option>
+                  {[
+                    "State Bank of India","HDFC Bank","ICICI Bank","Axis Bank","Kotak Mahindra Bank",
+                    "Punjab National Bank","Bank of Baroda","Canara Bank","Union Bank of India","Bank of India",
+                    "IndusInd Bank","Yes Bank","IDFC First Bank","IDBI Bank","Federal Bank",
+                    "RBL Bank","Central Bank of India","Indian Bank","Indian Overseas Bank","UCO Bank",
+                    "Bank of Maharashtra","Karnataka Bank","South Indian Bank","City Union Bank","AU Small Finance Bank",
+                    "Bandhan Bank","DCB Bank","Jammu & Kashmir Bank","Karur Vysya Bank","Tamilnad Mercantile Bank",
+                    "Paytm Payments Bank","Airtel Payments Bank","India Post Payments Bank",
+                  ].map((b) => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                  <option value="Other">Other</option>
+                </select>
+                <input className="w-full rounded-lg border border-border bg-background/60 px-3 py-2" placeholder="Account holder name" value={name} onChange={(e) => setName(e.target.value)} />
                 <input className="w-full rounded-lg border border-border bg-background/60 px-3 py-2" placeholder="Account number" value={acc} onChange={(e) => setAcc(e.target.value)} />
                 <input className="w-full rounded-lg border border-border bg-background/60 px-3 py-2" placeholder="IFSC" value={ifsc} onChange={(e) => setIfsc(e.target.value)} />
               </>
             )}
             <button
               className="battle-btn w-full"
-              disabled={req.isPending || amt <= 0 || amt > bal || (method === "upi" ? !upi : !acc || !ifsc || !name)}
+              disabled={req.isPending || amt <= 0 || amt > bal || (method === "upi" ? !upi : !acc || !ifsc || !name || !bankName)}
               onClick={() => req.mutate()}
             >
               {req.isPending ? "Submitting…" : "Confirm withdrawal"}

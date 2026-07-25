@@ -324,6 +324,7 @@ const withdrawSchema = z.object({
   account_name: z.string().optional(),
   account_number: z.string().optional(),
   ifsc: z.string().optional(),
+  bank_name: z.string().optional(),
 });
 
 export const requestWithdrawal = createServerFn({ method: "POST" })
@@ -341,6 +342,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
         user_id: context.userId, amount: data.amount, method: data.method,
         upi_id: data.upi_id ?? null, account_name: data.account_name ?? null,
         account_number: data.account_number ?? null, ifsc: data.ifsc ?? null,
+        bank_name: data.bank_name ?? null,
       })
       .select("id, process_after, short_code").single();
     if (error) throw error;
@@ -366,7 +368,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
               `Method: ${data.method.toUpperCase()}`,
               data.method === "upi"
                 ? `UPI ID: <code>${data.upi_id ?? "-"}</code>`
-                : `Account Name: ${data.account_name ?? "-"}\nAccount No: <code>${data.account_number ?? "-"}</code>\nIFSC: <code>${data.ifsc ?? "-"}</code>`,
+                : `Bank: ${data.bank_name ?? "-"}\nAccount Name: ${data.account_name ?? "-"}\nAccount No: <code>${data.account_number ?? "-"}</code>\nIFSC: <code>${data.ifsc ?? "-"}</code>`,
               ``,
               `Reply with:`,
               `<code>/approve id=${row.short_code}</code>`,
