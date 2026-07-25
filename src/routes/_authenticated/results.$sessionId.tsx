@@ -197,25 +197,39 @@ function ResultsPage() {
       const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!blob) throw new Error("Could not create image");
       const file = new File([blob], `scorecard-${sessionId}.png`, { type: "image/png" });
+      const origin = typeof window !== "undefined" ? window.location.origin : "https://lasttopper.lovable.app";
+      const code = ref.data?.code;
+      const inviteUrl = code ? `${origin}/?ref=${code}` : origin;
+      const shareText = `I scored ${accuracy.toFixed(1)}% (${correct}/${total}) on Last Topper! Join me${code ? ` with code ${code}` : ""}: ${inviteUrl}`;
+      const file = new File([blob], `scorecard-${sessionId}.png`, { type: "image/png" });
       const nav2 = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
       if (nav2.canShare && nav2.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
           title: "My Last Topper scorecard",
-          text: `I scored ${accuracy.toFixed(1)}% (${correct}/${total}) on Last Topper!`,
+          text: shareText,
+          url: inviteUrl,
         });
+      } else if (navigator.share) {
+        await navigator.share({ title: "My Last Topper scorecard", text: shareText, url: inviteUrl });
       } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `scorecard-${sessionId}.png`;
-        a.click();
-        URL.revokeObjectURL(url);
-        toast.success("Scorecard downloaded");
+        try {
+          await navigator.clipboard.writeText(shareText);
+          toast.success("Invite link copied to clipboard");
+        } catch {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `scorecard-${sessionId}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+          toast.success("Scorecard downloaded");
+        }
       }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to share";
       if (!/aborted/i.test(msg)) toast.error(msg);
+
     } finally {
       setSharing(false);
     }
