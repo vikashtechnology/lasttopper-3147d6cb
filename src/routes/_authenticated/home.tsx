@@ -43,6 +43,7 @@ export const Route = createFileRoute("/_authenticated/home")({
 
 function HomePage() {
   const navigate = useNavigate();
+  useMonetagAds();
   const qc = useQueryClient();
   const { data } = useSuspenseQuery(profileQuery);
   const setProfile = useUserStore((s) => s.setProfile);
