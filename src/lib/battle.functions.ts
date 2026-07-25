@@ -368,7 +368,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
               `Method: ${data.method.toUpperCase()}`,
               data.method === "upi"
                 ? `UPI ID: <code>${data.upi_id ?? "-"}</code>`
-                : `Account Name: ${data.account_name ?? "-"}\nAccount No: <code>${data.account_number ?? "-"}</code>\nIFSC: <code>${data.ifsc ?? "-"}</code>`,
+                : `Bank: ${data.bank_name ?? "-"}\nAccount Name: ${data.account_name ?? "-"}\nAccount No: <code>${data.account_number ?? "-"}</code>\nIFSC: <code>${data.ifsc ?? "-"}</code>`,
               ``,
               `Reply with:`,
               `<code>/approve id=${row.short_code}</code>`,
