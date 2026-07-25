@@ -116,6 +116,13 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
     // wallet_topup
     const amount = data.amount_inr ?? 0;
     if (amount <= 0) throw new Error("Invalid amount");
+    const note = `Wallet top-up via Razorpay (${data.razorpay_payment_id})`;
+    // Idempotency: if this payment_id was already credited (by client retry or webhook), no-op.
+    const { data: dup } = await context.supabase
+      .from("wallet_transactions").select("id, balance_after").eq("note", note).maybeSingle();
+    if (dup) {
+      return { ok: true as const, purpose: "wallet_topup" as const, balance: Number(dup.balance_after ?? 0) };
+    }
     const { data: u } = await context.supabase
       .from("users").select("balance, referred_by, referral_credited").eq("id", context.userId).maybeSingle();
     const cur = Number(u?.balance ?? 0);
@@ -127,9 +134,10 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
       category: "topup",
       amount,
       balance_after: next,
-      note: `Wallet top-up via Razorpay (${data.razorpay_payment_id})`,
+      note,
       reference_id: null,
     });
+
 
     // Referral reward: first-ever top-up credits referrer with 5 mega-test-only TC.
     if (u?.referred_by && !u.referral_credited) {

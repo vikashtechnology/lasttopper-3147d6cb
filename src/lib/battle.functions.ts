@@ -358,8 +358,19 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
           },
           body: JSON.stringify({
             chat_id: chat,
-            text: `💸 Withdrawal request\nUser: ${u?.full_name ?? u?.email ?? context.userId}\nAmount: ₹${data.amount}\nMethod: ${data.method}\nID: ${row.id}`,
+            parse_mode: "HTML",
+            text: [
+              `💸 <b>Withdrawal request</b>`,
+              `User: ${u?.full_name ?? u?.email ?? context.userId}`,
+              `Amount: ₹${data.amount}`,
+              `Method: ${data.method.toUpperCase()}`,
+              data.method === "upi"
+                ? `UPI ID: <code>${data.upi_id ?? "-"}</code>`
+                : `Account Name: ${data.account_name ?? "-"}\nAccount No: <code>${data.account_number ?? "-"}</code>\nIFSC: <code>${data.ifsc ?? "-"}</code>`,
+              `Request ID: ${row.id}`,
+            ].join("\n"),
           }),
+
         });
       }
     } catch { /* non-fatal */ }
