@@ -68,7 +68,10 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
     if (!res.ok) {
       const t = await res.text();
       console.error("[razorpay] order create failed", res.status, t);
-      throw new Error("Failed to create order");
+      if (res.status === 401) {
+        throw new Error("Payment gateway not configured correctly. Please contact support (invalid Razorpay keys).");
+      }
+      throw new Error(`Failed to create order: ${res.status}`);
     }
     const order = (await res.json()) as { id: string; amount: number; currency: string };
     return { order_id: order.id, amount: order.amount, currency: order.currency, key_id: key };

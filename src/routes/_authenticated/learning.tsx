@@ -1,14 +1,16 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   getSubjectsWithChapters,
   generateQuestions,
   createQuizSession,
+  getTodayUsage,
 } from "@/lib/learning.functions";
 import { getMyProfile } from "@/lib/user.functions";
+import { ProUpgradeDialog } from "@/components/ProUpgradeDialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -57,11 +59,25 @@ function LearningPage() {
   const { data: subjects } = useSuspenseQuery(subjectsQuery);
   const { data: profile } = useSuspenseQuery(profileQuery);
   const isPro = !!profile?.is_pro;
+  const dailyLimit = profile?.daily_question_limit ?? 20;
+  const usage = useQuery({ queryKey: ["today-usage"], queryFn: () => getTodayUsage(), refetchOnWindowFocus: true });
+  const usedToday = usage.data?.used ?? 0;
+  const remaining = Math.max(0, dailyLimit - usedToday);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [count, setCount] = useState<20 | 50 | 100>(20);
   const [timerEnabled, setTimerEnabled] = useState(false);
   const [timerMinutes, setTimerMinutes] = useState(45);
   const [busy, setBusy] = useState(false);
+  const [proOpen, setProOpen] = useState(false);
+  const [proReason, setProReason] = useState<string | undefined>(undefined);
+
+  // Auto-trigger upgrade popup when user has hit their daily free limit.
+  useEffect(() => {
+    if (!isPro && !usage.isLoading && remaining === 0 && usedToday > 0) {
+      setProReason(`You've used all ${dailyLimit} free questions for today. Upgrade to keep practicing.`);
+      setProOpen(true);
+    }
+  }, [isPro, usage.isLoading, remaining, usedToday, dailyLimit]);
 
   const chapterIds = useMemo(() => Array.from(selected), [selected]);
 
@@ -83,9 +99,17 @@ function LearningPage() {
       return;
     }
     if (count > 20 && !isPro) {
-      toast.error("50 & 100 question sets are a Pro feature.", {
-        action: { label: "Upgrade", onClick: () => nav({ to: "/pricing" }) },
-      });
+      setProReason("50 & 100 question sets are a Pro feature.");
+      setProOpen(true);
+      return;
+    }
+    if (!isPro && count > remaining) {
+      setProReason(
+        remaining === 0
+          ? `You've used all ${dailyLimit} free questions for today. Upgrade to keep practicing.`
+          : `Only ${remaining} of ${dailyLimit} free questions left today. Upgrade for more.`,
+      );
+      setProOpen(true);
       return;
     }
     setBusy(true);
@@ -202,9 +226,8 @@ function LearningPage() {
             onValueChange={(v) => {
               const n = Number(v) as 20 | 50 | 100;
               if (n > 20 && !isPro) {
-                toast.error("50 & 100 question sets are a Pro feature.", {
-                  action: { label: "Upgrade", onClick: () => nav({ to: "/pricing" }) },
-                });
+                setProReason("50 & 100 question sets are a Pro feature.");
+                setProOpen(true);
                 return;
               }
               setCount(n);
@@ -268,6 +291,7 @@ function LearningPage() {
           )}
         </Button>
       </section>
+      <ProUpgradeDialog open={proOpen} onOpenChange={setProOpen} reason={proReason} />
     </main>
   );
 }

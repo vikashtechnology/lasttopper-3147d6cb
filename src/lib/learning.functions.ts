@@ -417,12 +417,17 @@ export const getTodayUsage = createServerFn({ method: "GET" })
     start.setHours(0, 0, 0, 0);
     const { data } = await context.supabase
       .from("quiz_sessions")
-      .select("question_count")
+      .select("answers")
       .eq("user_id", context.userId)
       .gte("created_at", start.toISOString());
-    const used = (data ?? []).reduce((sum, r) => sum + Number(r.question_count ?? 0), 0);
+    // Only count questions the user actually attempted (answered).
+    const used = (data ?? []).reduce((sum, r) => {
+      const ans = (r.answers ?? {}) as Record<string, unknown>;
+      return sum + Object.keys(ans).length;
+    }, 0);
     return { used };
   });
+
 
 export const getQuizHistory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
