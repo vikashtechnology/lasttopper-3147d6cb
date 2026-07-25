@@ -316,3 +316,15 @@ html:not(.dark) .battle-theme [class*="bg-white\\/"] { background-color: rgba(30
   height: 0;
   display: none;
 }
+
+/* Ad-free routes: hide any Monetag overlays/iframes injected globally */
+body[data-no-ads="1"] iframe[src*="5gvci"],
+body[data-no-ads="1"] iframe[src*="nap5k"],
+body[data-no-ads="1"] iframe[src*="n6wxm"],
+body[data-no-ads="1"] iframe[src*="monetag"],
+body[data-no-ads="1"] [id*="monetag"],
+body[data-no-ads="1"] [class*="monetag"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}

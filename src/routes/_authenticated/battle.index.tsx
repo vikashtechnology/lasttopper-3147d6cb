@@ -5,9 +5,10 @@ import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { Latex } from "@/components/Latex";
 import { useAntiCheat } from "@/hooks/useAntiCheat";
-import { startQuickBattle, submitBattle, getQuickLeaderboard } from "@/lib/battle.functions";
+import { useHideAds } from "@/lib/useHideAds";
+import { startQuickBattle, extendQuickBattle, submitBattle, getQuickLeaderboard } from "@/lib/battle.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { Timer, Zap, Trophy } from "lucide-react";
+import { Timer, Zap, Trophy, Loader2 } from "lucide-react";
 import type { QuizQuestion } from "@/lib/learning.functions";
 
 export const Route = createFileRoute("/_authenticated/battle/")({
@@ -28,8 +29,10 @@ type Phase = "idle" | "countdown" | "playing" | "done";
 
 function QuickBattle() {
   useAntiCheat(true);
+  useHideAds();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const QUICK_TOTAL = 10;
   const [phase, setPhase] = useState<Phase>("idle");
   const [countdown, setCountdown] = useState(3);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -108,9 +111,22 @@ function QuickBattle() {
     const next = { ...answers };
     if (letter) next[q.id] = letter;
     setAnswers(next);
-    if (idx + 1 >= questions.length) submit.mutate(next);
+    if (idx + 1 >= QUICK_TOTAL) submit.mutate(next);
     else setIdx((i) => i + 1);
   }
+
+  // Progressive prefetch of the next 5 while player is answering the first 5
+  const fetchingRef = useRef(false);
+  useEffect(() => {
+    if (phase !== "playing" || !sessionId) return;
+    if (questions.length >= QUICK_TOTAL || fetchingRef.current) return;
+    if (idx < questions.length - 2) return;
+    fetchingRef.current = true;
+    extendQuickBattle({ data: { id: sessionId } })
+      .then((r) => { if (r.questions?.length) setQuestions(r.questions); })
+      .catch((e: Error) => toast.error(e.message || "Failed to load more"))
+      .finally(() => { fetchingRef.current = false; });
+  }, [idx, questions.length, phase, sessionId]);
 
   const cur = questions[idx];
   const correctCount = useMemo(
@@ -170,11 +186,22 @@ function QuickBattle() {
     );
   }
 
+  if (phase === "playing" && !cur) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="battle-glass p-6 text-center text-sm text-white/70">
+          <Loader2 className="mx-auto h-6 w-6 animate-spin text-cyan-300" />
+          <div className="mt-3">Loading next questions…</div>
+        </div>
+      </div>
+    );
+  }
+
   if (phase === "playing" && cur) {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between text-sm text-white/70">
-          <span>Q {idx + 1} / {questions.length}</span>
+          <span>Q {idx + 1} / {QUICK_TOTAL}</span>
           <span className="inline-flex items-center gap-1.5">
             <Timer className="h-4 w-4 text-cyan-300" />
             <span className={tick <= 5 ? "text-red-400" : "text-white"}>{tick}s</span>
@@ -204,7 +231,7 @@ function QuickBattle() {
       <div className="battle-glass battle-slide-up p-6 text-center">
         <div className="battle-title text-3xl">Victory</div>
         <div className="mt-3 text-5xl font-black text-cyan-300">{correctCount * 10}</div>
-        <div className="mt-1 text-sm text-white/70">{correctCount} / {questions.length} correct</div>
+        <div className="mt-1 text-sm text-white/70">{correctCount} / {QUICK_TOTAL} correct</div>
         <div className="mt-5 flex justify-center gap-2">
           <button className="battle-btn" onClick={() => start.mutate()}>Play again</button>
           <button

@@ -1,14 +1,16 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   getQuizSession,
   submitQuizSession,
   heartbeatSession,
+  extendQuizSession,
   type QuizQuestion,
 } from "@/lib/learning.functions";
 import { useQuizStore, type Answer } from "@/store/quiz";
+import { useHideAds } from "@/lib/useHideAds";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Latex } from "@/components/Latex";
@@ -29,8 +31,10 @@ export const Route = createFileRoute("/_authenticated/quiz/$sessionId")({
 });
 
 function QuizPage() {
+  useHideAds();
   const { sessionId } = Route.useParams();
   const nav = useNavigate();
+  const qc = useQueryClient();
 
   const { data: session, isLoading } = useQuery({
     queryKey: ["quiz-session", sessionId],
@@ -39,6 +43,7 @@ function QuizPage() {
   });
 
   const questions = (session?.questions as QuizQuestion[] | undefined) ?? [];
+  const targetCount = session?.question_count ?? questions.length;
   const timerEnabled = !!session?.timer_enabled;
   const duration = session?.duration_seconds ?? null;
   const startTimeMs = session?.start_time ? new Date(session.start_time).getTime() : Date.now();
@@ -86,6 +91,21 @@ function QuizPage() {
   const idx = state?.currentIndex ?? 0;
   const answers = state?.answers ?? {};
   const q = questions[idx];
+  const needsMore = !alreadySubmitted && questions.length < targetCount;
+  const fetchingRef = useRef(false);
+
+  // Progressive prefetch: when we near the end of loaded questions, fetch next batch.
+  useEffect(() => {
+    if (!needsMore || fetchingRef.current) return;
+    if (idx < questions.length - 2 && questions.length > 0) return;
+    fetchingRef.current = true;
+    extendQuizSession({ data: { id: sessionId } })
+      .then((r) => {
+        if (r.added > 0) qc.invalidateQueries({ queryKey: ["quiz-session", sessionId] });
+      })
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to load more"))
+      .finally(() => { fetchingRef.current = false; });
+  }, [idx, questions.length, needsMore, sessionId, qc]);
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -145,7 +165,7 @@ function QuizPage() {
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div className="text-xs font-medium text-muted-foreground">
-            Q {idx + 1} / {questions.length}
+            Q {idx + 1} / {targetCount}
           </div>
           {remaining != null ? (
             <div className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
@@ -156,7 +176,7 @@ function QuizPage() {
             <div className="w-16" />
           )}
         </div>
-        <Progress value={((idx + 1) / questions.length) * 100} className="h-1 rounded-none" />
+        <Progress value={((idx + 1) / targetCount) * 100} className="h-1 rounded-none" />
       </header>
 
       <section className="mx-auto w-full max-w-3xl flex-1 px-5 py-6">
@@ -222,11 +242,18 @@ function QuizPage() {
             <ChevronLeft className="mr-1 h-4 w-4" /> Prev
           </Button>
           <div className="text-xs text-muted-foreground">
-            {answeredCount} / {questions.length} answered
+            {answeredCount} / {targetCount} answered
           </div>
-          {idx < questions.length - 1 ? (
-            <Button onClick={() => setIndex(sessionId, idx + 1)}>
-              Next <ChevronRight className="ml-1 h-4 w-4" />
+          {idx < targetCount - 1 ? (
+            <Button
+              onClick={() => setIndex(sessionId, idx + 1)}
+              disabled={idx + 1 >= questions.length}
+            >
+              {idx + 1 >= questions.length ? (
+                <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Loading</>
+              ) : (
+                <>Next <ChevronRight className="ml-1 h-4 w-4" /></>
+              )}
             </Button>
           ) : (
             <Button onClick={() => handleSubmit(false)} disabled={submitting}>
