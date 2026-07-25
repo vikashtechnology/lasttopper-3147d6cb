@@ -151,14 +151,14 @@ function WalletPage() {
 
         <div className="mt-4 flex flex-wrap gap-2">
           <button
-            className="rounded-xl border border-cyan-400/60 bg-cyan-400/10 px-4 py-2 text-sm text-cyan-100 inline-flex items-center gap-1.5"
-            onClick={() => setShowTopup((v) => !v)}
+            className="rounded-xl border border-cyan-500/60 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-700 dark:text-cyan-100 inline-flex items-center gap-1.5"
+            onClick={() => setShowTopup(true)}
           >
             <Plus className="h-4 w-4" /> Add money
           </button>
           <button
-            className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/80 inline-flex items-center gap-1.5"
-            onClick={() => setShowForm((v) => !v)}
+            className="rounded-xl border border-border bg-background/60 px-4 py-2 text-sm text-foreground inline-flex items-center gap-1.5"
+            onClick={() => setShowForm(true)}
           >
             <ArrowDownToLine className="h-4 w-4" /> Withdraw
           </button>
