@@ -29,17 +29,23 @@ function BattleLayout() {
   const navigate = useNavigate();
   return (
     <div className="battle-theme battle-noselect">
-      <header className="sticky top-0 z-20 border-b border-white/5 bg-black/40 backdrop-blur-lg">
+      <header
+        className="sticky top-0 z-20 backdrop-blur-lg"
+        style={{
+          background: "var(--battle-header-bg)",
+          borderBottom: "1px solid var(--battle-header-border)",
+        }}
+      >
         <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3">
           <button
             onClick={() => navigate({ to: "/home" })}
-            className="rounded-full p-2 text-white/70 hover:text-white"
+            className="rounded-full p-2 opacity-70 hover:opacity-100"
             aria-label="Back to home"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div className="flex items-center gap-2">
-            <Swords className="h-5 w-5 text-cyan-300" />
+            <Swords className="h-5 w-5" style={{ color: "var(--neon-cyan)" }} />
             <span className="battle-title text-base font-bold">Arena</span>
           </div>
         </div>
