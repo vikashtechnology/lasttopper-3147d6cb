@@ -119,6 +119,25 @@ async function generateQuickBatch(profession: string, count: number, batchIdx: n
 }
 
 
+async function generateWithFallback(
+  profession: string,
+  count: number,
+  batchIdx: number,
+  mode: "quick" | "1v1",
+): Promise<QuizQuestion[]> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { saveToBank, sampleFromBank } = await import("@/lib/question-bank.server");
+  try {
+    const qs = await generateQuickBatch(profession, count, batchIdx, mode);
+    void saveToBank(supabaseAdmin, profession, qs, null);
+    return qs;
+  } catch (e) {
+    const bank = await sampleFromBank(supabaseAdmin, profession, count);
+    if (bank.length >= Math.min(count, 3)) return bank;
+    throw e;
+  }
+}
+
 export const startQuickBattle = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -126,7 +145,7 @@ export const startQuickBattle = createServerFn({ method: "POST" })
       .from("users").select("profession").eq("id", context.userId).maybeSingle();
     const profession = profile?.profession;
     if (!profession) throw new Error("Complete onboarding first");
-    const first = await generateQuickBatch(profession, QUICK_BATCH, 0);
+    const first = await generateWithFallback(profession, QUICK_BATCH, 0, "quick");
     const { data: row, error } = await context.supabase
       .from("battle_sessions")
       .insert({ user_id: context.userId, mode: "quick", profession, questions: first as unknown as never })
@@ -142,7 +161,7 @@ export const start1v1Battle = createServerFn({ method: "POST" })
       .from("users").select("profession").eq("id", context.userId).maybeSingle();
     const profession = profile?.profession;
     if (!profession) throw new Error("Complete onboarding first");
-    const first = await generateQuickBatch(profession, QUICK_BATCH, 0, "1v1");
+    const first = await generateWithFallback(profession, QUICK_BATCH, 0, "1v1");
     const { data: row, error } = await context.supabase
       .from("battle_sessions")
       .insert({ user_id: context.userId, mode: "1v1", profession, questions: first as unknown as never })
@@ -165,13 +184,14 @@ export const extendQuickBattle = createServerFn({ method: "POST" })
     if (cur.length >= QUICK_TOTAL) return { done: true as const, questions: cur };
     const n = Math.min(QUICK_BATCH, QUICK_TOTAL - cur.length);
     const batchIdx = Math.floor(cur.length / QUICK_BATCH);
-    const more = await generateQuickBatch(s.profession as string, n, batchIdx, mode === "1v1" ? "1v1" : "quick");
+    const more = await generateWithFallback(s.profession as string, n, batchIdx, mode === "1v1" ? "1v1" : "quick");
     const next = [...cur, ...more];
     await context.supabase.from("battle_sessions")
       .update({ questions: next as unknown as never })
       .eq("id", data.id).eq("user_id", context.userId);
     return { done: next.length >= QUICK_TOTAL, questions: next };
   });
+
 
 const submitBattleSchema = z.object({
   id: z.string().uuid(),
