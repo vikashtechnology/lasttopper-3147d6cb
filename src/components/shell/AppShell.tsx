@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Home as HomeIcon,
   BookOpen,
+  BookMarked,
   AlertOctagon,
   BarChart3,
   History,
