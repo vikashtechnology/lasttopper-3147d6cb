@@ -40,7 +40,7 @@ export const getRazorpayKeyId = createServerFn({ method: "GET" }).handler(async 
 });
 
 const createOrderSchema = z.object({
-  purpose: z.enum(["pro", "pro_yearly", "wallet_topup"]),
+  purpose: z.enum(["pro", "pro_yearly", "pro_weekly", "wallet_topup"]),
   amount_inr: z.number().positive().optional(),
 });
 
