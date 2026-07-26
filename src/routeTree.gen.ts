@@ -38,6 +38,7 @@ import { Route as AuthenticatedBattleWalletRouteImport } from './routes/_authent
 import { Route as AuthenticatedBattleMegaRouteImport } from './routes/_authenticated/battle.mega'
 import { Route as AuthenticatedBattleLeaderboardRouteImport } from './routes/_authenticated/battle.leaderboard'
 import { Route as AuthenticatedBattleHistoryRouteImport } from './routes/_authenticated/battle.history'
+import { Route as AuthenticatedBattle1v1RouteImport } from './routes/_authenticated/battle.1v1'
 import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_authenticated/admin.moderation'
@@ -207,6 +208,11 @@ const AuthenticatedBattleHistoryRoute =
     path: '/history',
     getParentRoute: () => AuthenticatedBattleRoute,
   } as any)
+const AuthenticatedBattle1v1Route = AuthenticatedBattle1v1RouteImport.update({
+  id: '/1v1',
+  path: '/1v1',
+  getParentRoute: () => AuthenticatedBattleRoute,
+} as any)
 const AuthenticatedAdminWithdrawalsRoute =
   AuthenticatedAdminWithdrawalsRouteImport.update({
     id: '/withdrawals',
@@ -297,6 +303,7 @@ export interface FileRoutesByFullPath {
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
+  '/battle/1v1': typeof AuthenticatedBattle1v1Route
   '/battle/history': typeof AuthenticatedBattleHistoryRoute
   '/battle/leaderboard': typeof AuthenticatedBattleLeaderboardRoute
   '/battle/mega': typeof AuthenticatedBattleMegaRoute
@@ -336,6 +343,7 @@ export interface FileRoutesByTo {
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
+  '/battle/1v1': typeof AuthenticatedBattle1v1Route
   '/battle/history': typeof AuthenticatedBattleHistoryRoute
   '/battle/leaderboard': typeof AuthenticatedBattleLeaderboardRoute
   '/battle/mega': typeof AuthenticatedBattleMegaRoute
@@ -380,6 +388,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
+  '/_authenticated/battle/1v1': typeof AuthenticatedBattle1v1Route
   '/_authenticated/battle/history': typeof AuthenticatedBattleHistoryRoute
   '/_authenticated/battle/leaderboard': typeof AuthenticatedBattleLeaderboardRoute
   '/_authenticated/battle/mega': typeof AuthenticatedBattleMegaRoute
@@ -424,6 +433,7 @@ export interface FileRouteTypes {
     | '/admin/moderation'
     | '/admin/users'
     | '/admin/withdrawals'
+    | '/battle/1v1'
     | '/battle/history'
     | '/battle/leaderboard'
     | '/battle/mega'
@@ -463,6 +473,7 @@ export interface FileRouteTypes {
     | '/admin/moderation'
     | '/admin/users'
     | '/admin/withdrawals'
+    | '/battle/1v1'
     | '/battle/history'
     | '/battle/leaderboard'
     | '/battle/mega'
@@ -506,6 +517,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/moderation'
     | '/_authenticated/admin/users'
     | '/_authenticated/admin/withdrawals'
+    | '/_authenticated/battle/1v1'
     | '/_authenticated/battle/history'
     | '/_authenticated/battle/leaderboard'
     | '/_authenticated/battle/mega'
@@ -748,6 +760,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBattleHistoryRouteImport
       parentRoute: typeof AuthenticatedBattleRoute
     }
+    '/_authenticated/battle/1v1': {
+      id: '/_authenticated/battle/1v1'
+      path: '/1v1'
+      fullPath: '/battle/1v1'
+      preLoaderRoute: typeof AuthenticatedBattle1v1RouteImport
+      parentRoute: typeof AuthenticatedBattleRoute
+    }
     '/_authenticated/admin/withdrawals': {
       id: '/_authenticated/admin/withdrawals'
       path: '/withdrawals'
@@ -853,6 +872,7 @@ const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
 interface AuthenticatedBattleRouteChildren {
+  AuthenticatedBattle1v1Route: typeof AuthenticatedBattle1v1Route
   AuthenticatedBattleHistoryRoute: typeof AuthenticatedBattleHistoryRoute
   AuthenticatedBattleLeaderboardRoute: typeof AuthenticatedBattleLeaderboardRoute
   AuthenticatedBattleMegaRoute: typeof AuthenticatedBattleMegaRoute
@@ -862,6 +882,7 @@ interface AuthenticatedBattleRouteChildren {
 }
 
 const AuthenticatedBattleRouteChildren: AuthenticatedBattleRouteChildren = {
+  AuthenticatedBattle1v1Route: AuthenticatedBattle1v1Route,
   AuthenticatedBattleHistoryRoute: AuthenticatedBattleHistoryRoute,
   AuthenticatedBattleLeaderboardRoute: AuthenticatedBattleLeaderboardRoute,
   AuthenticatedBattleMegaRoute: AuthenticatedBattleMegaRoute,
@@ -955,3 +976,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
