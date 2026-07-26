@@ -366,16 +366,18 @@ function OneVOne() {
 function ArenaShell({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="-mx-4 -my-6 min-h-[calc(100vh-8rem)] px-4 py-6"
+      className="battle-live arena-live-bg -mx-4 -my-6 min-h-[calc(100vh-8rem)] px-4 py-6"
       style={{
         background:
-          "radial-gradient(1200px 500px at 50% -20%, rgba(244,63,94,0.18), transparent 60%), radial-gradient(900px 500px at 20% 110%, rgba(34,211,238,0.15), transparent 60%), #060314",
+          "radial-gradient(1200px 500px at 50% -20%, rgba(244,63,94,0.22), transparent 60%), radial-gradient(900px 500px at 20% 110%, rgba(34,211,238,0.18), transparent 60%), #060314",
       }}
     >
+      <div className="arena-scanline" />
       {children}
     </div>
   );
 }
+
 
 function CenterPanel({ children }: { children: React.ReactNode }) {
   return (

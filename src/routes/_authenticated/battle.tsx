@@ -47,6 +47,9 @@ function BattleLayout() {
           <div className="flex items-center gap-2">
             <Swords className="h-5 w-5" style={{ color: "var(--neon-cyan)" }} />
             <span className="battle-title text-base font-bold">Arena</span>
+            <span className="ml-2 inline-flex items-center gap-1.5 rounded-full border border-rose-400/30 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold tracking-widest text-rose-400">
+              <span className="arena-live-dot" /> LIVE
+            </span>
           </div>
         </div>
         <nav className="mx-auto flex max-w-4xl gap-1 overflow-x-auto px-4 pb-3">
@@ -58,9 +61,11 @@ function BattleLayout() {
           <TabLink to="/battle/history" icon={<History className="h-3.5 w-3.5" />} label="History" />
         </nav>
       </header>
-      <main className="mx-auto max-w-4xl px-4 py-6">
+      <main className="arena-live-bg relative mx-auto max-w-4xl px-4 py-6">
+        <div className="arena-scanline" />
         <Outlet />
       </main>
+
     </div>
   );
 }
