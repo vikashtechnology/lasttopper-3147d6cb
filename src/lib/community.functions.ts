@@ -91,7 +91,7 @@ export const getForumPost = createServerFn({ method: "GET" })
     ]);
     const replyUserIds = Array.from(new Set((replies ?? []).map((r) => r.user_id)));
     const replyAuthors = replyUserIds.length
-      ? (await context.supabase.from("users").select("id, full_name, avatar_url, reputation").in("id", replyUserIds)).data ?? []
+      ? (await context.supabase.from("public_profiles").select("id, full_name, avatar_url, reputation").in("id", replyUserIds)).data ?? []
       : [];
     const rm = new Map(replyAuthors.map((a) => [a.id, a]));
     // increment view count (fire and forget)
