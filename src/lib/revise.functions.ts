@@ -103,7 +103,7 @@ async function firecrawlReferences(topic: string, chapter: string): Promise<Revi
 export const getChapterTopics = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ chapter_id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }): Promise<{ chapter: { id: string; name: string; class_level: number } | null; topics: ReviseTopic[] }> => {
+  .handler(async ({ data, context }): Promise<{ chapter: { id: string; name: string; class_level: number | null } | null; topics: ReviseTopic[] }> => {
     const { data: chapter } = await context.supabase
       .from("chapters")
       .select("id, name, class_level, subject_id")
