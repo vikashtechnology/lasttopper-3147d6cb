@@ -123,7 +123,7 @@ export const start1v1Battle = createServerFn({ method: "POST" })
       .from("users").select("profession").eq("id", context.userId).maybeSingle();
     const profession = profile?.profession;
     if (!profession) throw new Error("Complete onboarding first");
-    const first = await generateQuickBatch(profession, QUICK_BATCH, 0);
+    const first = await generateQuickBatch(profession, QUICK_BATCH, 0, "1v1");
     const { data: row, error } = await context.supabase
       .from("battle_sessions")
       .insert({ user_id: context.userId, mode: "1v1", profession, questions: first as unknown as never })
