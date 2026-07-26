@@ -1,6 +1,12 @@
 // This file is integration-managed. It gates the /_authenticated subtree.
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { useAppNotifications } from "@/lib/useAppNotifications";
+
+function AuthedLayout() {
+  useAppNotifications();
+  return <Outlet />;
+}
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -11,5 +17,6 @@ export const Route = createFileRoute("/_authenticated")({
     }
     return { user: data.user };
   },
-  component: () => <Outlet />,
+  component: AuthedLayout,
 });
+
