@@ -107,7 +107,7 @@ function MegaTest() {
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2">
-          {!entry?.paid && !isDone && (
+          {!entry?.paid && !isDone && !isLive && (
             <button
               className="battle-btn inline-flex items-center gap-2"
               disabled={join.isPending}
@@ -117,9 +117,15 @@ function MegaTest() {
               {join.isPending ? "Joining…" : (
                 <span className="inline-flex items-center gap-1">Join for <TopperCoin size={14} />{Number(test.entry_fee)} TC</span>
               )}
-
             </button>
           )}
+          {!entry?.paid && isLive && (
+            <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/50 bg-emerald-400/10 px-3 py-2 text-sm font-semibold uppercase tracking-widest text-emerald-200">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+              Test is live
+            </div>
+          )}
+
           {entry?.paid && !entry.session_id && isLive && (
             <button className="battle-btn" disabled={start.isPending} onClick={() => start.mutate(test.id)}>
               {start.isPending ? "Preparing…" : "Enter test"}
