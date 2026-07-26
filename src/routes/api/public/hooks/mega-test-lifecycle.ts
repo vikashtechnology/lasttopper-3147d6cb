@@ -69,7 +69,15 @@ export const Route = createFileRoute("/api/public/hooks/mega-test-lifecycle")({
                 note: `Mega Test rank #${rank}`, reference_id: t.id,
               });
             }
+            if (rank === 1) {
+              // Grant 1 week of Pro to the winner
+              const { data: u2 } = await supabaseAdmin.from("users").select("pro_until").eq("id", e.user_id).maybeSingle();
+              const base = u2?.pro_until && new Date(u2.pro_until) > new Date() ? new Date(u2.pro_until) : new Date();
+              const until = new Date(base.getTime() + 7 * 24 * 60 * 60 * 1000);
+              await supabaseAdmin.from("users").update({ is_pro: true, pro_since: new Date().toISOString(), pro_until: until.toISOString() }).eq("id", e.user_id);
+            }
           }
+
           await supabaseAdmin.from("mega_tests").update({ status: "completed" }).eq("id", t.id);
           results.push({ id: t.id, action: "completed" });
         }
