@@ -5,14 +5,14 @@ import type { QuizQuestion } from "@/lib/learning.functions";
 
 /* ----------------------------- AI generation ----------------------------- */
 
-async function callGemini(prompt: string, count: number): Promise<QuizQuestion[]> {
+async function callGemini(prompt: string, count: number, model = "google/gemini-3.6-flash"): Promise<QuizQuestion[]> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("Missing LOVABLE_API_KEY");
   const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
     body: JSON.stringify({
-      model: "google/gemini-3.6-flash",
+      model,
       messages: [
         { role: "system", content: "You are an NCERT-only exam question generator. Only use content from official NCERT textbooks (Class 11 & 12). Output STRICT JSON only." },
         { role: "user", content: prompt },
