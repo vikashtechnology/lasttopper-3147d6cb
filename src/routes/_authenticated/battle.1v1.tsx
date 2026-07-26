@@ -7,7 +7,7 @@ import { Latex } from "@/components/Latex";
 import { useAntiCheat } from "@/hooks/useAntiCheat";
 import { useHideAds } from "@/lib/useHideAds";
 import { start1v1Battle, extendQuickBattle, submitBattle } from "@/lib/battle.functions";
-import { Timer, Users, Loader2, Swords } from "lucide-react";
+import { Timer, Users, Loader2, Swords, Flame } from "lucide-react";
 import type { QuizQuestion } from "@/lib/learning.functions";
 import { useUserStore } from "@/store/user";
 
@@ -15,9 +15,9 @@ export const Route = createFileRoute("/_authenticated/battle/1v1")({
   head: () => ({
     meta: [
       { title: "1v1 Battle — Last Topper" },
-      { name: "description", content: "Head-to-head 10-question duel. Beat your rival to the top." },
-      { property: "og:title", content: "1v1 Battle" },
-      { property: "og:description", content: "10q · 30s each · beat your rival." },
+      { name: "description", content: "Head-to-head 10-question live duel. 1 minute per question." },
+      { property: "og:title", content: "1v1 Live Battle" },
+      { property: "og:description", content: "10q · 60s each · beat your rival." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -35,6 +35,12 @@ const BOT_NAMES = [
 
 type Phase = "idle" | "matching" | "countdown" | "playing" | "done";
 const TOTAL = 10;
+const PER_Q_SECONDS = 60;
+
+function initials(name: string) {
+  const p = name.trim().split(/\s+/);
+  return ((p[0]?.[0] ?? "") + (p[1]?.[0] ?? "")).toUpperCase() || "P";
+}
 
 function OneVOne() {
   useAntiCheat(true);
@@ -49,38 +55,38 @@ function OneVOne() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, "A" | "B" | "C" | "D">>({});
-  const [tick, setTick] = useState(30);
+  const [selected, setSelected] = useState<"A" | "B" | "C" | "D" | null>(null);
+  const [tick, setTick] = useState(PER_Q_SECONDS);
   const startRef = useRef<number>(0);
 
-  // Bot state
   const [bot, setBot] = useState<{
     name: string;
-    // per-question: will_be_correct, respond_after_seconds
+    rank: number;
     plan: Array<{ correct: boolean; delay: number }>;
   } | null>(null);
   const [botIdx, setBotIdx] = useState(0);
   const [botCorrect, setBotCorrect] = useState(0);
+
+  const myRank = useMemo(() => 100 + Math.floor(Math.random() * 400), []);
 
   const start = useMutation({
     mutationFn: () => start1v1Battle(),
     onSuccess: (res) => {
       setQuestions(res.questions);
       setSessionId(res.id);
-      setAnswers({}); setIdx(0);
-      // Build bot plan
+      setAnswers({}); setIdx(0); setSelected(null);
       const name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
-      const correctCount = 5 + Math.floor(Math.random() * 4); // 5..8
+      const correctCount = 5 + Math.floor(Math.random() * 4);
       const correctFlags = Array.from({ length: TOTAL }, (_, i) => i < correctCount);
-      // shuffle
       for (let i = correctFlags.length - 1; i > 0; i -= 1) {
         const j = Math.floor(Math.random() * (i + 1));
         [correctFlags[i], correctFlags[j]] = [correctFlags[j], correctFlags[i]];
       }
       const plan = correctFlags.map((c) => ({
         correct: c,
-        delay: 6 + Math.floor(Math.random() * 20), // 6..25s per q
+        delay: 15 + Math.floor(Math.random() * 40), // 15..55s
       }));
-      setBot({ name, plan });
+      setBot({ name, rank: 80 + Math.floor(Math.random() * 400), plan });
       setBotIdx(0); setBotCorrect(0);
       setPhase("matching");
     },
@@ -95,14 +101,11 @@ function OneVOne() {
     onSuccess: () => {
       setPhase("done");
       const myCorrect = questions.reduce((n, q) => (answers[q.id] === q.correct ? n + 1 : n), 0);
-      if (myCorrect > botCorrect) {
-        confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } });
-      }
+      if (myCorrect > botCorrect) confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  // "Matching" spinner then countdown
   useEffect(() => {
     if (phase !== "matching") return;
     const d = setInterval(() => setMatchDots((n) => (n + 1) % 4), 400);
@@ -114,17 +117,17 @@ function OneVOne() {
     if (phase !== "countdown") return;
     if (countdown <= 0) {
       startRef.current = Date.now();
-      setPhase("playing"); setTick(30);
+      setPhase("playing"); setTick(PER_Q_SECONDS);
       return;
     }
     const t = setTimeout(() => setCountdown((c) => c - 1), 800);
     return () => clearTimeout(t);
   }, [phase, countdown]);
 
-  // Per-question player timer
   useEffect(() => {
     if (phase !== "playing") return;
-    setTick(30);
+    setTick(PER_Q_SECONDS);
+    setSelected(null);
     const t = setInterval(() => {
       setTick((v) => {
         if (v <= 1) { clearInterval(t); advance(null); return 0; }
@@ -135,7 +138,6 @@ function OneVOne() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx, phase]);
 
-  // Bot's independent per-question timer
   useEffect(() => {
     if (phase !== "playing" || !bot) return;
     if (botIdx >= TOTAL) return;
@@ -143,7 +145,7 @@ function OneVOne() {
     const t = setTimeout(() => {
       if (step.correct) setBotCorrect((n) => n + 1);
       setBotIdx((n) => n + 1);
-    }, Math.min(step.delay, 30) * 1000);
+    }, Math.min(step.delay, PER_Q_SECONDS) * 1000);
     return () => clearTimeout(t);
   }, [phase, bot, botIdx]);
 
@@ -157,7 +159,12 @@ function OneVOne() {
     else setIdx((i) => i + 1);
   }
 
-  // Progressive prefetch
+  function pick(letter: "A" | "B" | "C" | "D") {
+    if (selected) return;
+    setSelected(letter);
+    setTimeout(() => advance(letter), 350);
+  }
+
   const fetchingRef = useRef(false);
   useEffect(() => {
     if (phase !== "playing" || !sessionId) return;
@@ -175,189 +182,254 @@ function OneVOne() {
     () => questions.reduce((n, q) => (answers[q.id] === q.correct ? n + 1 : n), 0),
     [answers, questions],
   );
-  const myName = profile?.full_name?.split(" ")[0] ?? "You";
+  const myName = profile?.full_name?.split(" ").slice(0, 2).join(" ") ?? "You";
+  const streak = Number(profile?.streak ?? 0);
+
+  // total elapsed for header clock (mm:ss)
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (phase !== "playing") return;
+    const t = setInterval(() => setElapsed(Math.floor((Date.now() - startRef.current) / 1000)), 1000);
+    return () => clearInterval(t);
+  }, [phase]);
+  const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
+  const ss = String(elapsed % 60).padStart(2, "0");
 
   if (start.isPending) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="battle-glass battle-slide-up p-8 text-center">
-          <Loader2 className="mx-auto h-8 w-8 animate-spin" style={{ color: "var(--neon-cyan)" }} />
-          <div className="battle-title mt-4 text-2xl">Preparing arena…</div>
-        </div>
-      </div>
-    );
+    return <ArenaShell><CenterPanel><Loader2 className="mx-auto h-8 w-8 animate-spin text-cyan-400" /><div className="mt-4 text-2xl font-bold text-white">Preparing arena…</div></CenterPanel></ArenaShell>;
   }
 
   if (phase === "idle") {
     return (
-      <div className="space-y-6">
-        <div className="battle-glass battle-slide-up p-6">
-          <div className="flex items-center gap-2">
-            <Swords className="h-5 w-5" style={{ color: "var(--neon-cyan)" }} />
-            <h1 className="battle-title text-2xl">1v1 Duel</h1>
+      <ArenaShell>
+        <div className="mx-auto max-w-md space-y-5">
+          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#1a0e1e] to-[#0d0a1a] p-6 shadow-[0_0_40px_rgba(236,72,153,0.15)]">
+            <div className="flex items-center gap-2 text-rose-400">
+              <Swords className="h-5 w-5" />
+              <h1 className="text-xl font-black tracking-wide">1v1 LIVE BATTLES</h1>
+            </div>
+            <p className="mt-3 text-sm text-white/70">
+              Challenge any student or get matched randomly. Answer questions faster and more accurately to win XP and climb ranks.
+            </p>
+            <ul className="mt-4 space-y-1.5 text-sm text-white/60">
+              <li>• 10 NCERT questions · <span className="text-cyan-300">60 seconds each</span></li>
+              <li>• Live head-to-head — most correct wins</li>
+              <li>• Bot rival steps in if no human is around</li>
+            </ul>
+            <button
+              className="mt-5 w-full rounded-xl bg-gradient-to-r from-rose-500 to-fuchsia-600 py-3 text-sm font-bold text-white shadow-[0_0_30px_rgba(244,63,94,0.4)] transition-transform hover:scale-[1.02]"
+              onClick={() => start.mutate()}
+            >
+              <Users className="mr-2 inline h-4 w-4" /> Find Rival
+            </button>
           </div>
-          <p className="mt-2 text-sm opacity-70">
-            10 NCERT questions · 30 seconds each · beat your rival live.
-          </p>
-          <ul className="mt-3 space-y-1 text-sm opacity-80">
-            <li>• Matched against another aspirant instantly.</li>
-            <li>• Race side-by-side — most correct wins.</li>
-            <li>• If no human is around, a rival bot steps in.</li>
-          </ul>
-          <button
-            className="battle-btn mt-5 inline-flex items-center gap-2"
-            onClick={() => start.mutate()}
-          >
-            <Users className="h-4 w-4" />
-            Find Rival
-          </button>
         </div>
-      </div>
+      </ArenaShell>
     );
   }
 
   if (phase === "matching") {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="battle-glass battle-slide-up p-8 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl" style={{ background: "rgba(34,211,238,0.1)" }}>
-            <Users className="h-8 w-8 animate-pulse" style={{ color: "var(--neon-cyan)" }} />
+      <ArenaShell>
+        <CenterPanel>
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-400/10">
+            <Users className="h-8 w-8 animate-pulse text-cyan-400" />
           </div>
-          <div className="battle-title mt-4 text-2xl">
-            Finding rival{".".repeat(matchDots)}
-          </div>
-          <p className="mt-2 text-sm opacity-60">Scanning live players across India</p>
-        </div>
-      </div>
+          <div className="mt-4 text-2xl font-bold text-white">Finding rival{".".repeat(matchDots)}</div>
+          <p className="mt-2 text-sm text-white/50">Scanning live players across India</p>
+        </CenterPanel>
+      </ArenaShell>
     );
   }
 
   if (phase === "countdown") {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-center">
-          {bot && (
-            <div className="mb-6 flex items-center justify-center gap-4 text-sm">
-              <span className="font-semibold">{myName}</span>
-              <span className="battle-title text-lg opacity-60">VS</span>
-              <span className="font-semibold">{bot.name}</span>
-            </div>
-          )}
-          <div className="battle-title battle-pulse text-7xl font-black">
+      <ArenaShell>
+        <div className="flex min-h-[60vh] flex-col items-center justify-center">
+          <VsRow myName={myName} myRank={myRank} botName={bot?.name ?? "Rival"} botRank={bot?.rank ?? 0} />
+          <div className="mt-8 animate-pulse text-7xl font-black text-rose-500 drop-shadow-[0_0_20px_rgba(244,63,94,0.6)]">
             {countdown > 0 ? countdown : "FIGHT!"}
           </div>
         </div>
-      </div>
+      </ArenaShell>
     );
   }
 
   if (phase === "playing" && !cur) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="battle-glass p-6 text-center text-sm opacity-70">
-          <Loader2 className="mx-auto h-6 w-6 animate-spin" style={{ color: "var(--neon-cyan)" }} />
-          <div className="mt-3">Loading next questions…</div>
-        </div>
-      </div>
-    );
+    return <ArenaShell><CenterPanel><Loader2 className="mx-auto h-6 w-6 animate-spin text-cyan-400" /><div className="mt-3 text-sm text-white/60">Loading next questions…</div></CenterPanel></ArenaShell>;
   }
 
   if (phase === "playing" && cur) {
+    const subjectLabel = ((profile?.profession ?? "").toString().toUpperCase() || "MCQ") + " • NCERT";
     return (
-      <div className="space-y-4">
-        {/* Rival HUD */}
-        <div className="battle-glass p-3">
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <PlayerBar name={myName} progress={idx} total={TOTAL} highlight />
-            <PlayerBar name={bot?.name ?? "Rival"} progress={botIdx} total={TOTAL} />
+      <ArenaShell>
+        <div className="mx-auto max-w-md space-y-4">
+          {/* battle card */}
+          <div className="rounded-3xl border border-white/10 bg-[#0d0a1a]/80 p-5 shadow-[0_0_50px_rgba(99,102,241,0.15)]">
+            {/* live header */}
+            <div className="flex items-center justify-between text-xs">
+              <span className="inline-flex items-center gap-1.5 font-bold text-rose-400">
+                <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-500" />
+                LIVE BATTLE
+              </span>
+              <span className="tabular-nums text-white/70">{mm}:{ss}</span>
+            </div>
+
+            {/* vs row */}
+            <div className="mt-4">
+              <VsRow myName={myName} myRank={myRank} botName={bot?.name ?? "Rival"} botRank={bot?.rank ?? 0} compact />
+            </div>
+
+            {/* Question box */}
+            <div className="mt-5 rounded-2xl border border-white/10 bg-black/40 p-4">
+              <div className="text-[10px] font-bold tracking-widest text-white/40">{subjectLabel}</div>
+              <div className="mt-2 text-[15px] leading-relaxed text-white"><Latex>{cur.question}</Latex></div>
+            </div>
+
+            {/* Options */}
+            <div className="mt-4 space-y-2.5">
+              {(["A", "B", "C", "D"] as const).map((l) => {
+                const active = selected === l;
+                return (
+                  <button
+                    key={l}
+                    onClick={() => pick(l)}
+                    disabled={!!selected}
+                    className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm transition-all ${
+                      active
+                        ? "border-cyan-400 bg-cyan-400/10 text-white shadow-[0_0_20px_rgba(34,211,238,0.35)]"
+                        : "border-white/10 bg-white/[0.03] text-white/85 hover:border-white/25"
+                    }`}
+                  >
+                    <span className="flex-1"><span className="mr-2 font-bold text-white/60">{l})</span><Latex>{cur.options[l]}</Latex></span>
+                    {active && <span className="ml-3 text-xs font-semibold text-emerald-400">✓ Selected</span>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* footer stats */}
+            <div className="mt-5 flex items-center justify-between text-xs">
+              <span className="text-white/60">Score: <span className="font-bold text-amber-400">{myCorrect * 100} XP</span></span>
+              <span className="inline-flex items-center gap-1 text-white/60">
+                <Timer className={`h-3.5 w-3.5 ${tick <= 10 ? "text-rose-400" : "text-cyan-400"}`} />
+                <span className={`tabular-nums font-bold ${tick <= 10 ? "text-rose-400" : "text-white/80"}`}>{tick}s</span>
+              </span>
+              <span className="inline-flex items-center gap-1 text-white/60">
+                Streak: <Flame className="h-3.5 w-3.5 text-orange-400" />
+                <span className="font-bold text-orange-300">{streak}</span>
+              </span>
+            </div>
+          </div>
+
+          {/* progress */}
+          <div className="flex items-center justify-between px-1 text-[11px] text-white/50">
+            <span>Q {idx + 1} / {TOTAL}</span>
+            <span>Rival: {botIdx}/{TOTAL}</span>
           </div>
         </div>
-
-        <div className="flex items-center justify-between text-sm opacity-80">
-          <span>Q {idx + 1} / {TOTAL}</span>
-          <span className="inline-flex items-center gap-1.5">
-            <Timer className="h-4 w-4" style={{ color: "var(--neon-cyan)" }} />
-            <span className={tick <= 5 ? "text-red-500 font-bold" : ""}>{tick}s</span>
-          </span>
-        </div>
-
-        <div className="battle-glass battle-slide-up p-5">
-          <div className="text-base leading-relaxed"><Latex>{cur.question}</Latex></div>
-          <div className="mt-5 grid gap-2">
-            {(["A", "B", "C", "D"] as const).map((l) => (
-              <button
-                key={l}
-                onClick={() => advance(l)}
-                className="flex items-start gap-3 rounded-xl border p-3 text-left transition-colors hover:border-cyan-400/60"
-                style={{ borderColor: "var(--battle-header-border)" }}
-              >
-                <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold" style={{ background: "rgba(255,255,255,0.08)" }}>{l}</span>
-                <span className="flex-1 text-sm"><Latex>{cur.options[l]}</Latex></span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      </ArenaShell>
     );
   }
 
   const won = myCorrect > botCorrect;
   const tie = myCorrect === botCorrect;
   return (
-    <div className="space-y-6">
-      <div className="battle-glass battle-slide-up p-6 text-center">
-        <div className="battle-title text-3xl">
-          {won ? "Victory 🏆" : tie ? "Draw 🤝" : "Defeat 💥"}
-        </div>
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <ResultCard name={myName} correct={myCorrect} total={TOTAL} winner={won} />
-          <ResultCard name={bot?.name ?? "Rival"} correct={botCorrect} total={TOTAL} winner={!won && !tie} />
-        </div>
-        <div className="mt-6 flex justify-center gap-2">
-          <button className="battle-btn" onClick={() => start.mutate()}>Rematch</button>
-          <button
-            className="rounded-xl border px-4 py-2 text-sm"
-            style={{ borderColor: "var(--battle-header-border)" }}
-            onClick={() => navigate({ to: "/battle" })}
-          >Back to Arena</button>
+    <ArenaShell>
+      <div className="mx-auto max-w-md space-y-5 text-center">
+        <div className="rounded-3xl border border-white/10 bg-[#0d0a1a]/80 p-6 shadow-[0_0_50px_rgba(244,63,94,0.2)]">
+          <div className={`text-3xl font-black ${won ? "text-emerald-400" : tie ? "text-amber-300" : "text-rose-400"}`}>
+            {won ? "Victory 🏆" : tie ? "Draw 🤝" : "Defeat 💥"}
+          </div>
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <ResultCard name={myName} correct={myCorrect} total={TOTAL} accent="cyan" winner={won} />
+            <ResultCard name={bot?.name ?? "Rival"} correct={botCorrect} total={TOTAL} accent="rose" winner={!won && !tie} />
+          </div>
+          <div className="mt-6 flex justify-center gap-2">
+            <button
+              className="rounded-xl bg-gradient-to-r from-rose-500 to-fuchsia-600 px-5 py-2 text-sm font-bold text-white shadow-[0_0_20px_rgba(244,63,94,0.4)]"
+              onClick={() => start.mutate()}
+            >Rematch</button>
+            <button
+              className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/80 hover:bg-white/5"
+              onClick={() => navigate({ to: "/battle" })}
+            >Back to Arena</button>
+          </div>
         </div>
       </div>
-    </div>
+    </ArenaShell>
   );
 }
 
-function PlayerBar({ name, progress, total, highlight }: { name: string; progress: number; total: number; highlight?: boolean }) {
-  const pct = Math.min(100, (progress / total) * 100);
-  return (
-    <div>
-      <div className="flex items-center justify-between">
-        <span className={`truncate font-semibold ${highlight ? "" : "opacity-80"}`}>{name}</span>
-        <span className="opacity-70">{progress}/{total}</span>
-      </div>
-      <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: "rgba(255,255,255,0.08)" }}>
-        <div
-          className="h-full transition-[width] duration-500"
-          style={{ width: `${pct}%`, background: highlight ? "var(--neon-cyan)" : "var(--neon-magenta, #ec4899)" }}
-        />
-      </div>
-    </div>
-  );
-}
+/* ------------------------ Themed shell & building blocks ------------------ */
 
-function ResultCard({ name, correct, total, winner }: { name: string; correct: number; total: number; winner: boolean }) {
+function ArenaShell({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className={`rounded-2xl border p-4 ${winner ? "border-cyan-400/60" : ""}`}
+      className="-mx-4 -my-6 min-h-[calc(100vh-8rem)] px-4 py-6"
       style={{
-        borderColor: winner ? undefined : "var(--battle-header-border)",
-        background: winner ? "rgba(34,211,238,0.08)" : "rgba(255,255,255,0.03)",
+        background:
+          "radial-gradient(1200px 500px at 50% -20%, rgba(244,63,94,0.18), transparent 60%), radial-gradient(900px 500px at 20% 110%, rgba(34,211,238,0.15), transparent 60%), #060314",
       }}
     >
-      <div className="truncate text-sm font-semibold">{name}</div>
-      <div className="mt-1 text-3xl font-black" style={{ color: winner ? "var(--neon-cyan)" : undefined }}>
-        {correct * 10}
+      {children}
+    </div>
+  );
+}
+
+function CenterPanel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <div className="rounded-2xl border border-white/10 bg-[#0d0a1a]/80 p-8 text-center shadow-[0_0_40px_rgba(99,102,241,0.15)]">
+        {children}
       </div>
-      <div className="text-xs opacity-70">{correct}/{total} correct</div>
+    </div>
+  );
+}
+
+function VsRow({
+  myName, myRank, botName, botRank, compact,
+}: { myName: string; myRank: number; botName: string; botRank: number; compact?: boolean }) {
+  const size = compact ? "h-16 w-16 text-base" : "h-20 w-20 text-lg";
+  return (
+    <div className="flex items-center justify-center gap-6">
+      <PlayerAvatar label="YOU" name={myName} rank={myRank} color="cyan" sizeClass={size} />
+      <div className="text-3xl font-black text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.6)]">VS</div>
+      <PlayerAvatar label="OPP" name={botName} rank={botRank} color="rose" sizeClass={size} />
+    </div>
+  );
+}
+
+function PlayerAvatar({
+  label, name, rank, color, sizeClass,
+}: { label: string; name: string; rank: number; color: "cyan" | "rose"; sizeClass: string }) {
+  const bg = color === "cyan"
+    ? "from-sky-400 to-blue-600 shadow-[0_0_30px_rgba(56,189,248,0.5)]"
+    : "from-rose-400 to-red-600 shadow-[0_0_30px_rgba(244,63,94,0.5)]";
+  const short = label === "YOU" ? "YOU" : initials(name);
+  return (
+    <div className="flex flex-col items-center">
+      <div className={`${sizeClass} rounded-full bg-gradient-to-br ${bg} flex items-center justify-center font-black text-white`}>
+        {short}
+      </div>
+      <div className="mt-2 max-w-[110px] truncate text-sm font-semibold text-white">{name}</div>
+      <div className="text-[11px] font-medium text-amber-400">Rank #{rank}</div>
+    </div>
+  );
+}
+
+function ResultCard({
+  name, correct, total, winner, accent,
+}: { name: string; correct: number; total: number; winner: boolean; accent: "cyan" | "rose" }) {
+  const border = winner
+    ? accent === "cyan" ? "border-cyan-400/70 shadow-[0_0_25px_rgba(34,211,238,0.35)]" : "border-rose-400/70 shadow-[0_0_25px_rgba(244,63,94,0.35)]"
+    : "border-white/10";
+  const num = winner ? (accent === "cyan" ? "text-cyan-300" : "text-rose-300") : "text-white";
+  return (
+    <div className={`rounded-2xl border p-4 ${border} bg-black/30`}>
+      <div className="truncate text-sm font-semibold text-white">{name}</div>
+      <div className={`mt-1 text-3xl font-black ${num}`}>{correct * 100}</div>
+      <div className="text-xs text-white/60">{correct}/{total} correct</div>
     </div>
   );
 }

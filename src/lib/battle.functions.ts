@@ -5,14 +5,14 @@ import type { QuizQuestion } from "@/lib/learning.functions";
 
 /* ----------------------------- AI generation ----------------------------- */
 
-async function callGemini(prompt: string, count: number): Promise<QuizQuestion[]> {
+async function callGemini(prompt: string, count: number, model = "google/gemini-3.6-flash"): Promise<QuizQuestion[]> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("Missing LOVABLE_API_KEY");
   const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
     body: JSON.stringify({
-      model: "google/gemini-3.6-flash",
+      model,
       messages: [
         { role: "system", content: "You are an NCERT-only exam question generator. Only use content from official NCERT textbooks (Class 11 & 12). Output STRICT JSON only." },
         { role: "user", content: prompt },
@@ -90,13 +90,15 @@ export const getWallet = createServerFn({ method: "GET" })
 const QUICK_TOTAL = 10;
 const QUICK_BATCH = 5;
 
-async function generateQuickBatch(profession: string, count: number, batchIdx: number): Promise<QuizQuestion[]> {
+async function generateQuickBatch(profession: string, count: number, batchIdx: number, mode: "quick" | "1v1" = "quick"): Promise<QuizQuestion[]> {
   const subjectLabel = profession === "pcm"
     ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
   const prompt = `Generate exactly ${count} exam-style MCQ for ${subjectLabel}. STRICT SOURCE: use ONLY content from official NCERT Class 11 & 12 textbooks — no non-NCERT facts. Mix chapters and difficulty. Use LaTeX ($...$ / $$...$$) for math. Return STRICT JSON: {"questions":[{"question":"...","options":{"A":"","B":"","C":"","D":""},"correct":"A|B|C|D","hint":"...","explanation":"..."}]}`;
-  const qs = await callGemini(prompt, count);
+  const model = mode === "1v1" ? "google/gemini-3.5-flash" : "google/gemini-3.6-flash";
+  const qs = await callGemini(prompt, count, model);
   return qs.map((q, i) => ({ ...q, id: `bq_${Date.now()}_${batchIdx}_${i}` }));
 }
+
 
 export const startQuickBattle = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -121,7 +123,7 @@ export const start1v1Battle = createServerFn({ method: "POST" })
       .from("users").select("profession").eq("id", context.userId).maybeSingle();
     const profession = profile?.profession;
     if (!profession) throw new Error("Complete onboarding first");
-    const first = await generateQuickBatch(profession, QUICK_BATCH, 0);
+    const first = await generateQuickBatch(profession, QUICK_BATCH, 0, "1v1");
     const { data: row, error } = await context.supabase
       .from("battle_sessions")
       .insert({ user_id: context.userId, mode: "1v1", profession, questions: first as unknown as never })
@@ -144,7 +146,7 @@ export const extendQuickBattle = createServerFn({ method: "POST" })
     if (cur.length >= QUICK_TOTAL) return { done: true as const, questions: cur };
     const n = Math.min(QUICK_BATCH, QUICK_TOTAL - cur.length);
     const batchIdx = Math.floor(cur.length / QUICK_BATCH);
-    const more = await generateQuickBatch(s.profession as string, n, batchIdx);
+    const more = await generateQuickBatch(s.profession as string, n, batchIdx, mode === "1v1" ? "1v1" : "quick");
     const next = [...cur, ...more];
     await context.supabase.from("battle_sessions")
       .update({ questions: next as unknown as never })
