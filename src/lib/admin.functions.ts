@@ -326,3 +326,72 @@ export const ownerSetAdmin = createServerFn({ method: "POST" })
     }
     return { ok: true, user_id: userId, email };
   });
+
+/* ---------------- Announcements (broadcast to all users) ---------------- */
+
+export const adminBroadcast = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      title: z.string().trim().min(3).max(120),
+      body: z.string().trim().max(1000).optional().default(""),
+      link: z.string().trim().max(300).optional().default(""),
+      audience: z.enum(["all", "pro", "free"]).optional().default("all"),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    let q = supabaseAdmin.from("users").select("id").eq("is_banned", false);
+    if (data.audience === "pro") q = q.eq("is_pro", true);
+    if (data.audience === "free") q = q.eq("is_pro", false);
+    const { data: users, error } = await q;
+    if (error) throw error;
+
+    const ids = (users ?? []).map((u) => u.id as string);
+    if (!ids.length) return { sent: 0 };
+
+    const rows = ids.map((id) => ({
+      user_id: id,
+      kind: "announcement",
+      title: data.title,
+      body: data.body || null,
+      link: data.link || null,
+    }));
+
+    let sent = 0;
+    for (let i = 0; i < rows.length; i += 500) {
+      const chunk = rows.slice(i, i + 500);
+      const { error: insErr } = await supabaseAdmin
+        .from("notifications")
+        .insert(chunk as unknown as never);
+      if (insErr) throw insErr;
+      sent += chunk.length;
+    }
+
+    await sendTelegramAlert(`📣 Announcement sent to ${sent} users\n<b>${data.title}</b>\n${data.body ?? ""}`);
+    return { sent };
+  });
+
+export const adminListAnnouncements = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("notifications")
+      .select("title, body, created_at")
+      .eq("kind", "announcement")
+      .order("created_at", { ascending: false })
+      .limit(300);
+    if (error) throw error;
+    const seen = new Map<string, { title: string; body: string | null; created_at: string; count: number }>();
+    for (const n of data ?? []) {
+      const key = `${n.title}|${(n.created_at as string).slice(0, 16)}`;
+      const cur = seen.get(key);
+      if (cur) cur.count += 1;
+      else seen.set(key, { title: n.title as string, body: (n.body as string) ?? null, created_at: n.created_at as string, count: 1 });
+    }
+    return Array.from(seen.values()).slice(0, 20);
+  });
