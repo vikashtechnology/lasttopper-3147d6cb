@@ -51,10 +51,10 @@ export const Route = createFileRoute("/api/public/hooks/razorpay")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        if (purpose === "pro" || purpose === "pro_yearly") {
+        if (purpose === "pro" || purpose === "pro_yearly" || purpose === "pro_weekly") {
           const { data: u } = await supabaseAdmin
             .from("users").select("is_pro, pro_until").eq("id", userId).maybeSingle();
-          const days = purpose === "pro_yearly" ? 365 : 30;
+          const days = purpose === "pro_yearly" ? 365 : purpose === "pro_weekly" ? 7 : 30;
           const base = u?.pro_until && new Date(u.pro_until as string).getTime() > Date.now()
             ? new Date(u.pro_until as string).getTime()
             : Date.now();

@@ -44,12 +44,42 @@ export const adminListUsers = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     let q = context.supabase.from("users")
-      .select("id, email, full_name, phone, profession, is_banned, balance, reputation, streak, created_at")
+      .select("id, email, full_name, phone, profession, is_banned, balance, reputation, streak, created_at, is_pro, pro_until")
       .order("created_at", { ascending: false }).limit(100);
     if (data.q) q = q.or(`email.ilike.%${data.q}%,full_name.ilike.%${data.q}%,phone.ilike.%${data.q}%`);
     const { data: rows, error } = await q;
     if (error) throw error;
     return rows ?? [];
+  });
+
+export const adminGrantPro = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      user_id: z.string().uuid(),
+      plan: z.enum(["weekly", "monthly", "yearly", "revoke"]),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    if (data.plan === "revoke") {
+      const { error } = await context.supabase.from("users")
+        .update({ is_pro: false, pro_until: null }).eq("id", data.user_id);
+      if (error) throw error;
+      return { ok: true };
+    }
+    const days = data.plan === "yearly" ? 365 : data.plan === "monthly" ? 30 : 7;
+    const { data: u } = await context.supabase
+      .from("users").select("pro_until").eq("id", data.user_id).maybeSingle();
+    const base = u?.pro_until && new Date(u.pro_until as string).getTime() > Date.now()
+      ? new Date(u.pro_until as string).getTime()
+      : Date.now();
+    const until = new Date(base + days * 86400_000).toISOString();
+    const { error } = await context.supabase.from("users")
+      .update({ is_pro: true, pro_since: new Date().toISOString(), pro_until: until })
+      .eq("id", data.user_id);
+    if (error) throw error;
+    return { ok: true, pro_until: until };
   });
 
 export const adminSetBan = createServerFn({ method: "POST" })

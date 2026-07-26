@@ -16,11 +16,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  *   4. Webhook /api/public/hooks/razorpay is a redundant safety net
  */
 
-type Purpose = "pro" | "pro_yearly" | "wallet_topup";
+type Purpose = "pro" | "pro_yearly" | "pro_weekly" | "wallet_topup";
 
 const REFERRAL_REWARD_TC = 5;
 
 function amountFor(purpose: Purpose, requested?: number): number {
+  if (purpose === "pro_weekly") return 4900; // ₹49 / week
   if (purpose === "pro") return 14900; // ₹149 / month
   if (purpose === "pro_yearly") return 149900; // ₹1499 / year
   if (purpose === "wallet_topup") {
@@ -39,7 +40,7 @@ export const getRazorpayKeyId = createServerFn({ method: "GET" }).handler(async 
 });
 
 const createOrderSchema = z.object({
-  purpose: z.enum(["pro", "pro_yearly", "wallet_topup"]),
+  purpose: z.enum(["pro", "pro_yearly", "pro_weekly", "wallet_topup"]),
   amount_inr: z.number().positive().optional(),
 });
 
@@ -81,7 +82,7 @@ const verifySchema = z.object({
   razorpay_order_id: z.string().min(1),
   razorpay_payment_id: z.string().min(1),
   razorpay_signature: z.string().min(1),
-  purpose: z.enum(["pro", "pro_yearly", "wallet_topup"]),
+  purpose: z.enum(["pro", "pro_yearly", "pro_weekly", "wallet_topup"]),
   amount_inr: z.number().positive().optional(),
 });
 
@@ -103,8 +104,8 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
       throw new Error("Invalid payment signature");
     }
 
-    if (data.purpose === "pro" || data.purpose === "pro_yearly") {
-      const days = data.purpose === "pro_yearly" ? 365 : 30;
+    if (data.purpose === "pro" || data.purpose === "pro_yearly" || data.purpose === "pro_weekly") {
+      const days = data.purpose === "pro_yearly" ? 365 : data.purpose === "pro_weekly" ? 7 : 30;
       const until = new Date(Date.now() + days * 86400_000).toISOString();
       await context.supabase
         .from("users")
