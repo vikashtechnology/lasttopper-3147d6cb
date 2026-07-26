@@ -219,6 +219,13 @@ export const generateQuestions = createServerFn({ method: "POST" })
       questions = await callGeminiForQuestions(chapterNames, profession, data.question_count);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
+      // AI failed — try the fallback bank
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { sampleFromBank } = await import("@/lib/question-bank.server");
+      const bank = await sampleFromBank(supabaseAdmin, profession, data.question_count, data.chapter_ids);
+      if (bank.length >= Math.min(data.question_count, 5)) {
+        return { questions: bank, cached: false, error: "Using saved questions (AI busy)." as const };
+      }
       if (msg === "AI_BUSY") {
         return { questions: [] as QuizQuestion[], cached: false, error: "AI is busy — please try again in a minute." as const };
       }
@@ -230,6 +237,13 @@ export const generateQuestions = createServerFn({ method: "POST" })
       chapter_id: data.chapter_ids[i % data.chapter_ids.length],
     }));
 
+    // Save AI-generated questions to the fallback bank (best effort)
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { saveToBank } = await import("@/lib/question-bank.server");
+      void saveToBank(supabaseAdmin, profession, questions);
+    } catch { /* non-fatal */ }
+
     await context.supabase.from("generated_questions").insert({
       user_id: context.userId,
       chapter_ids: data.chapter_ids,
@@ -240,6 +254,7 @@ export const generateQuestions = createServerFn({ method: "POST" })
 
     return { questions, cached: false };
   });
+
 
 /* ---------------- Progressive (5-at-a-time) generation ---------------- */
 
