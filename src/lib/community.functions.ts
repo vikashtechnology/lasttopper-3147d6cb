@@ -82,7 +82,7 @@ export const getForumPost = createServerFn({ method: "GET" })
     if (error) throw error;
     if (!post) return null;
     const [{ data: author }, { data: replies }, { data: myVote }] = await Promise.all([
-      context.supabase.from("users").select("id, full_name, avatar_url, reputation").eq("id", post.user_id).maybeSingle(),
+      context.supabase.from("public_profiles").select("id, full_name, avatar_url, reputation").eq("id", post.user_id).maybeSingle(),
       context.supabase.from("forum_replies")
         .select("id, body, upvote_count, created_at, user_id")
         .eq("post_id", data.post_id).order("created_at"),
