@@ -50,19 +50,24 @@ function WalletPage() {
     const code = ref.data?.code;
     if (!code) return;
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const text = `Join me on Last Topper — use my code ${code} at signup and I earn 5 TC (Mega Test only) on your first wallet top-up. ${origin}`;
-    const nav = navigator as Navigator & { share?: (data: { text: string }) => Promise<void> };
+    const inviteUrl = `${origin}/auth?ref=${encodeURIComponent(code)}`;
+    const text = `Join me on Last Topper — use my code ${code} at signup and I earn 5 TC (Mega Test only) on your first wallet top-up. ${inviteUrl}`;
+    const nav = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
     try {
       if (nav.share) {
-        await nav.share({ text });
+        await nav.share({ title: "Last Topper invite", text, url: inviteUrl });
       } else {
-        await nav.clipboard.writeText(text);
-        toast.success("Copied invite link");
+        await navigator.clipboard.writeText(inviteUrl);
+        toast.success("Invite link copied");
       }
     } catch {
-      /* user cancelled */
+      try {
+        await navigator.clipboard.writeText(inviteUrl);
+        toast.success("Invite link copied");
+      } catch { /* ignore */ }
     }
   };
+
 
   const copyCode = async () => {
     const code = ref.data?.code;
@@ -148,13 +153,14 @@ function WalletPage() {
   return (
     <div className="space-y-4">
       <div className="battle-glass battle-slide-up p-6">
-        <div className="flex items-center gap-2 text-white/70">
+        <div className="flex items-center gap-2 text-muted-foreground">
           <Wallet className="h-4 w-4" />
           <span className="text-xs uppercase tracking-widest">Topper Coin balance</span>
         </div>
         <div className="mt-2 flex items-baseline gap-2">
-          <span className="battle-title inline-flex items-center gap-1.5 text-4xl"><TopperCoin size={32} />{bal.toFixed(2)} TC</span>
-          <span className="text-xs text-white/50">1 TC = ₹1</span>
+          <span className="battle-title inline-flex items-center gap-1.5 text-4xl text-foreground"><TopperCoin size={32} />{bal.toFixed(2)} TC</span>
+          <span className="text-xs text-muted-foreground">1 TC = ₹1</span>
+
         </div>
         {(ref.data?.mega_credits ?? 0) > 0 && (
           <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-fuchsia-400/10 px-2 py-0.5 text-[11px] text-fuchsia-200">
@@ -337,22 +343,22 @@ function WalletPage() {
       )}
 
       <div className="battle-glass p-5">
-        <h2 className="mb-3 text-xs uppercase tracking-widest text-white/60">Withdrawal requests</h2>
+        <h2 className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">Withdrawal requests</h2>
         {(wr.data ?? []).length === 0 ? (
-          <p className="text-sm text-white/50">No requests yet.</p>
+          <p className="text-sm text-muted-foreground">No requests yet.</p>
         ) : (
           <ul className="space-y-1.5 text-sm">
             {(wr.data ?? []).map((r) => (
-              <li key={r.id} className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
+              <li key={r.id} className="flex items-center justify-between rounded-lg border border-border bg-background/40 p-2.5">
                 <div>
-                  <div className="inline-flex items-center gap-1 font-medium"><TopperCoin size={14} />{Number(r.amount).toFixed(2)} TC · {r.method.toUpperCase()}</div>
-                  <div className="text-xs text-white/50">
+                  <div className="inline-flex items-center gap-1 font-medium text-foreground"><TopperCoin size={14} />{Number(r.amount).toFixed(2)} TC · {r.method.toUpperCase()}</div>
+                  <div className="text-xs text-muted-foreground">
                     {r.status === "pending"
                       ? `Processes at ${new Date(r.process_after).toLocaleTimeString()}`
                       : `${r.status} · ${r.processed_at ? new Date(r.processed_at).toLocaleString() : ""}`}
                   </div>
                 </div>
-                <span className={`text-xs uppercase ${r.status === "processed" ? "text-emerald-300" : (r.status === "failed" || r.status === "rejected") ? "text-red-300" : "text-amber-300"}`}>{r.status === "rejected" ? "failed" : r.status}</span>
+                <span className={`text-xs uppercase ${r.status === "processed" ? "text-emerald-500 dark:text-emerald-300" : (r.status === "failed" || r.status === "rejected") ? "text-red-500 dark:text-red-300" : "text-amber-500 dark:text-amber-300"}`}>{r.status === "rejected" ? "failed" : r.status}</span>
               </li>
             ))}
           </ul>
@@ -360,34 +366,50 @@ function WalletPage() {
       </div>
 
       <div className="battle-glass p-5">
-        <h2 className="mb-3 text-xs uppercase tracking-widest text-white/60">Recent transactions</h2>
+        <h2 className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">Recent transactions</h2>
         {(w.data?.transactions ?? []).length === 0 ? (
-          <p className="text-sm text-white/50">No activity yet.</p>
+          <p className="text-sm text-muted-foreground">No activity yet.</p>
         ) : (
           <ul className="space-y-1.5 text-sm">
-            {(w.data?.transactions ?? []).map((t) => (
-              <li key={t.id} className="flex items-center justify-between rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-                <div>
-                  <div className="font-medium">{t.note ?? t.category}</div>
-                  <div className="text-xs text-white/50">{new Date(t.created_at).toLocaleString()}</div>
-                </div>
-                <span className={`inline-flex items-center gap-0.5 ${t.type === "credit" ? "text-emerald-300" : "text-red-300"}`}>
-                  {t.type === "credit" ? "+" : "−"}<TopperCoin size={12} />{Number(t.amount).toFixed(2)}
-
-                </span>
-              </li>
-            ))}
+            {(w.data?.transactions ?? []).map((t) => {
+              const label = formatTxLabel(t.category, t.note, t.type);
+              return (
+                <li key={t.id} className="flex items-center justify-between rounded-lg border border-border bg-background/40 p-2.5">
+                  <div>
+                    <div className="font-medium text-foreground">{label}</div>
+                    <div className="text-xs text-muted-foreground">{new Date(t.created_at).toLocaleString()}</div>
+                  </div>
+                  <span className={`inline-flex items-center gap-0.5 font-semibold ${t.type === "credit" ? "text-emerald-500 dark:text-emerald-300" : "text-red-500 dark:text-red-300"}`}>
+                    {t.type === "credit" ? "+" : "−"}<TopperCoin size={12} />{Number(t.amount).toFixed(2)} TC
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
 
-      <footer className="mt-4 flex items-center justify-center gap-4 pb-6 text-xs text-white/50">
-        <Link to="/terms" className="hover:text-white/80 hover:underline">Terms</Link>
+
+      <footer className="mt-4 flex items-center justify-center gap-4 pb-6 text-xs text-muted-foreground">
+        <Link to="/terms" className="hover:text-foreground hover:underline">Terms</Link>
         <span aria-hidden>•</span>
-        <Link to="/privacy" className="hover:text-white/80 hover:underline">Privacy Policy</Link>
+        <Link to="/privacy" className="hover:text-foreground hover:underline">Privacy Policy</Link>
         <span aria-hidden>•</span>
-        <Link to="/refund" className="hover:text-white/80 hover:underline">Refund Policy</Link>
+        <Link to="/refund" className="hover:text-foreground hover:underline">Refund Policy</Link>
       </footer>
     </div>
   );
 }
+
+function formatTxLabel(category: string, note: string | null, type: "credit" | "debit" | string): string {
+  const c = (category ?? "").toLowerCase();
+  if (c === "referral") return "Referral reward";
+  if (c === "topup" || c === "deposit") return "Money added successful";
+  if (c === "withdrawal") return "Withdrawal processed";
+  if (c === "refund") return note?.toLowerCase().includes("reject") ? "Withdrawal rejected — refunded" : "Refund credited";
+  if (c === "prize") return note ?? "Prize credited";
+  if (c === "entry" || c === "entry_fee") return "Mega Test entry";
+  if (c === "subscription" || c === "pro") return "Pro subscription";
+  return note ?? (type === "credit" ? "Credit" : "Debit");
+}
+

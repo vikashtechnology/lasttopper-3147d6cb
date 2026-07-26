@@ -84,12 +84,13 @@ function MegaTest() {
           <Trophy className="h-5 w-5" />
           <span className="text-xs uppercase tracking-widest">Sunday Mega Test</span>
         </div>
-        <h1 className="battle-title mt-2 flex flex-wrap items-center gap-x-2 text-2xl">
-          <TopperCoin size={22} />100 · <TopperCoin size={22} />50 · <TopperCoin size={22} />25 · 7×<TopperCoin size={22} />15
+        <h1 className="battle-title mt-2 text-2xl">
+          Prove your skill.
         </h1>
         <p className="mt-2 inline-flex flex-wrap items-center gap-1 text-sm text-white/70">
           180 questions · 3-hour window · entry <TopperCoin size={14} />{Number(test.entry_fee)} TC
         </p>
+
 
 
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -106,7 +107,7 @@ function MegaTest() {
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2">
-          {!entry?.paid && !isDone && (
+          {!entry?.paid && !isDone && !isLive && (
             <button
               className="battle-btn inline-flex items-center gap-2"
               disabled={join.isPending}
@@ -116,9 +117,15 @@ function MegaTest() {
               {join.isPending ? "Joining…" : (
                 <span className="inline-flex items-center gap-1">Join for <TopperCoin size={14} />{Number(test.entry_fee)} TC</span>
               )}
-
             </button>
           )}
+          {!entry?.paid && isLive && (
+            <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/50 bg-emerald-400/10 px-3 py-2 text-sm font-semibold uppercase tracking-widest text-emerald-200">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+              Test is live
+            </div>
+          )}
+
           {entry?.paid && !entry.session_id && isLive && (
             <button className="battle-btn" disabled={start.isPending} onClick={() => start.mutate(test.id)}>
               {start.isPending ? "Preparing…" : "Enter test"}
@@ -152,13 +159,13 @@ function MegaTest() {
       <div className="battle-glass p-5">
         <div className="mb-2 text-xs uppercase tracking-widest text-white/60">Prize pool (Topper Coins · 1 TC = ₹1)</div>
         <ul className="space-y-1 text-sm">
-          <li className="inline-flex items-center gap-1">🥇 Rank 1 — <TopperCoin size={14} />100 TC</li>
+          <li className="inline-flex items-center gap-1">🥇 Rank 1 — <TopperCoin size={14} />100 TC <span className="ml-1 rounded-full bg-fuchsia-400/15 px-1.5 py-0.5 text-[10px] uppercase tracking-widest text-fuchsia-200">+ Weekly Pro</span></li>
           <li className="inline-flex items-center gap-1">🥈 Rank 2 — <TopperCoin size={14} />50 TC</li>
           <li className="inline-flex items-center gap-1">🥉 Rank 3 — <TopperCoin size={14} />25 TC</li>
           <li className="inline-flex items-center gap-1">Ranks 4–10 — <TopperCoin size={14} />15 TC each</li>
         </ul>
-
       </div>
+
     </div>
   );
 }

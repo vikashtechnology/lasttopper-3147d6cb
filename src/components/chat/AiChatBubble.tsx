@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { MessageCircle, X, Send, Sparkles } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { X, Send, Sparkles, GraduationCap } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { getMyProfile } from "@/lib/user.functions";
+
 import { chatWithTopperAi } from "@/lib/chatbot.functions";
 import { Latex } from "@/components/Latex";
 
@@ -14,8 +16,11 @@ const INTRO: Msg = {
 
 export function AiChatBubble() {
   const [open, setOpen] = useState(false);
+  const profile = useQuery({ queryKey: ["my-profile"], queryFn: () => getMyProfile() });
+  const avatarUrl = profile.data?.avatar_url ?? null;
   const [messages, setMessages] = useState<Msg[]>([INTRO]);
   const [input, setInput] = useState("");
+
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const send = useMutation({
@@ -119,11 +124,18 @@ export function AiChatBubble() {
 
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-20 right-4 z-40 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-xl shadow-primary/30 transition-transform hover:scale-105 lg:bottom-6 lg:right-6"
+        className="fixed bottom-20 right-4 z-40 grid h-14 w-14 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-xl shadow-primary/30 ring-2 ring-primary/40 transition-transform hover:scale-105 lg:bottom-6 lg:right-6"
         aria-label="Open Topper AI"
       >
-        {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
+        {open ? (
+          <X className="h-6 w-6" />
+        ) : avatarUrl ? (
+          <img src={avatarUrl} alt="Your tutor" className="h-full w-full object-cover" />
+        ) : (
+          <GraduationCap className="h-7 w-7" />
+        )}
       </button>
+
     </>
   );
 }
