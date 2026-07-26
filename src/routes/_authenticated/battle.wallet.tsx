@@ -50,19 +50,24 @@ function WalletPage() {
     const code = ref.data?.code;
     if (!code) return;
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    const text = `Join me on Last Topper — use my code ${code} at signup and I earn 5 TC (Mega Test only) on your first wallet top-up. ${origin}`;
-    const nav = navigator as Navigator & { share?: (data: { text: string }) => Promise<void> };
+    const inviteUrl = `${origin}/auth?ref=${encodeURIComponent(code)}`;
+    const text = `Join me on Last Topper — use my code ${code} at signup and I earn 5 TC (Mega Test only) on your first wallet top-up. ${inviteUrl}`;
+    const nav = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
     try {
       if (nav.share) {
-        await nav.share({ text });
+        await nav.share({ title: "Last Topper invite", text, url: inviteUrl });
       } else {
-        await nav.clipboard.writeText(text);
-        toast.success("Copied invite link");
+        await navigator.clipboard.writeText(inviteUrl);
+        toast.success("Invite link copied");
       }
     } catch {
-      /* user cancelled */
+      try {
+        await navigator.clipboard.writeText(inviteUrl);
+        toast.success("Invite link copied");
+      } catch { /* ignore */ }
     }
   };
+
 
   const copyCode = async () => {
     const code = ref.data?.code;
