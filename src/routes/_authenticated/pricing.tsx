@@ -95,6 +95,15 @@ function PricingPage() {
           <div className="inline-flex rounded-xl border border-border bg-muted/40 p-1">
             <button
               type="button"
+              onClick={() => setPlan("weekly")}
+              className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
+                plan === "weekly" ? "bg-background shadow-sm" : "text-muted-foreground"
+              }`}
+            >
+              Weekly
+            </button>
+            <button
+              type="button"
               onClick={() => setPlan("monthly")}
               className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
                 plan === "monthly" ? "bg-background shadow-sm" : "text-muted-foreground"
