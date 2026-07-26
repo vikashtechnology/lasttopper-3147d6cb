@@ -84,12 +84,13 @@ function MegaTest() {
           <Trophy className="h-5 w-5" />
           <span className="text-xs uppercase tracking-widest">Sunday Mega Test</span>
         </div>
-        <h1 className="battle-title mt-2 flex flex-wrap items-center gap-x-2 text-2xl">
-          <TopperCoin size={22} />100 · <TopperCoin size={22} />50 · <TopperCoin size={22} />25 · 7×<TopperCoin size={22} />15
+        <h1 className="battle-title mt-2 text-2xl">
+          Prove your skill.
         </h1>
         <p className="mt-2 inline-flex flex-wrap items-center gap-1 text-sm text-white/70">
           180 questions · 3-hour window · entry <TopperCoin size={14} />{Number(test.entry_fee)} TC
         </p>
+
 
 
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
