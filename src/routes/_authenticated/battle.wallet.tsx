@@ -352,7 +352,7 @@ function WalletPage() {
                       : `${r.status} · ${r.processed_at ? new Date(r.processed_at).toLocaleString() : ""}`}
                   </div>
                 </div>
-                <span className={`text-xs uppercase ${r.status === "processed" ? "text-emerald-300" : r.status === "failed" ? "text-red-300" : "text-amber-300"}`}>{r.status}</span>
+                <span className={`text-xs uppercase ${r.status === "processed" ? "text-emerald-300" : (r.status === "failed" || r.status === "rejected") ? "text-red-300" : "text-amber-300"}`}>{r.status === "rejected" ? "failed" : r.status}</span>
               </li>
             ))}
           </ul>
