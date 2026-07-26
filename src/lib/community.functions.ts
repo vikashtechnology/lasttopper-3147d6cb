@@ -394,13 +394,14 @@ export const getPublicProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ user_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const [{ data: user }, { data: badges }, { data: followers }, { data: following }, { data: iFollow }] = await Promise.all([
-      context.supabase.from("users")
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [{ data: user }, { data: badges }, { count: followersCount }, { count: followingCount }, { data: iFollow }] = await Promise.all([
+      context.supabase.from("public_profiles")
         .select("id, full_name, avatar_url, profession, streak, total_accuracy, reputation, bio, created_at")
         .eq("id", data.user_id).maybeSingle(),
-      context.supabase.from("user_badges").select("badge_id, awarded_at").eq("user_id", data.user_id),
-      context.supabase.from("follows").select("follower_id", { count: "exact" }).eq("following_id", data.user_id),
-      context.supabase.from("follows").select("following_id", { count: "exact" }).eq("follower_id", data.user_id),
+      supabaseAdmin.from("user_badges").select("badge_id, awarded_at").eq("user_id", data.user_id),
+      supabaseAdmin.from("follows").select("follower_id", { count: "exact", head: true }).eq("following_id", data.user_id),
+      supabaseAdmin.from("follows").select("following_id", { count: "exact", head: true }).eq("follower_id", data.user_id),
       context.supabase.from("follows").select("id").eq("follower_id", context.userId).eq("following_id", data.user_id).maybeSingle(),
     ]);
     const badgeIds = (badges ?? []).map((b) => b.badge_id);
@@ -409,8 +410,8 @@ export const getPublicProfile = createServerFn({ method: "GET" })
       : [];
     return {
       user, badges: badgeMeta,
-      followers_count: followers?.length ?? 0,
-      following_count: following?.length ?? 0,
+      followers_count: followersCount ?? 0,
+      following_count: followingCount ?? 0,
       i_follow: !!iFollow,
     };
   });
