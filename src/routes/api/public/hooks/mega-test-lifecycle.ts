@@ -122,7 +122,28 @@ export const Route = createFileRoute("/api/public/hooks/mega-test-lifecycle")({
               results.push({ id: `${profession}-${start.toISOString()}`, action: "provisioned" });
             }
           }
+
+          // Pre-generate ONE shared question set for the upcoming test (Physics + Chemistry
+          // only — common to both PCM and PCB per product decision). Save it to both
+          // profession rows so every joiner sees the exact same paper.
+          const { data: rows } = await supabaseAdmin
+            .from("mega_tests")
+            .select("id, questions")
+            .eq("scheduled_start", start.toISOString());
+          const needsGen = (rows ?? []).some((r) => !r.questions || (r.questions as unknown[]).length === 0);
+          if (needsGen) {
+            const questions = await generateMegaQuestionSet();
+            if (questions.length > 0) {
+              for (const r of rows ?? []) {
+                await supabaseAdmin.from("mega_tests")
+                  .update({ questions: questions as unknown as never })
+                  .eq("id", r.id);
+              }
+              results.push({ id: `mega-questions-${start.toISOString()}`, action: `generated-${questions.length}` });
+            }
+          }
         }
+
 
         return Response.json({ ok: true, results });
       },
