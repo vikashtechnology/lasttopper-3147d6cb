@@ -600,6 +600,59 @@ export type Database = {
         }
         Relationships: []
       }
+      question_bank: {
+        Row: {
+          chapter_id: string | null
+          correct: string
+          created_at: string
+          created_by: string | null
+          explanation: string
+          hint: string
+          id: string
+          options: Json
+          profession: string | null
+          question: string
+          source: string
+          subject_code: string | null
+        }
+        Insert: {
+          chapter_id?: string | null
+          correct: string
+          created_at?: string
+          created_by?: string | null
+          explanation?: string
+          hint?: string
+          id?: string
+          options: Json
+          profession?: string | null
+          question: string
+          source?: string
+          subject_code?: string | null
+        }
+        Update: {
+          chapter_id?: string | null
+          correct?: string
+          created_at?: string
+          created_by?: string | null
+          explanation?: string
+          hint?: string
+          id?: string
+          options?: Json
+          profession?: string | null
+          question?: string
+          source?: string
+          subject_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_bank_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       question_reports: {
         Row: {
           created_at: string

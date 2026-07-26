@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { amIAdmin } from "@/lib/admin.functions";
-import { ArrowLeft, LayoutDashboard, Users, Flag, Wallet } from "lucide-react";
+import { ArrowLeft, LayoutDashboard, Users, Flag, Wallet, Database } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -47,7 +47,9 @@ function AdminLayout() {
     { to: "/admin/users", icon: Users, label: "Users" },
     { to: "/admin/moderation", icon: Flag, label: "Moderation" },
     { to: "/admin/withdrawals", icon: Wallet, label: "Withdrawals" },
+    { to: "/admin/bank", icon: Database, label: "Question Bank" },
   ];
+
 
   return (
     <main className="min-h-screen bg-background">

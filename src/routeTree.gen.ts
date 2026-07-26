@@ -44,6 +44,7 @@ import { Route as AuthenticatedBattle1v1RouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_authenticated/admin.moderation'
+import { Route as AuthenticatedAdminBankRouteImport } from './routes/_authenticated/admin.bank'
 import { Route as ApiPublicHooksTelegramWithdrawalRouteImport } from './routes/api/public/hooks/telegram-withdrawal'
 import { Route as ApiPublicHooksRazorpayRouteImport } from './routes/api/public/hooks/razorpay'
 import { Route as ApiPublicHooksProcessWithdrawalsRouteImport } from './routes/api/public/hooks/process-withdrawals'
@@ -244,6 +245,11 @@ const AuthenticatedAdminModerationRoute =
     path: '/moderation',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminBankRoute = AuthenticatedAdminBankRouteImport.update({
+  id: '/bank',
+  path: '/bank',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const ApiPublicHooksTelegramWithdrawalRoute =
   ApiPublicHooksTelegramWithdrawalRouteImport.update({
     id: '/api/public/hooks/telegram-withdrawal',
@@ -314,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/mistakes': typeof AuthenticatedMistakesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/pricing': typeof AuthenticatedPricingRoute
+  '/admin/bank': typeof AuthenticatedAdminBankRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
@@ -356,6 +363,7 @@ export interface FileRoutesByTo {
   '/mistakes': typeof AuthenticatedMistakesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/pricing': typeof AuthenticatedPricingRoute
+  '/admin/bank': typeof AuthenticatedAdminBankRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
@@ -403,6 +411,7 @@ export interface FileRoutesById {
   '/_authenticated/mistakes': typeof AuthenticatedMistakesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/pricing': typeof AuthenticatedPricingRoute
+  '/_authenticated/admin/bank': typeof AuthenticatedAdminBankRoute
   '/_authenticated/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
@@ -450,6 +459,7 @@ export interface FileRouteTypes {
     | '/mistakes'
     | '/notifications'
     | '/pricing'
+    | '/admin/bank'
     | '/admin/moderation'
     | '/admin/users'
     | '/admin/withdrawals'
@@ -492,6 +502,7 @@ export interface FileRouteTypes {
     | '/mistakes'
     | '/notifications'
     | '/pricing'
+    | '/admin/bank'
     | '/admin/moderation'
     | '/admin/users'
     | '/admin/withdrawals'
@@ -538,6 +549,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mistakes'
     | '/_authenticated/notifications'
     | '/_authenticated/pricing'
+    | '/_authenticated/admin/bank'
     | '/_authenticated/admin/moderation'
     | '/_authenticated/admin/users'
     | '/_authenticated/admin/withdrawals'
@@ -828,6 +840,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminModerationRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/bank': {
+      id: '/_authenticated/admin/bank'
+      path: '/bank'
+      fullPath: '/admin/bank'
+      preLoaderRoute: typeof AuthenticatedAdminBankRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/api/public/hooks/telegram-withdrawal': {
       id: '/api/public/hooks/telegram-withdrawal'
       path: '/api/public/hooks/telegram-withdrawal'
@@ -895,6 +914,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminBankRoute: typeof AuthenticatedAdminBankRoute
   AuthenticatedAdminModerationRoute: typeof AuthenticatedAdminModerationRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedAdminWithdrawalsRoute: typeof AuthenticatedAdminWithdrawalsRoute
@@ -902,6 +922,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminBankRoute: AuthenticatedAdminBankRoute,
   AuthenticatedAdminModerationRoute: AuthenticatedAdminModerationRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedAdminWithdrawalsRoute: AuthenticatedAdminWithdrawalsRoute,
@@ -1020,13 +1041,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

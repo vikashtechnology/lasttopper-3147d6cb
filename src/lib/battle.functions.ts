@@ -119,6 +119,25 @@ async function generateQuickBatch(profession: string, count: number, batchIdx: n
 }
 
 
+async function generateWithFallback(
+  profession: string,
+  count: number,
+  batchIdx: number,
+  mode: "quick" | "1v1",
+): Promise<QuizQuestion[]> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { saveToBank, sampleFromBank } = await import("@/lib/question-bank.server");
+  try {
+    const qs = await generateQuickBatch(profession, count, batchIdx, mode);
+    void saveToBank(supabaseAdmin, profession, qs, null);
+    return qs;
+  } catch (e) {
+    const bank = await sampleFromBank(supabaseAdmin, profession, count);
+    if (bank.length >= Math.min(count, 3)) return bank;
+    throw e;
+  }
+}
+
 export const startQuickBattle = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -126,7 +145,7 @@ export const startQuickBattle = createServerFn({ method: "POST" })
       .from("users").select("profession").eq("id", context.userId).maybeSingle();
     const profession = profile?.profession;
     if (!profession) throw new Error("Complete onboarding first");
-    const first = await generateQuickBatch(profession, QUICK_BATCH, 0);
+    const first = await generateWithFallback(profession, QUICK_BATCH, 0, "quick");
     const { data: row, error } = await context.supabase
       .from("battle_sessions")
       .insert({ user_id: context.userId, mode: "quick", profession, questions: first as unknown as never })
@@ -142,7 +161,7 @@ export const start1v1Battle = createServerFn({ method: "POST" })
       .from("users").select("profession").eq("id", context.userId).maybeSingle();
     const profession = profile?.profession;
     if (!profession) throw new Error("Complete onboarding first");
-    const first = await generateQuickBatch(profession, QUICK_BATCH, 0, "1v1");
+    const first = await generateWithFallback(profession, QUICK_BATCH, 0, "1v1");
     const { data: row, error } = await context.supabase
       .from("battle_sessions")
       .insert({ user_id: context.userId, mode: "1v1", profession, questions: first as unknown as never })
@@ -165,13 +184,14 @@ export const extendQuickBattle = createServerFn({ method: "POST" })
     if (cur.length >= QUICK_TOTAL) return { done: true as const, questions: cur };
     const n = Math.min(QUICK_BATCH, QUICK_TOTAL - cur.length);
     const batchIdx = Math.floor(cur.length / QUICK_BATCH);
-    const more = await generateQuickBatch(s.profession as string, n, batchIdx, mode === "1v1" ? "1v1" : "quick");
+    const more = await generateWithFallback(s.profession as string, n, batchIdx, mode === "1v1" ? "1v1" : "quick");
     const next = [...cur, ...more];
     await context.supabase.from("battle_sessions")
       .update({ questions: next as unknown as never })
       .eq("id", data.id).eq("user_id", context.userId);
     return { done: next.length >= QUICK_TOTAL, questions: next };
   });
+
 
 const submitBattleSchema = z.object({
   id: z.string().uuid(),
@@ -367,15 +387,27 @@ export const startMegaSession = createServerFn({ method: "POST" })
     if (!entry?.paid) throw new Error("Join first to play");
     if (entry.session_id) return { id: entry.session_id as string };
     let questions = (test.questions as QuizQuestion[] | null) ?? null;
-    if (!questions) {
-      const label = test.profession === "pcm"
-        ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
-      const prompt = `Generate exactly 60 exam-style MCQ for ${label}. STRICT SOURCE: use ONLY content from official NCERT Class 11 & 12 textbooks. Mix chapters, difficulties. Use LaTeX. Return STRICT JSON: {"questions":[{"question":"","options":{"A":"","B":"","C":"","D":""},"correct":"A","hint":"","explanation":""}]}`;
-      const parts = await Promise.all([callGemini(prompt, 60), callGemini(prompt, 60), callGemini(prompt, 60)]);
-      questions = parts.flat().slice(0, 180);
-      await context.supabase.from("mega_tests")
-        .update({ questions: questions as unknown as never, status: "live" })
-        .eq("id", data.mega_test_id);
+    // If not yet generated for this test, look for a shared set generated for the same time slot
+    // (one set is shared across all professions for fairness).
+    if (!questions || questions.length === 0) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: peer } = await supabaseAdmin
+        .from("mega_tests")
+        .select("questions")
+        .eq("scheduled_start", test.scheduled_start as string)
+        .not("questions", "is", null)
+        .limit(1)
+        .maybeSingle();
+      const shared = (peer?.questions as QuizQuestion[] | null) ?? null;
+      if (shared && shared.length > 0) {
+        questions = shared;
+        await supabaseAdmin.from("mega_tests")
+          .update({ questions: shared as unknown as never, status: "live" })
+          .eq("id", data.mega_test_id);
+      }
+    }
+    if (!questions || questions.length === 0) {
+      throw new Error("Test questions are still being prepared. Please try again in a minute.");
     }
     const { data: row, error } = await context.supabase
       .from("battle_sessions")
@@ -389,6 +421,7 @@ export const startMegaSession = createServerFn({ method: "POST" })
     await context.supabase.from("mega_test_entries").update({ session_id: row.id }).eq("id", entry.id);
     return { id: row.id as string };
   });
+
 
 /* ----------------------------- Withdrawals ------------------------------- */
 

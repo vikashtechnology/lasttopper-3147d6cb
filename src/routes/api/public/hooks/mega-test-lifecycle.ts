@@ -1,5 +1,82 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+type MegaQuestion = {
+  id: string;
+  chapter_id: string;
+  question: string;
+  options: { A: string; B: string; C: string; D: string };
+  correct: "A" | "B" | "C" | "D";
+  hint: string;
+  explanation: string;
+};
+
+async function callGeminiMega(count: number, batchIdx: number): Promise<MegaQuestion[]> {
+  const key = process.env.LOVABLE_API_KEY;
+  if (!key) return [];
+  const prompt = `Generate exactly ${count} NCERT-only exam-style MCQ covering ONLY Physics and Chemistry (Class 11 & 12). Mix chapters and difficulty (30/40/30). Use LaTeX ($...$ / $$...$$). This is batch #${batchIdx + 1}; produce a fresh unique set. Return STRICT JSON: {"questions":[{"question":"...","options":{"A":"","B":"","C":"","D":""},"correct":"A|B|C|D","hint":"...","explanation":"..."}]}`;
+  try {
+    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model: "google/gemini-3.6-flash",
+        messages: [
+          { role: "system", content: "You are an NCERT-only exam question generator. Physics and Chemistry only. Output STRICT JSON only." },
+          { role: "user", content: prompt },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    const content: string = data?.choices?.[0]?.message?.content ?? "{}";
+    const parsed = JSON.parse(content) as { questions?: Array<Omit<MegaQuestion, "id" | "chapter_id">> };
+    return (parsed.questions ?? []).slice(0, count).map((q, i) => ({
+      id: `mq_${Date.now()}_${batchIdx}_${i}`,
+      chapter_id: "",
+      question: q.question,
+      options: q.options,
+      correct: q.correct,
+      hint: q.hint ?? "",
+      explanation: q.explanation ?? "",
+    }));
+  } catch {
+    return [];
+  }
+}
+
+async function generateMegaQuestionSet(): Promise<MegaQuestion[]> {
+  // 180 questions in 3 parallel batches of 60
+  const parts = await Promise.all([callGeminiMega(60, 0), callGeminiMega(60, 1), callGeminiMega(60, 2)]);
+  const all = parts.flat();
+  // Fallback to bank if AI failed
+  if (all.length < 60) {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("question_bank")
+      .select("id, chapter_id, question, options, correct, hint, explanation")
+      .limit(500);
+    const pool = data ?? [];
+    if (pool.length === 0) return all;
+    const picked = [...pool].sort(() => Math.random() - 0.5).slice(0, 180 - all.length);
+    return [
+      ...all,
+      ...picked.map((r, i) => ({
+        id: `mq_bank_${Date.now()}_${i}`,
+        chapter_id: (r.chapter_id as string) ?? "",
+        question: r.question as string,
+        options: r.options as MegaQuestion["options"],
+        correct: r.correct as MegaQuestion["correct"],
+        hint: (r.hint as string) ?? "",
+        explanation: (r.explanation as string) ?? "",
+      })),
+    ];
+  }
+  return all.slice(0, 180);
+}
+
+
+
 /**
  * Called periodically by pg_cron to:
  *  - refund entry fees when a mega test ended with < min_participants
@@ -122,7 +199,28 @@ export const Route = createFileRoute("/api/public/hooks/mega-test-lifecycle")({
               results.push({ id: `${profession}-${start.toISOString()}`, action: "provisioned" });
             }
           }
+
+          // Pre-generate ONE shared question set for the upcoming test (Physics + Chemistry
+          // only — common to both PCM and PCB per product decision). Save it to both
+          // profession rows so every joiner sees the exact same paper.
+          const { data: rows } = await supabaseAdmin
+            .from("mega_tests")
+            .select("id, questions")
+            .eq("scheduled_start", start.toISOString());
+          const needsGen = (rows ?? []).some((r) => !r.questions || (r.questions as unknown[]).length === 0);
+          if (needsGen) {
+            const questions = await generateMegaQuestionSet();
+            if (questions.length > 0) {
+              for (const r of rows ?? []) {
+                await supabaseAdmin.from("mega_tests")
+                  .update({ questions: questions as unknown as never })
+                  .eq("id", r.id);
+              }
+              results.push({ id: `mega-questions-${start.toISOString()}`, action: `generated-${questions.length}` });
+            }
+          }
         }
+
 
         return Response.json({ ok: true, results });
       },

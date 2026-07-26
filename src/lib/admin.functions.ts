@@ -177,3 +177,74 @@ export const adminReportsChart = createServerFn({ method: "GET" })
     });
     return { signups: days };
   });
+
+/* ------------------------ Question bank bulk upload ------------------------ */
+
+const bankRowSchema = z.object({
+  question: z.string().min(3),
+  options: z.object({
+    A: z.string().min(1),
+    B: z.string().min(1),
+    C: z.string().min(1),
+    D: z.string().min(1),
+  }),
+  correct: z.enum(["A", "B", "C", "D"]),
+  hint: z.string().optional().default(""),
+  explanation: z.string().optional().default(""),
+  profession: z.enum(["pcm", "pcb"]).nullable().optional(),
+  chapter_id: z.string().uuid().nullable().optional(),
+  subject_code: z.string().nullable().optional(),
+});
+
+const bulkUploadSchema = z.object({
+  rows: z.array(bankRowSchema).min(1).max(2000),
+});
+
+export const adminBulkUploadQuestions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => bulkUploadSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const rows = data.rows.map((r) => ({
+      question: r.question,
+      options: r.options as unknown as never,
+      correct: r.correct,
+      hint: r.hint ?? "",
+      explanation: r.explanation ?? "",
+      profession: r.profession ?? null,
+      chapter_id: r.chapter_id ?? null,
+      subject_code: r.subject_code ?? null,
+      source: "admin",
+      created_by: context.userId,
+    }));
+    // insert in chunks of 200 to stay comfortably under any statement limits
+    let inserted = 0;
+    for (let i = 0; i < rows.length; i += 200) {
+      const chunk = rows.slice(i, i + 200);
+      const { error, count } = await supabaseAdmin
+        .from("question_bank")
+        .insert(chunk as unknown as never, { count: "exact" });
+      if (error) throw error;
+      inserted += count ?? chunk.length;
+    }
+    return { inserted };
+  });
+
+export const adminBankStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [total, ai, admin] = await Promise.all([
+      supabaseAdmin.from("question_bank").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("question_bank").select("id", { count: "exact", head: true }).eq("source", "ai"),
+      supabaseAdmin.from("question_bank").select("id", { count: "exact", head: true }).eq("source", "admin"),
+    ]);
+    return {
+      total: total.count ?? 0,
+      ai: ai.count ?? 0,
+      admin: admin.count ?? 0,
+    };
+  });
+
