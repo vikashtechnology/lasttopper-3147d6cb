@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { X, Send, Sparkles, GraduationCap } from "lucide-react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { getMyProfile } from "@/lib/user.functions";
+import { X, Send, Sparkles } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import avatarSrc from "@/assets/topper-ai-avatar.jpg";
 
 import { chatWithTopperAi } from "@/lib/chatbot.functions";
 import { Latex } from "@/components/Latex";
@@ -16,8 +16,6 @@ const INTRO: Msg = {
 
 export function AiChatBubble() {
   const [open, setOpen] = useState(false);
-  const profile = useQuery({ queryKey: ["my-profile"], queryFn: () => getMyProfile() });
-  const avatarUrl = profile.data?.avatar_url ?? null;
   const [messages, setMessages] = useState<Msg[]>([INTRO]);
   const [input, setInput] = useState("");
 
@@ -51,8 +49,8 @@ export function AiChatBubble() {
       {open && (
         <div className="fixed bottom-24 right-4 z-50 flex h-[70vh] max-h-[600px] w-[92vw] max-w-sm flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl lg:bottom-6 lg:right-6">
           <div className="flex items-center gap-2 border-b border-border bg-gradient-to-r from-primary/10 to-transparent px-4 py-3">
-            <div className="grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground">
-              <Sparkles className="h-4 w-4" />
+            <div className="grid h-8 w-8 place-items-center overflow-hidden rounded-full bg-primary text-primary-foreground">
+              <img src={avatarSrc} alt="Topper AI" className="h-full w-full object-cover" />
             </div>
             <div className="flex-1">
               <div className="text-sm font-semibold">Topper AI</div>
@@ -129,10 +127,8 @@ export function AiChatBubble() {
       >
         {open ? (
           <X className="h-6 w-6" />
-        ) : avatarUrl ? (
-          <img src={avatarUrl} alt="Your tutor" className="h-full w-full object-cover" />
         ) : (
-          <GraduationCap className="h-7 w-7" />
+          <img src={avatarSrc} alt="Topper AI" className="h-full w-full object-cover" />
         )}
       </button>
 
