@@ -282,13 +282,34 @@ async function generateBatchForSession(
     .from("chapters").select("id, name").in("id", chapterIds);
   const nameById = new Map((chapters ?? []).map((c) => [c.id, c.name] as const));
   const chapterNames = chapterIds.map((id) => nameById.get(id) ?? "").filter(Boolean);
-  const qs = await callGeminiBatch(chapterNames, profession, count, batchIndex);
-  return qs.map((q, i) => ({
-    ...q,
-    id: `q_${Date.now()}_${batchIndex}_${i}`,
-    chapter_id: chapterIds[i % chapterIds.length],
-  }));
+  try {
+    const qs = await callGeminiBatch(chapterNames, profession, count, batchIndex);
+    const mapped = qs.map((q, i) => ({
+      ...q,
+      id: `q_${Date.now()}_${batchIndex}_${i}`,
+      chapter_id: chapterIds[i % chapterIds.length],
+    }));
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { saveToBank } = await import("@/lib/question-bank.server");
+      void saveToBank(supabaseAdmin, profession, mapped);
+    } catch { /* non-fatal */ }
+    return mapped;
+  } catch (e) {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { sampleFromBank } = await import("@/lib/question-bank.server");
+    const bank = await sampleFromBank(supabaseAdmin, profession, count, chapterIds);
+    if (bank.length >= Math.min(count, 3)) {
+      return bank.map((q, i) => ({
+        ...q,
+        id: `q_${Date.now()}_${batchIndex}_${i}`,
+        chapter_id: chapterIds[i % chapterIds.length],
+      }));
+    }
+    throw e;
+  }
 }
+
 
 export const startProgressiveQuiz = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
