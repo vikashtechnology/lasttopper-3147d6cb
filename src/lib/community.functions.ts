@@ -194,7 +194,7 @@ export const getDoubt = createServerFn({ method: "GET" })
     if (error) throw error;
     if (!doubt) return null;
     const [{ data: author }, { data: replies }] = await Promise.all([
-      context.supabase.from("users").select("id, full_name, avatar_url, reputation").eq("id", doubt.user_id).maybeSingle(),
+      context.supabase.from("public_profiles").select("id, full_name, avatar_url, reputation").eq("id", doubt.user_id).maybeSingle(),
       context.supabase.from("doubt_replies")
         .select("id, body, image_url, is_accepted, upvote_count, created_at, user_id")
         .eq("doubt_id", data.doubt_id).order("is_accepted", { ascending: false }).order("created_at"),
