@@ -295,7 +295,7 @@ export const getUpcomingMegaTest = createServerFn({ method: "GET" })
       .from("mega_test_entries")
       .select("id, paid, refunded, session_id, score, rank, prize")
       .eq("mega_test_id", test.id).eq("user_id", context.userId).maybeSingle();
-    const { count } = await context.supabase
+    const { count } = await (await import("@/integrations/supabase/client.server")).supabaseAdmin
       .from("mega_test_entries").select("id", { count: "exact", head: true })
       .eq("mega_test_id", test.id).eq("paid", true);
     return { test, entry, participants: count ?? 0 };
