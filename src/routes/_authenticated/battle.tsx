@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Swords, Trophy, Wallet, History, Zap } from "lucide-react";
+import { ArrowLeft, Swords, Trophy, Wallet, History, Zap, Users } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/battle")({
   head: () => ({
@@ -51,6 +51,7 @@ function BattleLayout() {
         </div>
         <nav className="mx-auto flex max-w-4xl gap-1 overflow-x-auto px-4 pb-3">
           <TabLink to="/battle" icon={<Zap className="h-3.5 w-3.5" />} label="Quick" exact />
+          <TabLink to="/battle/1v1" icon={<Users className="h-3.5 w-3.5" />} label="1v1" />
           <TabLink to="/battle/mega" icon={<Trophy className="h-3.5 w-3.5" />} label="Mega" />
           <TabLink to="/battle/leaderboard" icon={<Trophy className="h-3.5 w-3.5" />} label="Board" />
           <TabLink to="/battle/wallet" icon={<Wallet className="h-3.5 w-3.5" />} label="Wallet" />

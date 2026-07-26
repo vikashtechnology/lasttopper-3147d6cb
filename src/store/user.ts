@@ -17,6 +17,7 @@ export type UserProfile = {
   total_accuracy: number;
   is_pro?: boolean;
   pro_since?: string | null;
+  date_of_birth?: string | null;
 };
 
 type UserState = {

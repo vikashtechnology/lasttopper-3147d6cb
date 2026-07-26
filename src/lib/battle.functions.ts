@@ -114,6 +114,22 @@ export const startQuickBattle = createServerFn({ method: "POST" })
     return { id: row.id as string, questions: first, target: QUICK_TOTAL };
   });
 
+export const start1v1Battle = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: profile } = await context.supabase
+      .from("users").select("profession").eq("id", context.userId).maybeSingle();
+    const profession = profile?.profession;
+    if (!profession) throw new Error("Complete onboarding first");
+    const first = await generateQuickBatch(profession, QUICK_BATCH, 0);
+    const { data: row, error } = await context.supabase
+      .from("battle_sessions")
+      .insert({ user_id: context.userId, mode: "1v1", profession, questions: first as unknown as never })
+      .select("id").single();
+    if (error) throw error;
+    return { id: row.id as string, questions: first, target: QUICK_TOTAL };
+  });
+
 export const extendQuickBattle = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
@@ -122,7 +138,8 @@ export const extendQuickBattle = createServerFn({ method: "POST" })
       .from("battle_sessions").select("questions, profession, submitted_at, mode")
       .eq("id", data.id).eq("user_id", context.userId).maybeSingle();
     if (!s) throw new Error("Not found");
-    if (s.submitted_at || s.mode !== "quick") return { done: true as const, questions: (s?.questions as QuizQuestion[]) ?? [] };
+    const mode = s.mode as string;
+    if (s.submitted_at || (mode !== "quick" && mode !== "1v1")) return { done: true as const, questions: (s?.questions as QuizQuestion[]) ?? [] };
     const cur = (s.questions as QuizQuestion[]) ?? [];
     if (cur.length >= QUICK_TOTAL) return { done: true as const, questions: cur };
     const n = Math.min(QUICK_BATCH, QUICK_TOTAL - cur.length);

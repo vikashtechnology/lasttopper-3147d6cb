@@ -121,6 +121,10 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       .eq("id", context.userId)
       .maybeSingle();
 
+    if (!u?.phone || !u?.date_of_birth || !u?.full_name) {
+      throw new Error("Please complete your profile (name, DOB, phone) before continuing.");
+    }
+
     const { error } = await context.supabase
       .from("users")
       .update({ onboarded: true })
@@ -128,7 +132,7 @@ export const completeOnboarding = createServerFn({ method: "POST" })
     if (error) throw error;
 
     // One-time signup verification alert to the dedicated bot
-    if (u && !u.signup_alert_sent_at) {
+    if (!u.signup_alert_sent_at) {
       const esc = (s: unknown) =>
         String(s ?? "—")
           .replace(/&/g, "&amp;")
