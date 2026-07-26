@@ -153,7 +153,7 @@ export const listDoubts = createServerFn({ method: "GET" })
     if (error) throw error;
     const userIds = Array.from(new Set((rows ?? []).map((r) => r.user_id)));
     const authors = userIds.length
-      ? (await context.supabase.from("users").select("id, full_name, avatar_url").in("id", userIds)).data ?? []
+      ? (await context.supabase.from("public_profiles").select("id, full_name, avatar_url").in("id", userIds)).data ?? []
       : [];
     const map = new Map(authors.map((a) => [a.id, a]));
     return (rows ?? []).map((r) => ({ ...r, author: map.get(r.user_id) ?? null }));
