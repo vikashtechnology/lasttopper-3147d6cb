@@ -127,10 +127,8 @@ export function AiChatBubble() {
       >
         {open ? (
           <X className="h-6 w-6" />
-        ) : avatarUrl ? (
-          <img src={avatarUrl} alt="Your tutor" className="h-full w-full object-cover" />
         ) : (
-          <GraduationCap className="h-7 w-7" />
+          <img src={avatarSrc} alt="Topper AI" className="h-full w-full object-cover" />
         )}
       </button>
 
