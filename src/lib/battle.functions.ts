@@ -90,13 +90,15 @@ export const getWallet = createServerFn({ method: "GET" })
 const QUICK_TOTAL = 10;
 const QUICK_BATCH = 5;
 
-async function generateQuickBatch(profession: string, count: number, batchIdx: number): Promise<QuizQuestion[]> {
+async function generateQuickBatch(profession: string, count: number, batchIdx: number, mode: "quick" | "1v1" = "quick"): Promise<QuizQuestion[]> {
   const subjectLabel = profession === "pcm"
     ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
   const prompt = `Generate exactly ${count} exam-style MCQ for ${subjectLabel}. STRICT SOURCE: use ONLY content from official NCERT Class 11 & 12 textbooks — no non-NCERT facts. Mix chapters and difficulty. Use LaTeX ($...$ / $$...$$) for math. Return STRICT JSON: {"questions":[{"question":"...","options":{"A":"","B":"","C":"","D":""},"correct":"A|B|C|D","hint":"...","explanation":"..."}]}`;
-  const qs = await callGemini(prompt, count);
+  const model = mode === "1v1" ? "google/gemini-3.5-flash" : "google/gemini-3.6-flash";
+  const qs = await callGemini(prompt, count, model);
   return qs.map((q, i) => ({ ...q, id: `bq_${Date.now()}_${batchIdx}_${i}` }));
 }
+
 
 export const startQuickBattle = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
