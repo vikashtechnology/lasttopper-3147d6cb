@@ -104,8 +104,8 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
       throw new Error("Invalid payment signature");
     }
 
-    if (data.purpose === "pro" || data.purpose === "pro_yearly") {
-      const days = data.purpose === "pro_yearly" ? 365 : 30;
+    if (data.purpose === "pro" || data.purpose === "pro_yearly" || data.purpose === "pro_weekly") {
+      const days = data.purpose === "pro_yearly" ? 365 : data.purpose === "pro_weekly" ? 7 : 30;
       const until = new Date(Date.now() + days * 86400_000).toISOString();
       await context.supabase
         .from("users")
