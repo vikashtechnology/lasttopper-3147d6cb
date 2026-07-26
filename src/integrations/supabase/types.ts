@@ -966,6 +966,13 @@ export type Database = {
             foreignKeyName: "users_referred_by_fkey"
             columns: ["referred_by"]
             isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -1060,7 +1067,45 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string | null
+          is_pro: boolean | null
+          profession: Database["public"]["Enums"]["profession"] | null
+          reputation: number | null
+          streak: number | null
+          total_accuracy: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_pro?: boolean | null
+          profession?: Database["public"]["Enums"]["profession"] | null
+          reputation?: number | null
+          streak?: number | null
+          total_accuracy?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_pro?: boolean | null
+          profession?: Database["public"]["Enums"]["profession"] | null
+          reputation?: number | null
+          streak?: number | null
+          total_accuracy?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {

@@ -29,7 +29,7 @@ export const listForumPosts = createServerFn({ method: "GET" })
     if (error) throw error;
     const userIds = Array.from(new Set((posts ?? []).map((p) => p.user_id)));
     const authors = userIds.length
-      ? (await context.supabase.from("users").select("id, full_name, avatar_url").in("id", userIds)).data ?? []
+      ? (await context.supabase.from("public_profiles").select("id, full_name, avatar_url").in("id", userIds)).data ?? []
       : [];
     const map = new Map(authors.map((a) => [a.id, a]));
     return (posts ?? []).map((p) => ({ ...p, author: map.get(p.user_id) ?? null }));
@@ -82,7 +82,7 @@ export const getForumPost = createServerFn({ method: "GET" })
     if (error) throw error;
     if (!post) return null;
     const [{ data: author }, { data: replies }, { data: myVote }] = await Promise.all([
-      context.supabase.from("users").select("id, full_name, avatar_url, reputation").eq("id", post.user_id).maybeSingle(),
+      context.supabase.from("public_profiles").select("id, full_name, avatar_url, reputation").eq("id", post.user_id).maybeSingle(),
       context.supabase.from("forum_replies")
         .select("id, body, upvote_count, created_at, user_id")
         .eq("post_id", data.post_id).order("created_at"),
@@ -91,7 +91,7 @@ export const getForumPost = createServerFn({ method: "GET" })
     ]);
     const replyUserIds = Array.from(new Set((replies ?? []).map((r) => r.user_id)));
     const replyAuthors = replyUserIds.length
-      ? (await context.supabase.from("users").select("id, full_name, avatar_url, reputation").in("id", replyUserIds)).data ?? []
+      ? (await context.supabase.from("public_profiles").select("id, full_name, avatar_url, reputation").in("id", replyUserIds)).data ?? []
       : [];
     const rm = new Map(replyAuthors.map((a) => [a.id, a]));
     // increment view count (fire and forget)
@@ -153,7 +153,7 @@ export const listDoubts = createServerFn({ method: "GET" })
     if (error) throw error;
     const userIds = Array.from(new Set((rows ?? []).map((r) => r.user_id)));
     const authors = userIds.length
-      ? (await context.supabase.from("users").select("id, full_name, avatar_url").in("id", userIds)).data ?? []
+      ? (await context.supabase.from("public_profiles").select("id, full_name, avatar_url").in("id", userIds)).data ?? []
       : [];
     const map = new Map(authors.map((a) => [a.id, a]));
     return (rows ?? []).map((r) => ({ ...r, author: map.get(r.user_id) ?? null }));
@@ -194,14 +194,14 @@ export const getDoubt = createServerFn({ method: "GET" })
     if (error) throw error;
     if (!doubt) return null;
     const [{ data: author }, { data: replies }] = await Promise.all([
-      context.supabase.from("users").select("id, full_name, avatar_url, reputation").eq("id", doubt.user_id).maybeSingle(),
+      context.supabase.from("public_profiles").select("id, full_name, avatar_url, reputation").eq("id", doubt.user_id).maybeSingle(),
       context.supabase.from("doubt_replies")
         .select("id, body, image_url, is_accepted, upvote_count, created_at, user_id")
         .eq("doubt_id", data.doubt_id).order("is_accepted", { ascending: false }).order("created_at"),
     ]);
     const ids = Array.from(new Set((replies ?? []).map((r) => r.user_id)));
     const auths = ids.length
-      ? (await context.supabase.from("users").select("id, full_name, avatar_url, reputation").in("id", ids)).data ?? []
+      ? (await context.supabase.from("public_profiles").select("id, full_name, avatar_url, reputation").in("id", ids)).data ?? []
       : [];
     const m = new Map(auths.map((a) => [a.id, a]));
     return {
@@ -394,13 +394,14 @@ export const getPublicProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ user_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const [{ data: user }, { data: badges }, { data: followers }, { data: following }, { data: iFollow }] = await Promise.all([
-      context.supabase.from("users")
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [{ data: user }, { data: badges }, { count: followersCount }, { count: followingCount }, { data: iFollow }] = await Promise.all([
+      context.supabase.from("public_profiles")
         .select("id, full_name, avatar_url, profession, streak, total_accuracy, reputation, bio, created_at")
         .eq("id", data.user_id).maybeSingle(),
-      context.supabase.from("user_badges").select("badge_id, awarded_at").eq("user_id", data.user_id),
-      context.supabase.from("follows").select("follower_id", { count: "exact" }).eq("following_id", data.user_id),
-      context.supabase.from("follows").select("following_id", { count: "exact" }).eq("follower_id", data.user_id),
+      supabaseAdmin.from("user_badges").select("badge_id, awarded_at").eq("user_id", data.user_id),
+      supabaseAdmin.from("follows").select("follower_id", { count: "exact", head: true }).eq("following_id", data.user_id),
+      supabaseAdmin.from("follows").select("following_id", { count: "exact", head: true }).eq("follower_id", data.user_id),
       context.supabase.from("follows").select("id").eq("follower_id", context.userId).eq("following_id", data.user_id).maybeSingle(),
     ]);
     const badgeIds = (badges ?? []).map((b) => b.badge_id);
@@ -409,8 +410,8 @@ export const getPublicProfile = createServerFn({ method: "GET" })
       : [];
     return {
       user, badges: badgeMeta,
-      followers_count: followers?.length ?? 0,
-      following_count: following?.length ?? 0,
+      followers_count: followersCount ?? 0,
+      following_count: followingCount ?? 0,
       i_follow: !!iFollow,
     };
   });
@@ -420,20 +421,22 @@ export const getPublicProfile = createServerFn({ method: "GET" })
 export const getActivityFeed = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Get list of users I follow
     const { data: follows } = await context.supabase.from("follows")
       .select("following_id").eq("follower_id", context.userId);
     const ids = (follows ?? []).map((f) => f.following_id);
-    let query = context.supabase.from("activity_events")
+    if (ids.length === 0) {
+      return { events: [], trending_doubts: await trendingDoubts(context.supabase) };
+    }
+    const { data: events, error } = await supabaseAdmin.from("activity_events")
       .select("id, user_id, kind, payload, created_at")
+      .in("user_id", ids)
       .order("created_at", { ascending: false }).limit(40);
-    if (ids.length > 0) query = query.in("user_id", ids);
-    else return { events: [], trending_doubts: await trendingDoubts(context.supabase) };
-    const { data: events, error } = await query;
     if (error) throw error;
     const userIds = Array.from(new Set((events ?? []).map((e) => e.user_id)));
     const profiles = userIds.length
-      ? (await context.supabase.from("users").select("id, full_name, avatar_url").in("id", userIds)).data ?? []
+      ? (await context.supabase.from("public_profiles").select("id, full_name, avatar_url").in("id", userIds)).data ?? []
       : [];
     const pm = new Map(profiles.map((p) => [p.id, p]));
     return {
