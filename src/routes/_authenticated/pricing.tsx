@@ -38,7 +38,7 @@ const PRO = [
   "Early access to new features",
 ];
 
-type Plan = "monthly" | "yearly";
+type Plan = "weekly" | "monthly" | "yearly";
 
 function PricingPage() {
   const { data: p } = useSuspenseQuery(profileQuery);
@@ -51,7 +51,7 @@ function PricingPage() {
     setLoading(true);
     try {
       await payWithRazorpay({
-        purpose: plan === "yearly" ? "pro_yearly" : "pro",
+        purpose: plan === "yearly" ? "pro_yearly" : plan === "weekly" ? "pro_weekly" : "pro",
         name: p?.full_name,
         email: p?.email,
       });
@@ -65,9 +65,9 @@ function PricingPage() {
     }
   };
 
-  const price = plan === "yearly" ? "₹1499" : "₹149";
-  const period = plan === "yearly" ? "/ year" : "/ month";
-  const cta = plan === "yearly" ? "Subscribe ₹1499/yr" : "Subscribe ₹149/mo";
+  const price = plan === "yearly" ? "₹1499" : plan === "weekly" ? "₹49" : "₹149";
+  const period = plan === "yearly" ? "/ year" : plan === "weekly" ? "/ week" : "/ month";
+  const cta = plan === "yearly" ? "Subscribe ₹1499/yr" : plan === "weekly" ? "Subscribe ₹49/wk" : "Subscribe ₹149/mo";
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
