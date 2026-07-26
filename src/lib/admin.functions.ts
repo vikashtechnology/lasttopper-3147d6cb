@@ -248,3 +248,81 @@ export const adminBankStats = createServerFn({ method: "GET" })
     };
   });
 
+
+/* ---------------- Owner-only: manage admins ---------------- */
+
+const OWNER_EMAIL = "vikashraoa2343@gmail.com";
+
+function isOwnerCtx(context: { claims: Record<string, unknown> }) {
+  const email = (context.claims?.email as string | undefined)?.toLowerCase();
+  return email === OWNER_EMAIL;
+}
+
+function assertOwner(context: { claims: Record<string, unknown> }) {
+  if (!isOwnerCtx(context)) throw new Error("Forbidden: owner only");
+}
+
+export const amIOwner = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => ({ owner: isOwnerCtx(context) }));
+
+export const ownerListAdmins = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    assertOwner(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: roles, error } = await supabaseAdmin
+      .from("user_roles").select("user_id, role, created_at").eq("role", "admin");
+    if (error) throw error;
+    const ids = (roles ?? []).map((r) => r.user_id as string);
+    if (!ids.length) return [];
+    const { data: users } = await supabaseAdmin
+      .from("users").select("id, email, full_name, avatar_url").in("id", ids);
+    return (roles ?? []).map((r) => {
+      const u = users?.find((x) => x.id === r.user_id);
+      return {
+        user_id: r.user_id as string,
+        created_at: r.created_at as string,
+        email: (u?.email as string) ?? null,
+        full_name: (u?.full_name as string) ?? null,
+        avatar_url: (u?.avatar_url as string) ?? null,
+        is_owner: (u?.email as string)?.toLowerCase() === OWNER_EMAIL,
+      };
+    });
+  });
+
+export const ownerSetAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ email: z.string().email().optional(), user_id: z.string().uuid().optional(), make: z.boolean() })
+      .refine((v) => v.email || v.user_id, "email or user_id required")
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    assertOwner(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    let userId = data.user_id;
+    let email = data.email?.toLowerCase();
+    if (!userId && email) {
+      const { data: u } = await supabaseAdmin.from("users").select("id, email").ilike("email", email).maybeSingle();
+      if (!u) throw new Error("No user found with that email. They must sign up first.");
+      userId = u.id as string;
+    } else if (userId && !email) {
+      const { data: u } = await supabaseAdmin.from("users").select("email").eq("id", userId).maybeSingle();
+      email = (u?.email as string | undefined)?.toLowerCase();
+    }
+
+    if (!data.make && email === OWNER_EMAIL) throw new Error("The owner account cannot be removed.");
+
+    if (data.make) {
+      const { error } = await supabaseAdmin
+        .from("user_roles").insert({ user_id: userId!, role: "admin" });
+      if (error && !`${error.message}`.includes("duplicate")) throw error;
+    } else {
+      const { error } = await supabaseAdmin
+        .from("user_roles").delete().eq("user_id", userId!).eq("role", "admin");
+      if (error) throw error;
+    }
+    return { ok: true, user_id: userId, email };
+  });
