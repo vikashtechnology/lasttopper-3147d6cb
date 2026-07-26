@@ -16,8 +16,6 @@ const INTRO: Msg = {
 
 export function AiChatBubble() {
   const [open, setOpen] = useState(false);
-  const profile = useQuery({ queryKey: ["my-profile"], queryFn: () => getMyProfile() });
-  const avatarUrl = profile.data?.avatar_url ?? null;
   const [messages, setMessages] = useState<Msg[]>([INTRO]);
   const [input, setInput] = useState("");
 
