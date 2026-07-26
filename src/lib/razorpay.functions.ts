@@ -82,7 +82,7 @@ const verifySchema = z.object({
   razorpay_order_id: z.string().min(1),
   razorpay_payment_id: z.string().min(1),
   razorpay_signature: z.string().min(1),
-  purpose: z.enum(["pro", "pro_yearly", "wallet_topup"]),
+  purpose: z.enum(["pro", "pro_yearly", "pro_weekly", "wallet_topup"]),
   amount_inr: z.number().positive().optional(),
 });
 
