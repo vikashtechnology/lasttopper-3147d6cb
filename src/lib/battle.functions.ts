@@ -235,14 +235,21 @@ export const getQuickLeaderboard = createServerFn({ method: "GET" })
       ? await supabaseAdmin.from("public_profiles").select("id, full_name, avatar_url").in("id", userIds)
       : { data: [] as Array<{ id: string; full_name: string | null; avatar_url: string | null }> };
     const map = new Map((users ?? []).map((u) => [u.id, u] as const));
-    return rows.map((r, i) => ({
-      rank: i + 1,
-      user: map.get(r.user_id as string) ?? { id: r.user_id as string, full_name: null, email: null as string | null, avatar_url: null },
-      score: r.score as number,
-      correct_count: r.correct_count as number,
-      time_taken_seconds: r.time_taken_seconds as number | null,
-      is_me: r.user_id === context.userId,
-    }));
+    return rows.map((r, i) => {
+      const u = map.get(r.user_id as string);
+      return {
+        rank: i + 1,
+        user: {
+          full_name: u?.full_name ?? null,
+          avatar_url: u?.avatar_url ?? null,
+          email: null as string | null,
+        },
+        score: r.score as number,
+        correct_count: r.correct_count as number,
+        time_taken_seconds: r.time_taken_seconds as number | null,
+        is_me: r.user_id === context.userId,
+      };
+    });
   });
 
 /* --------------------------------- Mega Test ----------------------------- */
