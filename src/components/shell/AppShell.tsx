@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Home as HomeIcon,
   BookOpen,
+  BookMarked,
   AlertOctagon,
   BarChart3,
   History,
@@ -34,6 +35,7 @@ export const defaultNavGroups = (opts: { profileUserId?: string; admin?: boolean
       title: "Practice",
       items: [
         { to: "/learning", label: "Learning", icon: <BookOpen className="h-4 w-4" /> },
+        { to: "/revise", label: "Revise", icon: <BookMarked className="h-4 w-4" /> },
         { to: "/mistakes", label: "Mistake bank", icon: <AlertOctagon className="h-4 w-4" /> },
         { to: "/analytics", label: "Mastery", icon: <BarChart3 className="h-4 w-4" /> },
         { to: "/history", label: "History", icon: <History className="h-4 w-4" /> },

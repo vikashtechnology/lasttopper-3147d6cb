@@ -16,6 +16,7 @@ import { AiChatBubble } from "@/components/chat/AiChatBubble";
 import { Sparkles } from "lucide-react";
 import {
   BookOpen,
+  BookMarked,
   Flame,
   Target,
   LogOut,
@@ -152,8 +153,9 @@ function HomePage() {
 
       {/* Practice */}
       <SectionHeading title="Practice" hint="Pick a mode to start" />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <NavTile icon={<BookOpen className="h-5 w-5" />} title="Learning" body="Practice by chapter" onClick={() => navigate({ to: "/learning" })} />
+        <NavTile icon={<BookMarked className="h-5 w-5" />} title="Revise" body="NCERT topic notes" onClick={() => navigate({ to: "/revise" })} />
         <NavTile icon={<AlertOctagon className="h-5 w-5" />} title="Mistake bank" body="Fix your errors" onClick={() => navigate({ to: "/mistakes" })} />
         <NavTile icon={<BarChart3 className="h-5 w-5" />} title="Mastery" body="Charts & insights" onClick={() => navigate({ to: "/analytics" })} />
         <NavTile icon={<History className="h-5 w-5" />} title="History" body="Past attempts" onClick={() => navigate({ to: "/history" })} />

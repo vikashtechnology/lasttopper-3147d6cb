@@ -696,6 +696,59 @@ export type Database = {
         }
         Relationships: []
       }
+      revise_topics: {
+        Row: {
+          chapter_id: string
+          created_at: string
+          display_order: number
+          formulas: Json
+          generated_at: string | null
+          id: string
+          key_points: Json
+          refs: Json
+          slug: string
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          chapter_id: string
+          created_at?: string
+          display_order?: number
+          formulas?: Json
+          generated_at?: string | null
+          id?: string
+          key_points?: Json
+          refs?: Json
+          slug: string
+          summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          chapter_id?: string
+          created_at?: string
+          display_order?: number
+          formulas?: Json
+          generated_at?: string | null
+          id?: string
+          key_points?: Json
+          refs?: Json
+          slug?: string
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revise_topics_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_group_members: {
         Row: {
           group_id: string
