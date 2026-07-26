@@ -387,15 +387,27 @@ export const startMegaSession = createServerFn({ method: "POST" })
     if (!entry?.paid) throw new Error("Join first to play");
     if (entry.session_id) return { id: entry.session_id as string };
     let questions = (test.questions as QuizQuestion[] | null) ?? null;
-    if (!questions) {
-      const label = test.profession === "pcm"
-        ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
-      const prompt = `Generate exactly 60 exam-style MCQ for ${label}. STRICT SOURCE: use ONLY content from official NCERT Class 11 & 12 textbooks. Mix chapters, difficulties. Use LaTeX. Return STRICT JSON: {"questions":[{"question":"","options":{"A":"","B":"","C":"","D":""},"correct":"A","hint":"","explanation":""}]}`;
-      const parts = await Promise.all([callGemini(prompt, 60), callGemini(prompt, 60), callGemini(prompt, 60)]);
-      questions = parts.flat().slice(0, 180);
-      await context.supabase.from("mega_tests")
-        .update({ questions: questions as unknown as never, status: "live" })
-        .eq("id", data.mega_test_id);
+    // If not yet generated for this test, look for a shared set generated for the same time slot
+    // (one set is shared across all professions for fairness).
+    if (!questions || questions.length === 0) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: peer } = await supabaseAdmin
+        .from("mega_tests")
+        .select("questions")
+        .eq("scheduled_start", test.scheduled_start as string)
+        .not("questions", "is", null)
+        .limit(1)
+        .maybeSingle();
+      const shared = (peer?.questions as QuizQuestion[] | null) ?? null;
+      if (shared && shared.length > 0) {
+        questions = shared;
+        await supabaseAdmin.from("mega_tests")
+          .update({ questions: shared as unknown as never, status: "live" })
+          .eq("id", data.mega_test_id);
+      }
+    }
+    if (!questions || questions.length === 0) {
+      throw new Error("Test questions are still being prepared. Please try again in a minute.");
     }
     const { data: row, error } = await context.supabase
       .from("battle_sessions")
@@ -409,6 +421,7 @@ export const startMegaSession = createServerFn({ method: "POST" })
     await context.supabase.from("mega_test_entries").update({ session_id: row.id }).eq("id", entry.id);
     return { id: row.id as string };
   });
+
 
 /* ----------------------------- Withdrawals ------------------------------- */
 
