@@ -64,7 +64,7 @@ export async function payWithRazorpay(args: PayArgs): Promise<{
       amount: order.amount,
       currency: order.currency,
       name: "Last Topper",
-      description: args.description ?? (args.purpose === "wallet_topup" ? "Wallet top-up" : args.purpose === "pro_yearly" ? "Pro yearly subscription" : "Pro monthly subscription"),
+      description: args.description ?? (args.purpose === "wallet_topup" ? "Wallet top-up" : args.purpose === "pro_yearly" ? "Pro yearly subscription" : args.purpose === "pro_weekly" ? "Pro weekly subscription" : "Pro monthly subscription"),
       prefill: { name: args.name ?? undefined, email: args.email ?? undefined },
       theme: { color: "#4f46e5" },
       handler: async (r) => {
