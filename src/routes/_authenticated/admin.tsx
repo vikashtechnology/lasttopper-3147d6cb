@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { amIAdmin } from "@/lib/admin.functions";
-import { ArrowLeft, LayoutDashboard, Users, Flag, Wallet, Database } from "lucide-react";
+import { amIAdmin, amIOwner } from "@/lib/admin.functions";
+import { ArrowLeft, LayoutDashboard, Users, Flag, Wallet, Database, Crown } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -28,6 +28,7 @@ function AdminLayout() {
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const check = useQuery({ queryKey: ["am-i-admin"], queryFn: () => amIAdmin() });
+  const owner = useQuery({ queryKey: ["am-i-owner"], queryFn: () => amIOwner() });
 
   if (check.isLoading) return <div className="p-6 text-sm">Checking access…</div>;
   if (!check.data?.admin) {
@@ -48,6 +49,7 @@ function AdminLayout() {
     { to: "/admin/moderation", icon: Flag, label: "Moderation" },
     { to: "/admin/withdrawals", icon: Wallet, label: "Withdrawals" },
     { to: "/admin/bank", icon: Database, label: "Question Bank" },
+    ...(owner.data?.owner ? [{ to: "/admin/admins", icon: Crown, label: "Admins" }] : []),
   ];
 
 
