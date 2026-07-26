@@ -1,15 +1,7 @@
-// Server-only helper for the dedicated signup-verification Telegram bot.
+// Signup alerts now use the same unified Telegram bot (connector gateway)
+// as all other alerts. Kept as a thin re-export for existing call sites.
+import { sendTelegramAlert } from "./telegram-alert";
+
 export async function sendSignupAlert(text: string): Promise<void> {
-  try {
-    const token = process.env.SIGNUP_TELEGRAM_BOT_TOKEN;
-    const chat = process.env.SIGNUP_TELEGRAM_CHAT_ID;
-    if (!token || !chat) return;
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chat, text, parse_mode: "HTML" }),
-    });
-  } catch (e) {
-    console.error("[signup-telegram] send failed", e);
-  }
+  return sendTelegramAlert(text);
 }
