@@ -63,3 +63,30 @@ build ready for the Play Store.
 It only affects the **native Android build**. In the web browser and PWA the
 existing `useAntiCheat` hook still blocks right-click, copy, and DevTools —
 that is the strongest protection browsers permit.
+
+## Local notifications (work when the app is closed)
+
+The app schedules device-side reminders via `@capacitor/local-notifications`:
+
+- **6:30 PM daily** — "Complete your streak" reminder
+- **Motivation nudges** — 9:00, 11:30, 14:00, 16:30, 20:30, 22:00 (every ~2.5 hrs)
+- **Mega Test** — Saturday 8 PM teaser, Sunday 9:30 AM window-open, Sunday 1:30 PM "starts in 30 min"
+- **Live events** — new community threads, study-group messages and personal alerts fire instantly while the app is running
+
+Install the plugin in your native build and sync:
+
+```bash
+bun add @capacitor/local-notifications
+npx cap sync android
+```
+
+Android 13+ requires the runtime permission (Capacitor adds it automatically):
+
+```xml
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+```
+
+The app requests permission on first launch after sign-in. On the web the same
+alerts appear through the browser Notification API while a tab is open;
+closed-app delivery is native-only.
