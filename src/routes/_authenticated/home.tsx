@@ -16,6 +16,7 @@ import { AiChatBubble } from "@/components/chat/AiChatBubble";
 import { Sparkles } from "lucide-react";
 import {
   BookOpen,
+  BookMarked,
   Flame,
   Target,
   LogOut,
