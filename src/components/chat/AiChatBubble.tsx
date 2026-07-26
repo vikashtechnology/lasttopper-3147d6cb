@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { X, Send, Sparkles, GraduationCap } from "lucide-react";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { getMyProfile } from "@/lib/user.functions";
+import { X, Send, Sparkles } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import avatarSrc from "@/assets/topper-ai-avatar.jpg";
 
 import { chatWithTopperAi } from "@/lib/chatbot.functions";
 import { Latex } from "@/components/Latex";
