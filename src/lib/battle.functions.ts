@@ -220,8 +220,9 @@ export const getBattleSession = createServerFn({ method: "POST" })
 export const getQuickLeaderboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { data } = await context.supabase
+    const { data } = await supabaseAdmin
       .from("battle_sessions")
       .select("id, user_id, score, correct_count, time_taken_seconds, submitted_at")
       .eq("mode", "quick").not("submitted_at", "is", null).gt("submitted_at", since)
@@ -231,12 +232,12 @@ export const getQuickLeaderboard = createServerFn({ method: "GET" })
     const rows = data ?? [];
     const userIds = Array.from(new Set(rows.map((r) => r.user_id as string)));
     const { data: users } = userIds.length
-      ? await context.supabase.from("users").select("id, full_name, email, avatar_url").in("id", userIds)
-      : { data: [] as Array<{ id: string; full_name: string | null; email: string | null; avatar_url: string | null }> };
+      ? await supabaseAdmin.from("public_profiles").select("id, full_name, avatar_url").in("id", userIds)
+      : { data: [] as Array<{ id: string; full_name: string | null; avatar_url: string | null }> };
     const map = new Map((users ?? []).map((u) => [u.id, u] as const));
     return rows.map((r, i) => ({
       rank: i + 1,
-      user: map.get(r.user_id as string) ?? { id: r.user_id as string, full_name: null, email: null, avatar_url: null },
+      user: map.get(r.user_id as string) ?? { id: r.user_id as string, full_name: null, email: null as string | null, avatar_url: null },
       score: r.score as number,
       correct_count: r.correct_count as number,
       time_taken_seconds: r.time_taken_seconds as number | null,
