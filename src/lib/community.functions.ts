@@ -421,20 +421,22 @@ export const getPublicProfile = createServerFn({ method: "GET" })
 export const getActivityFeed = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Get list of users I follow
     const { data: follows } = await context.supabase.from("follows")
       .select("following_id").eq("follower_id", context.userId);
     const ids = (follows ?? []).map((f) => f.following_id);
-    let query = context.supabase.from("activity_events")
+    if (ids.length === 0) {
+      return { events: [], trending_doubts: await trendingDoubts(context.supabase) };
+    }
+    const { data: events, error } = await supabaseAdmin.from("activity_events")
       .select("id, user_id, kind, payload, created_at")
+      .in("user_id", ids)
       .order("created_at", { ascending: false }).limit(40);
-    if (ids.length > 0) query = query.in("user_id", ids);
-    else return { events: [], trending_doubts: await trendingDoubts(context.supabase) };
-    const { data: events, error } = await query;
     if (error) throw error;
     const userIds = Array.from(new Set((events ?? []).map((e) => e.user_id)));
     const profiles = userIds.length
-      ? (await context.supabase.from("users").select("id, full_name, avatar_url").in("id", userIds)).data ?? []
+      ? (await context.supabase.from("public_profiles").select("id, full_name, avatar_url").in("id", userIds)).data ?? []
       : [];
     const pm = new Map(profiles.map((p) => [p.id, p]));
     return {
