@@ -146,7 +146,7 @@ export const extendQuickBattle = createServerFn({ method: "POST" })
     if (cur.length >= QUICK_TOTAL) return { done: true as const, questions: cur };
     const n = Math.min(QUICK_BATCH, QUICK_TOTAL - cur.length);
     const batchIdx = Math.floor(cur.length / QUICK_BATCH);
-    const more = await generateQuickBatch(s.profession as string, n, batchIdx);
+    const more = await generateQuickBatch(s.profession as string, n, batchIdx, mode === "1v1" ? "1v1" : "quick");
     const next = [...cur, ...more];
     await context.supabase.from("battle_sessions")
       .update({ questions: next as unknown as never })
