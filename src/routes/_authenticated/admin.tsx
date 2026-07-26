@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { amIAdmin, amIOwner } from "@/lib/admin.functions";
-import { ArrowLeft, LayoutDashboard, Users, Flag, Wallet, Database, Crown } from "lucide-react";
+import { ArrowLeft, LayoutDashboard, Users, Flag, Wallet, Database, Crown, Megaphone } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
