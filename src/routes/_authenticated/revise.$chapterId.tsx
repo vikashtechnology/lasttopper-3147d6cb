@@ -22,8 +22,30 @@ export const Route = createFileRoute("/_authenticated/revise/$chapterId")({
       queryKey: ["revise-topics", params.chapterId],
       queryFn: () => getChapterTopics({ data: { chapter_id: params.chapterId } }),
     }),
+  errorComponent: ReviseError,
   component: ChapterRevisePage,
 });
+
+function ReviseError({ error, reset }: { error: Error; reset: () => void }) {
+  const nav = useNavigate();
+
+  return (
+    <main className="min-h-screen bg-background px-5 py-10">
+      <div className="mx-auto max-w-md space-y-4 rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
+        <div>
+          <h1 className="text-lg font-semibold">Revision could not load</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{error.message || "Please try again."}</p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={reset}>Retry</Button>
+          <Button variant="outline" onClick={() => nav({ to: "/revise" })}>
+            Back
+          </Button>
+        </div>
+      </div>
+    </main>
+  );
+}
 
 function ChapterRevisePage() {
   const { chapterId } = Route.useParams();
@@ -147,7 +169,7 @@ function TopicCard({
           {!mut.isPending && detail.summary && (
             <div className="space-y-4 text-sm">
               <div className="flex items-center gap-2 text-xs font-medium text-primary">
-                <Sparkles className="h-3.5 w-3.5" /> AI revision note
+                <Sparkles className="h-3.5 w-3.5" /> Revision note
               </div>
               <Latex className="block leading-relaxed text-foreground">{detail.summary}</Latex>
 
