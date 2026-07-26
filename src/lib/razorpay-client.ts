@@ -42,10 +42,11 @@ function loadCheckout(): Promise<void> {
 export type PayArgs =
   | { purpose: "pro"; name?: string | null; email?: string | null; description?: string }
   | { purpose: "pro_yearly"; name?: string | null; email?: string | null; description?: string }
+  | { purpose: "pro_weekly"; name?: string | null; email?: string | null; description?: string }
   | { purpose: "wallet_topup"; amount_inr: number; name?: string | null; email?: string | null; description?: string };
 
 export async function payWithRazorpay(args: PayArgs): Promise<{
-  purpose: "pro" | "pro_yearly" | "wallet_topup";
+  purpose: "pro" | "pro_yearly" | "pro_weekly" | "wallet_topup";
   balance?: number;
 }> {
   await loadCheckout();
