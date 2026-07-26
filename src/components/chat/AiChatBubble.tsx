@@ -49,8 +49,8 @@ export function AiChatBubble() {
       {open && (
         <div className="fixed bottom-24 right-4 z-50 flex h-[70vh] max-h-[600px] w-[92vw] max-w-sm flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl lg:bottom-6 lg:right-6">
           <div className="flex items-center gap-2 border-b border-border bg-gradient-to-r from-primary/10 to-transparent px-4 py-3">
-            <div className="grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground">
-              <Sparkles className="h-4 w-4" />
+            <div className="grid h-8 w-8 place-items-center overflow-hidden rounded-full bg-primary text-primary-foreground">
+              <img src={avatarSrc} alt="Topper AI" className="h-full w-full object-cover" />
             </div>
             <div className="flex-1">
               <div className="text-sm font-semibold">Topper AI</div>
