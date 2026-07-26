@@ -25,6 +25,7 @@ import { Route as AuthenticatedCommunityRouteImport } from './routes/_authentica
 import { Route as AuthenticatedBattleRouteImport } from './routes/_authenticated/battle'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedReviseIndexRouteImport } from './routes/_authenticated/revise.index'
 import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
 import { Route as AuthenticatedBattleIndexRouteImport } from './routes/_authenticated/battle.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
@@ -132,6 +133,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReviseIndexRoute =
+  AuthenticatedReviseIndexRouteImport.update({
+    id: '/revise/',
+    path: '/revise/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCommunityIndexRoute =
   AuthenticatedCommunityIndexRouteImport.update({
     id: '/',
@@ -317,6 +324,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/battle/': typeof AuthenticatedBattleIndexRoute
   '/community/': typeof AuthenticatedCommunityIndexRoute
+  '/revise/': typeof AuthenticatedReviseIndexRoute
   '/battle/play/$sessionId': typeof AuthenticatedBattlePlaySessionIdRoute
   '/community/doubt/$doubtId': typeof AuthenticatedCommunityDoubtDoubtIdRoute
   '/community/forum/$categoryId': typeof AuthenticatedCommunityForumCategoryIdRoute
@@ -357,6 +365,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/battle': typeof AuthenticatedBattleIndexRoute
   '/community': typeof AuthenticatedCommunityIndexRoute
+  '/revise': typeof AuthenticatedReviseIndexRoute
   '/battle/play/$sessionId': typeof AuthenticatedBattlePlaySessionIdRoute
   '/community/doubt/$doubtId': typeof AuthenticatedCommunityDoubtDoubtIdRoute
   '/community/forum/$categoryId': typeof AuthenticatedCommunityForumCategoryIdRoute
@@ -402,6 +411,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/battle/': typeof AuthenticatedBattleIndexRoute
   '/_authenticated/community/': typeof AuthenticatedCommunityIndexRoute
+  '/_authenticated/revise/': typeof AuthenticatedReviseIndexRoute
   '/_authenticated/battle/play/$sessionId': typeof AuthenticatedBattlePlaySessionIdRoute
   '/_authenticated/community/doubt/$doubtId': typeof AuthenticatedCommunityDoubtDoubtIdRoute
   '/_authenticated/community/forum/$categoryId': typeof AuthenticatedCommunityForumCategoryIdRoute
@@ -447,6 +457,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/battle/'
     | '/community/'
+    | '/revise/'
     | '/battle/play/$sessionId'
     | '/community/doubt/$doubtId'
     | '/community/forum/$categoryId'
@@ -487,6 +498,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/battle'
     | '/community'
+    | '/revise'
     | '/battle/play/$sessionId'
     | '/community/doubt/$doubtId'
     | '/community/forum/$categoryId'
@@ -531,6 +543,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/'
     | '/_authenticated/battle/'
     | '/_authenticated/community/'
+    | '/_authenticated/revise/'
     | '/_authenticated/battle/play/$sessionId'
     | '/_authenticated/community/doubt/$doubtId'
     | '/_authenticated/community/forum/$categoryId'
@@ -667,6 +680,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/revise/': {
+      id: '/_authenticated/revise/'
+      path: '/revise'
+      fullPath: '/revise/'
+      preLoaderRoute: typeof AuthenticatedReviseIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/community/': {
@@ -940,6 +960,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProfileUserIdRoute: typeof AuthenticatedProfileUserIdRoute
   AuthenticatedQuizSessionIdRoute: typeof AuthenticatedQuizSessionIdRoute
   AuthenticatedResultsSessionIdRoute: typeof AuthenticatedResultsSessionIdRoute
+  AuthenticatedReviseIndexRoute: typeof AuthenticatedReviseIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -956,6 +977,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProfileUserIdRoute: AuthenticatedProfileUserIdRoute,
   AuthenticatedQuizSessionIdRoute: AuthenticatedQuizSessionIdRoute,
   AuthenticatedResultsSessionIdRoute: AuthenticatedResultsSessionIdRoute,
+  AuthenticatedReviseIndexRoute: AuthenticatedReviseIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
