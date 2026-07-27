@@ -30,9 +30,9 @@ type Provider = {
 /** Google's native API uses bare model ids. */
 function toGeminiModel(model: string): string {
   const bare = model.replace(/^google\//, "");
-  if (/lite/i.test(bare)) return "gemini-2.5-flash-lite";
-  if (/pro/i.test(bare)) return "gemini-2.5-pro";
-  return "gemini-2.5-flash";
+  if (/lite/i.test(bare)) return "gemini-flash-lite-latest";
+  if (/pro/i.test(bare)) return "gemini-pro-latest";
+  return "gemini-flash-latest";
 }
 
 /** OpenRouter needs an id that actually exists in its catalog. */
@@ -47,7 +47,7 @@ function buildProviders(): Provider[] {
   const list: Provider[] = [];
 
   for (const name of ["GEMINI_API_KEY_1", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3"]) {
-    const key = process.env[name];
+    const key = process.env[name]?.trim();
     if (!key) continue;
     list.push({
       label: name,
@@ -58,7 +58,7 @@ function buildProviders(): Provider[] {
   }
 
   for (const name of ["OPENROUTER_API_KEY_1", "OPENROUTER_API_KEY_2"]) {
-    const key = process.env[name];
+    const key = process.env[name]?.trim();
     if (!key) continue;
     list.push({
       label: name,
@@ -68,7 +68,7 @@ function buildProviders(): Provider[] {
     });
   }
 
-  const lov = process.env.LOVABLE_API_KEY;
+  const lov = process.env.LOVABLE_API_KEY?.trim();
   if (lov) {
     list.push({
       label: "LOVABLE_API_KEY",
