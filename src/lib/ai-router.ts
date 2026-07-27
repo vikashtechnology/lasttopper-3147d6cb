@@ -75,6 +75,17 @@ function buildProviders(): Provider[] {
     });
   }
 
+  const grok = process.env.XAI_API_KEY?.trim();
+  if (grok) {
+    list.push({
+      label: "XAI_API_KEY",
+      url: "https://api.x.ai/v1/chat/completions",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${grok}` },
+      model: toGrokModel,
+    });
+  }
+
+
   const lov = process.env.LOVABLE_API_KEY?.trim();
   if (lov) {
     list.push({
