@@ -39,11 +39,16 @@ function WalletPage() {
 
   const applyRef = useMutation({
     mutationFn: (code: string) => applyReferralCode({ data: { code } }),
-    onSuccess: () => {
+    onSuccess: (res) => {
+      if (!res.ok) {
+        toast.error(res.error);
+        return;
+      }
       toast.success("Referral applied — top up to reward your friend!");
       setCodeInput("");
       qc.invalidateQueries({ queryKey: ["referral"] });
     },
+
     onError: (e: Error) => toast.error(failMessage(e)),
   });
 

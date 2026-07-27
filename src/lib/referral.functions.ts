@@ -37,27 +37,33 @@ export const applyReferralCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => applySchema.parse(d))
   .handler(async ({ data, context }) => {
-    const code = data.code.toUpperCase();
+    const code = data.code.trim().toUpperCase();
 
     const { data: me } = await context.supabase
       .from("users")
       .select("referred_by, referral_code")
       .eq("id", context.userId)
       .maybeSingle();
-    if (me?.referred_by) throw new Error("Referral already applied");
-    if (me?.referral_code === code) throw new Error("You can't use your own code");
+    if (me?.referred_by) return { ok: false as const, error: "Referral already applied" };
+    if (me?.referral_code?.toUpperCase() === code)
+      return { ok: false as const, error: "You can't use your own code" };
 
-    const { data: ref } = await context.supabase
+    // RLS restricts the users table to the owner's row, so look up the
+    // referrer with the admin client (read-only, id only).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: ref } = await supabaseAdmin
       .from("users")
       .select("id")
-      .eq("referral_code", code)
+      .ilike("referral_code", code)
       .maybeSingle();
-    if (!ref) throw new Error("Invalid referral code");
+    if (!ref || ref.id === context.userId)
+      return { ok: false as const, error: "Invalid referral code" };
 
     const { error } = await context.supabase
       .from("users")
       .update({ referred_by: ref.id })
       .eq("id", context.userId);
-    if (error) throw error;
-    return { ok: true };
+    if (error) return { ok: false as const, error: "Could not apply referral code" };
+    return { ok: true as const };
   });
+

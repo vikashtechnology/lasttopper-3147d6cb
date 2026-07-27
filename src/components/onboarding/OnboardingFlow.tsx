@@ -75,11 +75,13 @@ export function OnboardingFlow({ open }: { open: boolean }) {
       const code = refCode.trim().toUpperCase();
       if (code.length >= 4) {
         try {
-          await applyReferralCode({ data: { code } });
-          toast.success("Referral code applied");
+          const res = await applyReferralCode({ data: { code } });
+          if (res.ok) toast.success("Referral code applied");
+          else toast.error(res.error);
         } catch (err) {
           toast.error(failMessage(err, "Invalid referral code"));
         }
+
       }
       setStep("profession");
     } catch (e) {
