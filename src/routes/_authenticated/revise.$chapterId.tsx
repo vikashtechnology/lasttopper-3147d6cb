@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getChapterTopics, getTopicRevision, type ReviseTopic } from "@/lib/revise.functions";
 import { Button } from "@/components/ui/button";
-import { Latex } from "@/components/Latex";
+import { Latex, Formula } from "@/components/Latex";
 import { ChevronLeft, ChevronDown, Loader2, ExternalLink, Sparkles, BookMarked } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/revise/$chapterId")({
