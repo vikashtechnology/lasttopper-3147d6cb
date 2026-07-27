@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getChapterTopics, getTopicRevision } from "@/lib/revise.functions";
 import { Button } from "@/components/ui/button";
-import { Latex } from "@/components/Latex";
+import { Latex, Formula, parseFormula } from "@/components/Latex";
 import { ChevronLeft, ChevronRight, Layers, Loader2, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/flashcards/$chapterId")({
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/flashcards/$chapterId")({
   component: FlashcardsPage,
 });
 
-type Card = { front: string; back: string; topic: string };
+type Card = { front: string; back: string; topic: string; isFormula?: boolean };
 
 function FlashcardsPage() {
   const { chapterId } = Route.useParams();
@@ -49,8 +49,8 @@ function FlashcardsPage() {
     const out: Card[] = [];
     for (const f of t.formulas ?? []) {
       const text = String(f);
-      const [head, ...rest] = text.split(/[:=]\s?/);
-      out.push({ topic: t.title, front: rest.length ? head.trim() : `Formula — ${t.title}`, back: text });
+      const { label } = parseFormula(text);
+      out.push({ topic: t.title, front: label ?? `Formula — ${t.title}`, back: text, isFormula: true });
     }
 
     for (const p of t.key_points ?? []) {
@@ -120,9 +120,13 @@ function FlashcardsPage() {
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
                 {flipped ? "Answer" : "Tap to reveal"}
               </span>
-              <Latex className="block text-base font-medium leading-relaxed">
-                {flipped ? card.back : card.front}
-              </Latex>
+              {flipped && card.isFormula ? (
+                <Formula>{card.back}</Formula>
+              ) : (
+                <Latex className="block text-base font-medium leading-relaxed">
+                  {flipped ? card.back : card.front}
+                </Latex>
+              )}
             </button>
             <div className="flex items-center justify-between">
               <Button variant="outline" disabled={cardIdx === 0} onClick={() => { setCardIdx((i) => i - 1); setFlipped(false); }}>

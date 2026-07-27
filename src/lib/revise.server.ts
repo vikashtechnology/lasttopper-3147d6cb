@@ -249,7 +249,7 @@ export async function readTopicRevision(topicId: string, context: SupabaseContex
 Return:
 - summary: 120-180 word plain-language explanation, exam-focused.
 - key_points: 5-8 crisp bullet points a student must remember.
-- formulas: important formulas or reactions (use plain text / LaTeX like $E=mc^2$). Empty array if none.
+- formulas: array of important formulas or reactions. STRICT FORMAT: each item MUST be "Label: $latex$" where the maths part is valid LaTeX wrapped in single dollar signs (e.g. "Kinetic energy: $K=\\tfrac{1}{2}mv^2$", "Ideal gas law: $PV=nRT$"). Use \\frac, ^, _, \\times, \\Delta, \\rightarrow for reactions, and never use plain-text symbols like "1/2" or "->". Empty array if none.
 
 Do NOT include copyrighted text from any textbook — write in your own words.`,
       {

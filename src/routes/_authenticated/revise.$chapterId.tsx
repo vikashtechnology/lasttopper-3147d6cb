@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getChapterTopics, getTopicRevision, type ReviseTopic } from "@/lib/revise.functions";
 import { Button } from "@/components/ui/button";
-import { Latex } from "@/components/Latex";
+import { Latex, Formula } from "@/components/Latex";
 import { ChevronLeft, ChevronDown, Loader2, ExternalLink, Sparkles, BookMarked } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/revise/$chapterId")({
@@ -193,15 +193,16 @@ function TopicCard({
                   <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Formulas / reactions
                   </div>
-                  <div className="space-y-1.5 rounded-lg border bg-background p-3">
+                  <div className="divide-y rounded-lg border bg-background">
                     {detail.formulas.map((f, i) => (
-                      <div key={i}>
-                        <Latex>{f}</Latex>
+                      <div key={i} className="px-3 py-2.5">
+                        <Formula>{f}</Formula>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
+
 
               {detail.refs?.length > 0 && (
                 <div>
