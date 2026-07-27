@@ -362,6 +362,31 @@ function OneVOne() {
             <ResultCard name={myName} correct={myCorrect} total={TOTAL} accent="cyan" winner={won} />
             <ResultCard name={bot?.name ?? "Rival"} correct={botCorrect} total={TOTAL} accent="rose" winner={!won && !tie} />
           </div>
+
+          <div className="mt-5 grid grid-cols-3 gap-2">
+            <MiniStat label="Accuracy" value={`${attemptedCount ? Math.round((myCorrect / attemptedCount) * 100) : 0}%`} />
+            <MiniStat label="Attempted" value={`${attemptedCount}/${TOTAL}`} />
+            <MiniStat label="Time" value={`${mm}:${ss}`} />
+          </div>
+
+          <div className="mt-5 text-left">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/50">Your progress</div>
+            <div className="flex flex-wrap gap-1.5">
+              {questions.slice(0, TOTAL).map((q, i) => {
+                const a = answers[q.id];
+                const ok = a === q.correct;
+                return (
+                  <span
+                    key={q.id}
+                    className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${
+                      !a ? "bg-white/10 text-white/60" : ok ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"
+                    }`}
+                  >{i + 1}</span>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="mt-6 flex justify-center gap-2">
             <button
               className="rounded-xl bg-gradient-to-r from-rose-500 to-fuchsia-600 px-5 py-2 text-sm font-bold text-white shadow-[0_0_20px_rgba(244,63,94,0.4)]"
