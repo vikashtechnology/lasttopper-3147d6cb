@@ -737,7 +737,7 @@ export const reportIssue = createServerFn({ method: "POST" })
     if (error) throw error;
 
     const lovableKey = process.env.LOVABLE_API_KEY;
-    const telegramKey = process.env.TELEGRAM_API_KEY;
+    const telegramKey = (process.env.TELEGRAM_API_KEY_1 ?? process.env.TELEGRAM_API_KEY);
     const chatId = process.env.REPORT_TELEGRAM_CHAT_ID;
     if (lovableKey && telegramKey && chatId) {
       const text = [

@@ -4,7 +4,7 @@
 function creds() {
   const chat = process.env.REPORT_TELEGRAM_CHAT_ID;
   const gwKey = process.env.LOVABLE_API_KEY;
-  const tgKey = process.env.TELEGRAM_API_KEY;
+  const tgKey = (process.env.TELEGRAM_API_KEY_1 ?? process.env.TELEGRAM_API_KEY);
   if (!chat || !gwKey || !tgKey) return null;
   return { chat, gwKey, tgKey };
 }
