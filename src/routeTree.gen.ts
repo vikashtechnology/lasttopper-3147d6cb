@@ -36,6 +36,7 @@ import { Route as AuthenticatedReviseChapterIdRouteImport } from './routes/_auth
 import { Route as AuthenticatedResultsSessionIdRouteImport } from './routes/_authenticated/results.$sessionId'
 import { Route as AuthenticatedQuizSessionIdRouteImport } from './routes/_authenticated/quiz.$sessionId'
 import { Route as AuthenticatedProfileUserIdRouteImport } from './routes/_authenticated/profile.$userId'
+import { Route as AuthenticatedFlashcardsChapterIdRouteImport } from './routes/_authenticated/flashcards.$chapterId'
 import { Route as AuthenticatedCommunityGroupsRouteImport } from './routes/_authenticated/community.groups'
 import { Route as AuthenticatedCommunityFeedRouteImport } from './routes/_authenticated/community.feed'
 import { Route as AuthenticatedCommunityDoubtsRouteImport } from './routes/_authenticated/community.doubts'
@@ -200,6 +201,12 @@ const AuthenticatedProfileUserIdRoute =
   AuthenticatedProfileUserIdRouteImport.update({
     id: '/profile/$userId',
     path: '/profile/$userId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFlashcardsChapterIdRoute =
+  AuthenticatedFlashcardsChapterIdRouteImport.update({
+    id: '/flashcards/$chapterId',
+    path: '/flashcards/$chapterId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCommunityGroupsRoute =
@@ -369,6 +376,7 @@ export interface FileRoutesByFullPath {
   '/community/doubts': typeof AuthenticatedCommunityDoubtsRoute
   '/community/feed': typeof AuthenticatedCommunityFeedRoute
   '/community/groups': typeof AuthenticatedCommunityGroupsRoute
+  '/flashcards/$chapterId': typeof AuthenticatedFlashcardsChapterIdRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/quiz/$sessionId': typeof AuthenticatedQuizSessionIdRoute
   '/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
@@ -417,6 +425,7 @@ export interface FileRoutesByTo {
   '/community/doubts': typeof AuthenticatedCommunityDoubtsRoute
   '/community/feed': typeof AuthenticatedCommunityFeedRoute
   '/community/groups': typeof AuthenticatedCommunityGroupsRoute
+  '/flashcards/$chapterId': typeof AuthenticatedFlashcardsChapterIdRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/quiz/$sessionId': typeof AuthenticatedQuizSessionIdRoute
   '/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
@@ -470,6 +479,7 @@ export interface FileRoutesById {
   '/_authenticated/community/doubts': typeof AuthenticatedCommunityDoubtsRoute
   '/_authenticated/community/feed': typeof AuthenticatedCommunityFeedRoute
   '/_authenticated/community/groups': typeof AuthenticatedCommunityGroupsRoute
+  '/_authenticated/flashcards/$chapterId': typeof AuthenticatedFlashcardsChapterIdRoute
   '/_authenticated/profile/$userId': typeof AuthenticatedProfileUserIdRoute
   '/_authenticated/quiz/$sessionId': typeof AuthenticatedQuizSessionIdRoute
   '/_authenticated/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
@@ -523,6 +533,7 @@ export interface FileRouteTypes {
     | '/community/doubts'
     | '/community/feed'
     | '/community/groups'
+    | '/flashcards/$chapterId'
     | '/profile/$userId'
     | '/quiz/$sessionId'
     | '/results/$sessionId'
@@ -571,6 +582,7 @@ export interface FileRouteTypes {
     | '/community/doubts'
     | '/community/feed'
     | '/community/groups'
+    | '/flashcards/$chapterId'
     | '/profile/$userId'
     | '/quiz/$sessionId'
     | '/results/$sessionId'
@@ -623,6 +635,7 @@ export interface FileRouteTypes {
     | '/_authenticated/community/doubts'
     | '/_authenticated/community/feed'
     | '/_authenticated/community/groups'
+    | '/_authenticated/flashcards/$chapterId'
     | '/_authenticated/profile/$userId'
     | '/_authenticated/quiz/$sessionId'
     | '/_authenticated/results/$sessionId'
@@ -844,6 +857,13 @@ declare module '@tanstack/react-router' {
       path: '/profile/$userId'
       fullPath: '/profile/$userId'
       preLoaderRoute: typeof AuthenticatedProfileUserIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/flashcards/$chapterId': {
+      id: '/_authenticated/flashcards/$chapterId'
+      path: '/flashcards/$chapterId'
+      fullPath: '/flashcards/$chapterId'
+      preLoaderRoute: typeof AuthenticatedFlashcardsChapterIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/community/groups': {
@@ -1102,6 +1122,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPricingRoute: typeof AuthenticatedPricingRoute
   AuthenticatedPyqRoute: typeof AuthenticatedPyqRoute
   AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
+  AuthenticatedFlashcardsChapterIdRoute: typeof AuthenticatedFlashcardsChapterIdRoute
   AuthenticatedProfileUserIdRoute: typeof AuthenticatedProfileUserIdRoute
   AuthenticatedQuizSessionIdRoute: typeof AuthenticatedQuizSessionIdRoute
   AuthenticatedResultsSessionIdRoute: typeof AuthenticatedResultsSessionIdRoute
@@ -1123,6 +1144,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPricingRoute: AuthenticatedPricingRoute,
   AuthenticatedPyqRoute: AuthenticatedPyqRoute,
   AuthenticatedReviewRoute: AuthenticatedReviewRoute,
+  AuthenticatedFlashcardsChapterIdRoute: AuthenticatedFlashcardsChapterIdRoute,
   AuthenticatedProfileUserIdRoute: AuthenticatedProfileUserIdRoute,
   AuthenticatedQuizSessionIdRoute: AuthenticatedQuizSessionIdRoute,
   AuthenticatedResultsSessionIdRoute: AuthenticatedResultsSessionIdRoute,

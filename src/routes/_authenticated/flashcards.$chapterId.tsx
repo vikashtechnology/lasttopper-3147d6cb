@@ -48,8 +48,11 @@ function FlashcardsPage() {
     if (!t) return [];
     const out: Card[] = [];
     for (const f of t.formulas ?? []) {
-      out.push({ topic: t.title, front: f.name ?? "Formula", back: `${f.expression ?? ""}${f.note ? `\n\n${f.note}` : ""}` });
+      const text = String(f);
+      const [head, ...rest] = text.split(/[:=]\s?/);
+      out.push({ topic: t.title, front: rest.length ? head.trim() : `Formula — ${t.title}`, back: text });
     }
+
     for (const p of t.key_points ?? []) {
       const text = typeof p === "string" ? p : String(p);
       const [head, ...rest] = text.split(/[:—-]\s/);
