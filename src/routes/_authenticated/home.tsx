@@ -53,6 +53,8 @@ function HomePage() {
   const navigate = useNavigate();
   useMonetagAds();
   const qc = useQueryClient();
+  const [streakOpen, setStreakOpen] = useState(false);
+
   const { data } = useSuspenseQuery(profileQuery);
   const setProfile = useUserStore((s) => s.setProfile);
   const clear = useUserStore((s) => s.clear);
