@@ -26,6 +26,10 @@ import {
   Bell,
   ShieldCheck,
   Trophy,
+  CalendarCheck,
+  Repeat2,
+  ScrollText,
+
 } from "lucide-react";
 
 const profileQuery = {
@@ -153,13 +157,17 @@ function HomePage() {
 
       {/* Practice */}
       <SectionHeading title="Practice" hint="Pick a mode to start" />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <NavTile icon={<CalendarCheck className="h-5 w-5" />} title="Daily challenge" body="10 questions · earn TC" onClick={() => navigate({ to: "/daily" })} />
+        <NavTile icon={<Repeat2 className="h-5 w-5" />} title="Review queue" body="Spaced repetition" onClick={() => navigate({ to: "/review" })} />
+        <NavTile icon={<ScrollText className="h-5 w-5" />} title="Past year papers" body="NEET & JEE PYQs" onClick={() => navigate({ to: "/pyq" })} />
         <NavTile icon={<BookOpen className="h-5 w-5" />} title="Learning" body="Practice by chapter" onClick={() => navigate({ to: "/learning" })} />
         <NavTile icon={<BookMarked className="h-5 w-5" />} title="Revise" body="NCERT topic notes" onClick={() => navigate({ to: "/revise" })} />
         <NavTile icon={<AlertOctagon className="h-5 w-5" />} title="Mistake bank" body="Fix your errors" onClick={() => navigate({ to: "/mistakes" })} />
         <NavTile icon={<BarChart3 className="h-5 w-5" />} title="Mastery" body="Charts & insights" onClick={() => navigate({ to: "/analytics" })} />
         <NavTile icon={<History className="h-5 w-5" />} title="History" body="Past attempts" onClick={() => navigate({ to: "/history" })} />
       </div>
+
 
       <OnboardingFlow open={needsOnboarding} />
       <AiChatBubble />

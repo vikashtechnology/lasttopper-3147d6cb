@@ -194,6 +194,9 @@ const bankRowSchema = z.object({
   profession: z.enum(["pcm", "pcb"]).nullable().optional(),
   chapter_id: z.string().uuid().nullable().optional(),
   subject_code: z.string().nullable().optional(),
+  exam: z.string().max(40).nullable().optional(),
+  exam_year: z.number().int().min(1980).max(2100).nullable().optional(),
+
 });
 
 const bulkUploadSchema = z.object({
@@ -215,6 +218,9 @@ export const adminBulkUploadQuestions = createServerFn({ method: "POST" })
       profession: r.profession ?? null,
       chapter_id: r.chapter_id ?? null,
       subject_code: r.subject_code ?? null,
+      exam: r.exam ? r.exam.toUpperCase() : null,
+      exam_year: r.exam_year ?? null,
+
       source: "admin",
       created_by: context.userId,
     }));
