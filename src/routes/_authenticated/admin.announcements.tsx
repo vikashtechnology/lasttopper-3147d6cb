@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { adminBroadcast, adminListAnnouncements } from "@/lib/admin.functions";
 import { Megaphone, Send, Loader2 } from "lucide-react";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/admin/announcements")({
   component: AdminAnnouncements,
@@ -27,7 +28,7 @@ function AdminAnnouncements() {
       setLink("");
       void qc.invalidateQueries({ queryKey: ["admin-announcements"] });
     },
-    onError: (e: Error) => setMsg(e.message),
+    onError: (e: Error) => setMsg(failMessage(e)),
   });
 
   const disabled = title.trim().length < 3 || send.isPending;

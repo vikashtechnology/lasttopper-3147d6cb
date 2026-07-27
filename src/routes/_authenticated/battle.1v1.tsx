@@ -10,6 +10,7 @@ import { start1v1Battle, extendQuickBattle, submitBattle } from "@/lib/battle.fu
 import { Timer, Users, Loader2, Swords, Flame } from "lucide-react";
 import type { QuizQuestion } from "@/lib/learning.functions";
 import { useUserStore } from "@/store/user";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/battle/1v1")({
   head: () => ({
@@ -90,7 +91,7 @@ function OneVOne() {
       setBotIdx(0); setBotCorrect(0);
       setPhase("matching");
     },
-    onError: (e: Error) => toast.error(e.message || "Failed to start"),
+    onError: (e: Error) => toast.error(failMessage(e, "Failed to start")),
   });
 
   const submit = useMutation({
@@ -103,7 +104,7 @@ function OneVOne() {
       const myCorrect = questions.reduce((n, q) => (answers[q.id] === q.correct ? n + 1 : n), 0);
       if (myCorrect > botCorrect) confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   useEffect(() => {
@@ -173,7 +174,7 @@ function OneVOne() {
     fetchingRef.current = true;
     extendQuickBattle({ data: { id: sessionId } })
       .then((r) => { if (r.questions?.length) setQuestions(r.questions); })
-      .catch((e: Error) => toast.error(e.message || "Failed to load more"))
+      .catch((e: Error) => toast.error(failMessage(e, "Failed to load more")))
       .finally(() => { fetchingRef.current = false; });
   }, [idx, questions.length, phase, sessionId]);
 

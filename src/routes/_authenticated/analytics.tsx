@@ -17,6 +17,7 @@ import { getAnalytics, generateQuestions, createQuizSession } from "@/lib/learni
 import { getMyProfile } from "@/lib/user.functions";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Flame, Target, ListChecks, Sparkles } from "lucide-react";
+import { failMessage } from "@/lib/friendly-error";
 
 const analyticsQuery = {
   queryKey: ["analytics"] as const,
@@ -76,7 +77,7 @@ function AnalyticsPage() {
       });
       nav({ to: "/quiz/$sessionId", params: { sessionId: s.id } });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
+      toast.error(failMessage(e, "Failed"));
     } finally {
       setStarting(false);
     }

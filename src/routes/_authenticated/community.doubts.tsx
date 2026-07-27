@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, ArrowUp, MessageCircle, CheckCircle2, ImagePlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/community/doubts")({
   component: DoubtsList,
@@ -36,7 +37,7 @@ function DoubtsList() {
       setImagePath(signed.path);
       toast.success("Image attached");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Upload failed");
+      toast.error(failMessage(e, "Upload failed"));
     } finally { setUploading(false); }
   }
 
@@ -54,7 +55,7 @@ function DoubtsList() {
       setOpen(false); setTitle(""); setBody(""); setImagePath(null);
       qc.invalidateQueries({ queryKey: ["doubts"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   return (

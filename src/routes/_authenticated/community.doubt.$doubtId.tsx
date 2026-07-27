@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, Check, Flag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserStore } from "@/store/user";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/community/doubt/$doubtId")({
   component: DoubtDetail,
@@ -31,7 +32,7 @@ function DoubtDetail() {
   const reply = useMutation({
     mutationFn: () => replyToDoubt({ data: { doubt_id: doubtId, body } }),
     onSuccess: () => { setBody(""); qc.invalidateQueries({ queryKey: ["doubt", doubtId] }); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
   const accept = useMutation({
     mutationFn: (reply_id: string) => acceptDoubtReply({ data: { reply_id } }),

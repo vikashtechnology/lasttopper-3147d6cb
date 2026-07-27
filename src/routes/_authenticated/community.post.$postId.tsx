@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowUp, ArrowDown, Flag, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/community/post/$postId")({
   component: PostDetail,
@@ -30,7 +31,7 @@ function PostDetail() {
   const reply = useMutation({
     mutationFn: () => replyToPost({ data: { post_id: postId, body } }),
     onSuccess: () => { setBody(""); qc.invalidateQueries({ queryKey: ["forum-post", postId] }); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   const vote = useMutation({
@@ -42,7 +43,7 @@ function PostDetail() {
     mutationFn: (payload: { target_type: "forum_post" | "forum_reply"; target_id: string }) =>
       reportContent({ data: { ...payload, reason: "Reported by user" } }),
     onSuccess: () => toast.success("Reported. Admins notified."),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   if (post.isLoading) return <div className="p-6 text-sm">Loading…</div>;

@@ -4,6 +4,7 @@ import { adminListWithdrawals, adminSetWithdrawalStatus } from "@/lib/admin.func
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Check, X } from "lucide-react";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/admin/withdrawals")({
   component: AdminWithdrawals,
@@ -15,7 +16,7 @@ function AdminWithdrawals() {
   const setStatus = useMutation({
     mutationFn: (v: { withdrawal_id: string; status: "processed" | "rejected" }) => adminSetWithdrawalStatus({ data: v }),
     onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["admin-wd"] }); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   return (

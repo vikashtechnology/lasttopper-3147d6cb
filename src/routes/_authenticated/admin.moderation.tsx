@@ -4,6 +4,7 @@ import { adminListReports, adminResolveReport } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Trash2, X } from "lucide-react";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/admin/moderation")({
   component: AdminModeration,
@@ -16,7 +17,7 @@ function AdminModeration() {
   const resolve = useMutation({
     mutationFn: (v: { report_id: string; action: "dismiss" | "delete_content" }) => adminResolveReport({ data: v }),
     onSuccess: () => { toast.success("Done"); qc.invalidateQueries({ queryKey: ["admin-reports"] }); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   return (

@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { saveSignupDetails, setProfession, completeOnboarding } from "@/lib/user.functions";
 import { applyReferralCode } from "@/lib/referral.functions";
 import { useUserStore, type Profession } from "@/store/user";
+import { failMessage } from "@/lib/friendly-error";
 
 const COUNTRY_CODES = ["+91", "+1", "+44", "+61", "+971", "+65", "+81"];
 
@@ -77,13 +78,13 @@ export function OnboardingFlow({ open }: { open: boolean }) {
           await applyReferralCode({ data: { code } });
           toast.success("Referral code applied");
         } catch (err) {
-          toast.error(err instanceof Error ? err.message : "Invalid referral code");
+          toast.error(failMessage(err, "Invalid referral code"));
         }
       }
       setStep("profession");
     } catch (e) {
       console.error(e);
-      toast.error(e instanceof Error ? e.message : "Could not save your details. Try again.");
+      toast.error(failMessage(e, "Could not save your details. Try again."));
     } finally {
       setSaving(false);
     }

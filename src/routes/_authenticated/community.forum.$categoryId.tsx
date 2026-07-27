@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, ArrowUp, MessageCircle } from "lucide-react";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/community/forum/$categoryId")({
   component: ForumCategory,
@@ -30,7 +31,7 @@ function ForumCategory() {
       setOpen(false); setTitle(""); setBody("");
       qc.invalidateQueries({ queryKey: ["forum-posts", categoryId] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   return (

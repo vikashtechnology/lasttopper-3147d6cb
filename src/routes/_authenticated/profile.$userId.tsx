@@ -6,6 +6,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Flame, Target, Award, ArrowLeft, UserPlus, UserMinus } from "lucide-react";
 import { useUserStore } from "@/store/user";
 import { toast } from "sonner";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/profile/$userId")({
   head: () => ({
@@ -31,7 +32,7 @@ function Profile() {
   const follow = useMutation({
     mutationFn: () => followUser({ data: { user_id: userId } }),
     onSuccess: () => { toast.success("Following"); qc.invalidateQueries({ queryKey: ["profile", userId] }); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
   const unfollow = useMutation({
     mutationFn: () => unfollowUser({ data: { user_id: userId } }),

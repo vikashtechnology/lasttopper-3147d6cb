@@ -9,6 +9,7 @@ import { Shield, ShieldOff, Sparkles, XCircle } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
   component: AdminUsers,
@@ -22,7 +23,7 @@ function AdminUsers() {
   const ban = useMutation({
     mutationFn: (v: { user_id: string; banned: boolean }) => adminSetBan({ data: v }),
     onSuccess: (_r, v) => { toast.success(v.banned ? "Banned" : "Unbanned"); qc.invalidateQueries({ queryKey: ["admin-users"] }); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   const grant = useMutation({
@@ -31,7 +32,7 @@ function AdminUsers() {
       toast.success(v.plan === "revoke" ? "Pro revoked" : `Pro granted (${v.plan})`);
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   return (

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { ShieldCheck, ShieldPlus, Trash2, Crown } from "lucide-react";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/admin/admins")({
   head: () => ({
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/admin/admins")({
   component: AdminsPage,
   errorComponent: ({ error, reset }) => (
     <div className="p-6 text-sm">
-      <p className="text-destructive">Failed: {error.message}</p>
+      <p className="text-destructive">Failed: {failMessage(error)}</p>
       <button className="mt-3 rounded bg-primary px-3 py-1.5 text-primary-foreground" onClick={reset}>Retry</button>
     </div>
   ),
@@ -46,7 +47,7 @@ function AdminsPage() {
       setEmail("");
       void qc.invalidateQueries({ queryKey: ["owner-admins"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   if (owner.isLoading) return <div className="p-6 text-sm text-muted-foreground">Checking access…</div>;

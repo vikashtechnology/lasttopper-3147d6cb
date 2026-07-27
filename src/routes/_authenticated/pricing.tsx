@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { getMyProfile } from "@/lib/user.functions";
 import { Button } from "@/components/ui/button";
 import { payWithRazorpay } from "@/lib/razorpay-client";
+import { failMessage } from "@/lib/friendly-error";
 
 const profileQuery = { queryKey: ["my-profile"], queryFn: () => getMyProfile() } as const;
 
@@ -58,7 +59,7 @@ function PricingPage() {
       toast.success("Welcome to Pro! 🎉");
       qc.invalidateQueries({ queryKey: ["my-profile"] });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Payment failed";
+      const msg = failMessage(e, "Payment failed");
       if (msg !== "Payment cancelled") toast.error(msg);
     } finally {
       setLoading(false);

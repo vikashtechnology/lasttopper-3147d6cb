@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Users, Send, LogOut, LogIn } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/community/group/$groupId")({
   component: GroupChat,
@@ -38,7 +39,7 @@ function GroupChat() {
   const send = useMutation({
     mutationFn: () => sendGroupMessage({ data: { group_id: groupId, body: text } }),
     onSuccess: () => { setText(""); qc.invalidateQueries({ queryKey: ["group-msgs", groupId] }); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
   const join = useMutation({
     mutationFn: () => joinStudyGroup({ data: { group_id: groupId } }),

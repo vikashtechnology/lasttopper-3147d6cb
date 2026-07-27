@@ -8,6 +8,7 @@ import { Latex } from "@/components/Latex";
 import { useAntiCheat } from "@/hooks/useAntiCheat";
 import { getBattleSession, submitBattle } from "@/lib/battle.functions";
 import type { QuizQuestion } from "@/lib/learning.functions";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/battle/play/$sessionId")({
   head: () => ({
@@ -60,7 +61,7 @@ function MegaPlay() {
       toast.success(res.auto ? "Time's up — auto-submitted" : "Submitted!");
       navigate({ to: "/battle/history" });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   useEffect(() => {
