@@ -15,12 +15,15 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated/review'
+import { Route as AuthenticatedPyqRouteImport } from './routes/_authenticated/pyq'
 import { Route as AuthenticatedPricingRouteImport } from './routes/_authenticated/pricing'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedMistakesRouteImport } from './routes/_authenticated/mistakes'
 import { Route as AuthenticatedLearningRouteImport } from './routes/_authenticated/learning'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
+import { Route as AuthenticatedDailyRouteImport } from './routes/_authenticated/daily'
 import { Route as AuthenticatedCommunityRouteImport } from './routes/_authenticated/community'
 import { Route as AuthenticatedBattleRouteImport } from './routes/_authenticated/battle'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
@@ -86,6 +89,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedReviewRoute = AuthenticatedReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPyqRoute = AuthenticatedPyqRouteImport.update({
+  id: '/pyq',
+  path: '/pyq',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPricingRoute = AuthenticatedPricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
@@ -115,6 +128,11 @@ const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
 const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDailyRoute = AuthenticatedDailyRouteImport.update({
+  id: '/daily',
+  path: '/daily',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCommunityRoute = AuthenticatedCommunityRouteImport.update({
@@ -328,12 +346,15 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/battle': typeof AuthenticatedBattleRouteWithChildren
   '/community': typeof AuthenticatedCommunityRouteWithChildren
+  '/daily': typeof AuthenticatedDailyRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/home': typeof AuthenticatedHomeRoute
   '/learning': typeof AuthenticatedLearningRoute
   '/mistakes': typeof AuthenticatedMistakesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/pricing': typeof AuthenticatedPricingRoute
+  '/pyq': typeof AuthenticatedPyqRoute
+  '/review': typeof AuthenticatedReviewRoute
   '/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
   '/admin/bank': typeof AuthenticatedAdminBankRoute
@@ -373,12 +394,15 @@ export interface FileRoutesByTo {
   '/refund': typeof RefundRoute
   '/terms': typeof TermsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/daily': typeof AuthenticatedDailyRoute
   '/history': typeof AuthenticatedHistoryRoute
   '/home': typeof AuthenticatedHomeRoute
   '/learning': typeof AuthenticatedLearningRoute
   '/mistakes': typeof AuthenticatedMistakesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/pricing': typeof AuthenticatedPricingRoute
+  '/pyq': typeof AuthenticatedPyqRoute
+  '/review': typeof AuthenticatedReviewRoute
   '/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
   '/admin/bank': typeof AuthenticatedAdminBankRoute
@@ -423,12 +447,15 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/battle': typeof AuthenticatedBattleRouteWithChildren
   '/_authenticated/community': typeof AuthenticatedCommunityRouteWithChildren
+  '/_authenticated/daily': typeof AuthenticatedDailyRoute
   '/_authenticated/history': typeof AuthenticatedHistoryRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/learning': typeof AuthenticatedLearningRoute
   '/_authenticated/mistakes': typeof AuthenticatedMistakesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/pricing': typeof AuthenticatedPricingRoute
+  '/_authenticated/pyq': typeof AuthenticatedPyqRoute
+  '/_authenticated/review': typeof AuthenticatedReviewRoute
   '/_authenticated/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/_authenticated/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
   '/_authenticated/admin/bank': typeof AuthenticatedAdminBankRoute
@@ -473,12 +500,15 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/battle'
     | '/community'
+    | '/daily'
     | '/history'
     | '/home'
     | '/learning'
     | '/mistakes'
     | '/notifications'
     | '/pricing'
+    | '/pyq'
+    | '/review'
     | '/admin/admins'
     | '/admin/announcements'
     | '/admin/bank'
@@ -518,12 +548,15 @@ export interface FileRouteTypes {
     | '/refund'
     | '/terms'
     | '/analytics'
+    | '/daily'
     | '/history'
     | '/home'
     | '/learning'
     | '/mistakes'
     | '/notifications'
     | '/pricing'
+    | '/pyq'
+    | '/review'
     | '/admin/admins'
     | '/admin/announcements'
     | '/admin/bank'
@@ -567,12 +600,15 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/battle'
     | '/_authenticated/community'
+    | '/_authenticated/daily'
     | '/_authenticated/history'
     | '/_authenticated/home'
     | '/_authenticated/learning'
     | '/_authenticated/mistakes'
     | '/_authenticated/notifications'
     | '/_authenticated/pricing'
+    | '/_authenticated/pyq'
+    | '/_authenticated/review'
     | '/_authenticated/admin/admins'
     | '/_authenticated/admin/announcements'
     | '/_authenticated/admin/bank'
@@ -663,6 +699,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/review': {
+      id: '/_authenticated/review'
+      path: '/review'
+      fullPath: '/review'
+      preLoaderRoute: typeof AuthenticatedReviewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pyq': {
+      id: '/_authenticated/pyq'
+      path: '/pyq'
+      fullPath: '/pyq'
+      preLoaderRoute: typeof AuthenticatedPyqRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/pricing': {
       id: '/_authenticated/pricing'
       path: '/pricing'
@@ -703,6 +753,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof AuthenticatedHistoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/daily': {
+      id: '/_authenticated/daily'
+      path: '/daily'
+      fullPath: '/daily'
+      preLoaderRoute: typeof AuthenticatedDailyRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/community': {
@@ -1036,12 +1093,15 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedBattleRoute: typeof AuthenticatedBattleRouteWithChildren
   AuthenticatedCommunityRoute: typeof AuthenticatedCommunityRouteWithChildren
+  AuthenticatedDailyRoute: typeof AuthenticatedDailyRoute
   AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedLearningRoute: typeof AuthenticatedLearningRoute
   AuthenticatedMistakesRoute: typeof AuthenticatedMistakesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedPricingRoute: typeof AuthenticatedPricingRoute
+  AuthenticatedPyqRoute: typeof AuthenticatedPyqRoute
+  AuthenticatedReviewRoute: typeof AuthenticatedReviewRoute
   AuthenticatedProfileUserIdRoute: typeof AuthenticatedProfileUserIdRoute
   AuthenticatedQuizSessionIdRoute: typeof AuthenticatedQuizSessionIdRoute
   AuthenticatedResultsSessionIdRoute: typeof AuthenticatedResultsSessionIdRoute
@@ -1054,12 +1114,15 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedBattleRoute: AuthenticatedBattleRouteWithChildren,
   AuthenticatedCommunityRoute: AuthenticatedCommunityRouteWithChildren,
+  AuthenticatedDailyRoute: AuthenticatedDailyRoute,
   AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedLearningRoute: AuthenticatedLearningRoute,
   AuthenticatedMistakesRoute: AuthenticatedMistakesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedPricingRoute: AuthenticatedPricingRoute,
+  AuthenticatedPyqRoute: AuthenticatedPyqRoute,
+  AuthenticatedReviewRoute: AuthenticatedReviewRoute,
   AuthenticatedProfileUserIdRoute: AuthenticatedProfileUserIdRoute,
   AuthenticatedQuizSessionIdRoute: AuthenticatedQuizSessionIdRoute,
   AuthenticatedResultsSessionIdRoute: AuthenticatedResultsSessionIdRoute,
