@@ -43,6 +43,13 @@ function toOpenRouterModel(model: string): string {
   return "google/gemini-2.5-flash";
 }
 
+/** xAI Grok model ids. */
+function toGrokModel(model: string): string {
+  const bare = model.replace(/^google\//, "");
+  if (/lite/i.test(bare)) return "grok-4-fast-non-reasoning";
+  return "grok-4-fast-non-reasoning";
+}
+
 function buildProviders(): Provider[] {
   const list: Provider[] = [];
 
@@ -67,6 +74,17 @@ function buildProviders(): Provider[] {
       model: toOpenRouterModel,
     });
   }
+
+  const grok = process.env.XAI_API_KEY?.trim();
+  if (grok) {
+    list.push({
+      label: "XAI_API_KEY",
+      url: "https://api.x.ai/v1/chat/completions",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${grok}` },
+      model: toGrokModel,
+    });
+  }
+
 
   const lov = process.env.LOVABLE_API_KEY?.trim();
   if (lov) {
