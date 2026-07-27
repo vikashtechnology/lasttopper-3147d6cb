@@ -17,5 +17,10 @@ export const getTopicRevision = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ topic_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }): Promise<ReviseTopic> => {
-    return readTopicRevision(data.topic_id, context);
+    const topic = await readTopicRevision(data.topic_id, context);
+    await context.supabase
+      .from("activity_events")
+      .insert({ user_id: context.userId, kind: "revise_view", payload: { topic_id: data.topic_id } })
+      .then(() => undefined, () => undefined);
+    return topic;
   });
