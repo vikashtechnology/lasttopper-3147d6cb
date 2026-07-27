@@ -14,6 +14,7 @@ import { useUserStore, type UserProfile } from "@/store/user";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
+import { AppTour } from "@/components/onboarding/AppTour";
 import { AppShell, defaultNavGroups } from "@/components/shell/AppShell";
 import { AiChatBubble } from "@/components/chat/AiChatBubble";
 import { Sparkles, Zap } from "lucide-react";
@@ -119,7 +120,7 @@ function HomePage() {
       footerNote={<>© {new Date().getFullYear()} Last Topper — Learn. Compete. Earn.</>}
       headerActions={
         <>
-          <div className="mr-1 flex items-center gap-1.5">
+          <div className="mr-1 flex items-center gap-1.5" data-tour="streak">
             <button
               type="button"
               onClick={() => setStreakOpen(true)}
@@ -144,7 +145,7 @@ function HomePage() {
               <ShieldCheck className="h-4 w-4" />
             </Link>
           )}
-          <Link to="/notifications" className="relative rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Notifications">
+          <Link to="/notifications" data-tour="notifications" className="relative rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Notifications">
             <Bell className="h-4 w-4" />
             {unread.data && unread.data.count > 0 ? (
               <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
@@ -160,7 +161,7 @@ function HomePage() {
     >
       {/* Top row: quota + stats */}
       <section className="grid gap-4 md:grid-cols-3">
-        <div className="mantis-card p-5 md:col-span-2">
+        <div className="mantis-card p-5 md:col-span-2" data-tour="quota">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Today's questions</div>
@@ -195,7 +196,7 @@ function HomePage() {
 
       {/* Practice */}
       <SectionHeading title="Practice" hint="Pick a mode to start" />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-tour="practice">
         <NavTile icon={<CalendarCheck className="h-5 w-5" />} title="Daily challenge" body="10 questions · earn TC" onClick={() => navigate({ to: "/daily" })} />
         <NavTile icon={<Repeat2 className="h-5 w-5" />} title="Review queue" body="Spaced repetition" onClick={() => navigate({ to: "/review" })} />
         <NavTile icon={<ScrollText className="h-5 w-5" />} title="Past year papers" body="NEET & JEE PYQs" onClick={() => navigate({ to: "/pyq" })} />
@@ -209,6 +210,7 @@ function HomePage() {
 
       <StreakDetailsDialog open={streakOpen} onOpenChange={setStreakOpen} fallbackStreak={p?.streak ?? 0} />
       <OnboardingFlow open={needsOnboarding} />
+      <AppTour enabled={!!p && !needsOnboarding} />
       <AiChatBubble />
 
     </AppShell>
