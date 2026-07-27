@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Users, Plus, Lock } from "lucide-react";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/community/groups")({
   component: GroupsList,
@@ -30,13 +31,13 @@ function GroupsList() {
       setOpen(false); setName(""); setDescription(""); setPriv(false);
       qc.invalidateQueries({ queryKey: ["study-groups"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   const join = useMutation({
     mutationFn: (group_id: string) => joinStudyGroup({ data: { group_id } }),
     onSuccess: () => { toast.success("Joined"); qc.invalidateQueries({ queryKey: ["study-groups"] }); },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   return (

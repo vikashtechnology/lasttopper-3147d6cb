@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Upload, Database, FileJson } from "lucide-react";
 import { adminBankStats, adminBulkUploadQuestions } from "@/lib/admin.functions";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/admin/bank")({
   head: () => ({
@@ -53,7 +54,7 @@ function BankAdmin() {
       setJson("");
       qc.invalidateQueries({ queryKey: ["bank-stats"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {

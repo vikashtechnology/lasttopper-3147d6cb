@@ -6,6 +6,7 @@ import { getReviewQueue, gradeReview } from "@/lib/review.functions";
 import { Button } from "@/components/ui/button";
 import { Latex } from "@/components/Latex";
 import { ChevronLeft, Repeat2, Loader2, CheckCircle2 } from "lucide-react";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/review")({
   head: () => ({
@@ -37,7 +38,7 @@ function ReviewPage() {
       setPos((p) => p + 1);
       qc.invalidateQueries({ queryKey: ["review-queue"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   const item = queue.data?.due[pos];

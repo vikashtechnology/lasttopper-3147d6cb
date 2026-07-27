@@ -22,6 +22,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
+import { failMessage } from "@/lib/friendly-error";
   CheckCircle2,
   XCircle,
   ChevronDown,
@@ -114,7 +115,7 @@ function ResultsPage() {
       });
       nav({ to: "/quiz/$sessionId", params: { sessionId: s.id } });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
+      toast.error(failMessage(e, "Failed"));
     } finally {
       setStarting(false);
     }
@@ -226,7 +227,7 @@ function ResultsPage() {
         }
       }
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Failed to share";
+      const msg = failMessage(e, "Failed to share");
       if (!/aborted/i.test(msg)) toast.error(msg);
 
     } finally {
@@ -251,7 +252,7 @@ function ResultsPage() {
       setReportFor(null);
       setReportMsg("");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to report");
+      toast.error(failMessage(e, "Failed to report"));
     } finally {
       setReporting(false);
     }

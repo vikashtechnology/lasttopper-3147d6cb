@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Latex } from "@/components/Latex";
 import { ChevronLeft, ChevronRight, Lightbulb, Timer, Loader2 } from "lucide-react";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/quiz/$sessionId")({
   head: () => ({
@@ -103,7 +104,7 @@ function QuizPage() {
       .then((r) => {
         if (r.added > 0) qc.invalidateQueries({ queryKey: ["quiz-session", sessionId] });
       })
-      .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to load more"))
+      .catch((e) => toast.error(failMessage(e, "Failed to load more")))
       .finally(() => { fetchingRef.current = false; });
   }, [idx, questions.length, needsMore, sessionId, qc]);
 
@@ -130,7 +131,7 @@ function QuizPage() {
       nav({ to: "/results/$sessionId", params: { sessionId } });
     } catch (e) {
       submittedRef.current = false;
-      toast.error(e instanceof Error ? e.message : "Failed to submit");
+      toast.error(failMessage(e, "Failed to submit"));
     } finally {
       setSubmitting(false);
     }

@@ -10,6 +10,7 @@ import { startQuickBattle, extendQuickBattle, submitBattle, getQuickLeaderboard 
 import { supabase } from "@/integrations/supabase/client";
 import { Timer, Zap, Trophy, Loader2 } from "lucide-react";
 import type { QuizQuestion } from "@/lib/learning.functions";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/battle/")({
   head: () => ({
@@ -65,7 +66,7 @@ function QuickBattle() {
       setAnswers({}); setIdx(0);
       setPhase("countdown"); setCountdown(3);
     },
-    onError: (e: Error) => toast.error(e.message || "Failed to start"),
+    onError: (e: Error) => toast.errorfailMessage(e, "Failed to start")),
   });
 
   const submit = useMutation({
@@ -78,7 +79,7 @@ function QuickBattle() {
       confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 } });
       qc.invalidateQueries({ queryKey: ["quick-leaderboard"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   useEffect(() => {
@@ -124,7 +125,7 @@ function QuickBattle() {
     fetchingRef.current = true;
     extendQuickBattle({ data: { id: sessionId } })
       .then((r) => { if (r.questions?.length) setQuestions(r.questions); })
-      .catch((e: Error) => toast.error(e.message || "Failed to load more"))
+      .catch((e: Error) => toast.errorfailMessage(e, "Failed to load more")))
       .finally(() => { fetchingRef.current = false; });
   }, [idx, questions.length, phase, sessionId]);
 

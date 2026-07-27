@@ -6,6 +6,7 @@ import { Trophy, Users, Clock, Coins } from "lucide-react";
 import { TopperCoin } from "@/components/TopperCoin";
 import { getUpcomingMegaTest, joinMegaTest, startMegaSession } from "@/lib/battle.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { failMessage } from "@/lib/friendly-error";
 
 
 export const Route = createFileRoute("/_authenticated/battle/mega")({
@@ -55,14 +56,14 @@ function MegaTest() {
       qc.invalidateQueries({ queryKey: ["mega-test"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   const start = useMutation({
     mutationFn: (id: string) => startMegaSession({ data: { mega_test_id: id } }),
     onSuccess: (res) =>
       navigate({ to: "/battle/play/$sessionId", params: { sessionId: res.id } }),
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   if (q.isLoading) return <div className="text-white/60 text-sm">Loading…</div>;

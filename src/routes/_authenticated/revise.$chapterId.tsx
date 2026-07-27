@@ -5,6 +5,7 @@ import { getChapterTopics, getTopicRevision, type ReviseTopic } from "@/lib/revi
 import { Button } from "@/components/ui/button";
 import { Latex, Formula } from "@/components/Latex";
 import { ChevronLeft, ChevronDown, Loader2, ExternalLink, Sparkles, BookMarked } from "lucide-react";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/revise/$chapterId")({
   head: () => ({
@@ -34,7 +35,7 @@ function ReviseError({ error, reset }: { error: Error; reset: () => void }) {
       <div className="mx-auto max-w-md space-y-4 rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
         <div>
           <h1 className="text-lg font-semibold">Revision could not load</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{error.message || "Please try again."}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{failMessage(error, "Please try again.")}</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={reset}>Retry</Button>

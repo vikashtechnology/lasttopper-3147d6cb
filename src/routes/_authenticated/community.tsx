@@ -3,6 +3,7 @@ import { ArrowLeft, MessageSquare, HelpCircle, Users, Activity, Bell } from "luc
 import { useQuery } from "@tanstack/react-query";
 import { unreadNotificationsCount } from "@/lib/community.functions";
 import { useMonetagAds } from "@/lib/useMonetagAds";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/community")({
   head: () => ({
@@ -18,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/community")({
   component: CommunityLayout,
   errorComponent: ({ error, reset }) => (
     <div className="p-6 text-sm">
-      <p className="text-destructive">Failed: {error.message}</p>
+      <p className="text-destructive">Failed: {failMessage(error)}</p>
       <button className="mt-3 rounded bg-primary px-3 py-1.5 text-primary-foreground" onClick={reset}>Retry</button>
     </div>
   ),

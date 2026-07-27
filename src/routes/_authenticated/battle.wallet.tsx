@@ -9,6 +9,7 @@ import { getWallet, requestWithdrawal, getWithdrawals } from "@/lib/battle.funct
 import { getMyProfile } from "@/lib/user.functions";
 import { getMyReferral, applyReferralCode } from "@/lib/referral.functions";
 import { payWithRazorpay } from "@/lib/razorpay-client";
+import { failMessage } from "@/lib/friendly-error";
 
 
 export const Route = createFileRoute("/_authenticated/battle/wallet")({
@@ -43,7 +44,7 @@ function WalletPage() {
       setCodeInput("");
       qc.invalidateQueries({ queryKey: ["referral"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   const shareCode = async () => {
@@ -90,7 +91,7 @@ function WalletPage() {
       setShowTopup(false);
       qc.invalidateQueries({ queryKey: ["wallet"] });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Payment failed";
+      const msg = failMessage(e, "Payment failed");
       if (msg !== "Payment cancelled") toast.error(msg);
     } finally {
       setTopupLoading(false);
@@ -145,7 +146,7 @@ function WalletPage() {
       qc.invalidateQueries({ queryKey: ["wallet"] });
       qc.invalidateQueries({ queryKey: ["withdrawals"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   const bal = w.data?.balance ?? 0;

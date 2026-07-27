@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Latex } from "@/components/Latex";
 import { ChevronLeft, CalendarCheck, Loader2, Trophy } from "lucide-react";
 import { TopperCoin } from "@/components/TopperCoin";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/daily")({
   head: () => ({
@@ -47,7 +48,7 @@ function DailyPage() {
       qc.invalidateQueries({ queryKey: ["my-profile"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   const questions = challenge.data?.questions ?? [];

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sendTelegramAlert } from "@/lib/telegram-alert";
+import { failMessage } from "@/lib/friendly-error";
 
 async function assertAdmin(ctx: { supabase: import("@supabase/supabase-js").SupabaseClient; userId: string }) {
   const { data, error } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
@@ -324,7 +325,7 @@ export const ownerSetAdmin = createServerFn({ method: "POST" })
     if (data.make) {
       const { error } = await supabaseAdmin
         .from("user_roles").insert({ user_id: userId!, role: "admin" });
-      if (error && !`${error.message}`.includes("duplicate")) throw error;
+      if (error && !`${failMessage(error)}`.includes("duplicate")) throw error;
     } else {
       const { error } = await supabaseAdmin
         .from("user_roles").delete().eq("user_id", userId!).eq("role", "admin");

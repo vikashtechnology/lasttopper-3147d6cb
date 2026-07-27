@@ -6,6 +6,7 @@ import { getMistakes, createQuizSession, type QuizQuestion } from "@/lib/learnin
 import { Button } from "@/components/ui/button";
 import { Latex } from "@/components/Latex";
 import { ChevronLeft, Repeat, XCircle } from "lucide-react";
+import { failMessage } from "@/lib/friendly-error";
 
 const mistakesQuery = {
   queryKey: ["mistakes"] as const,
@@ -68,7 +69,7 @@ function MistakesPage() {
       });
       nav({ to: "/quiz/$sessionId", params: { sessionId: s.id } });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed");
+      toast.error(failMessage(e, "Failed"));
     } finally {
       setStarting(false);
     }

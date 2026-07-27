@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate, useRouterState, redirect } 
 import { useQuery } from "@tanstack/react-query";
 import { amIAdmin, amIOwner } from "@/lib/admin.functions";
 import { ArrowLeft, LayoutDashboard, Users, Flag, Wallet, Database, Crown, Megaphone } from "lucide-react";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
   errorComponent: ({ error, reset }) => (
     <div className="p-6 text-sm">
-      <p className="text-destructive">Failed: {error.message}</p>
+      <p className="text-destructive">Failed: {failMessage(error)}</p>
       <button className="mt-3 rounded bg-primary px-3 py-1.5 text-primary-foreground" onClick={reset}>Retry</button>
     </div>
   ),
