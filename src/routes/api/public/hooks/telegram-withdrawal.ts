@@ -11,7 +11,7 @@ function safeEqual(a: string, b: string) {
 
 async function tgReply(chatId: number | string, text: string) {
   const gw = process.env.LOVABLE_API_KEY;
-  const tg = process.env.TELEGRAM_API_KEY;
+  const tg = (process.env.TELEGRAM_API_KEY_1 ?? process.env.TELEGRAM_API_KEY);
   if (!gw || !tg) return;
   await fetch("https://connector-gateway.lovable.dev/telegram/sendMessage", {
     method: "POST",
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/api/public/hooks/telegram-withdrawal")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const TG = process.env.TELEGRAM_API_KEY;
+        const TG = (process.env.TELEGRAM_API_KEY_1 ?? process.env.TELEGRAM_API_KEY);
         if (!TG) return new Response("Not configured", { status: 500 });
         const expected = deriveSecret(TG);
         const actual = request.headers.get("X-Telegram-Bot-Api-Secret-Token") ?? "";
