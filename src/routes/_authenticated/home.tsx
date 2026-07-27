@@ -6,6 +6,7 @@ import { getMyProfile, pingActivity } from "@/lib/user.functions";
 import { finalizeStaleSessions, getTodayUsage } from "@/lib/learning.functions";
 import { notifyFirstLogin, unreadNotificationsCount } from "@/lib/community.functions";
 import { amIAdmin } from "@/lib/admin.functions";
+import { pushPendingQuestReminders } from "@/lib/quests.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserStore, type UserProfile } from "@/store/user";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,19 @@ function HomePage() {
   const limit = p?.daily_question_limit ?? 20;
   const percent = Math.min(100, Math.round((usedToday / limit) * 100));
   const needsOnboarding = !!p && (!p.phone || !p.profession || !p.onboarded);
+
+  // Nudge the user about any quests they haven't finished today.
+  useQuery({
+    queryKey: ["quest-reminders"],
+    queryFn: async () => {
+      const res = await pushPendingQuestReminders().catch(() => ({ sent: 0 }));
+      if (res.sent) await qc.invalidateQueries({ queryKey: ["notif-unread"] });
+      return res;
+    },
+    enabled: !!p && !needsOnboarding,
+    staleTime: 3 * 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
 
   async function handleSignOut() {
     await qc.cancelQueries();
