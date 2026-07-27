@@ -28,6 +28,8 @@ export const Route = createFileRoute("/_authenticated/battle")({
 
 function BattleLayout() {
   const navigate = useNavigate();
+  const router = useRouter();
+
   return (
     <div className="battle-theme battle-noselect">
       <header
