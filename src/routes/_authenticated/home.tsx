@@ -6,6 +6,7 @@ import { getMyProfile, pingActivity } from "@/lib/user.functions";
 import { finalizeStaleSessions, getTodayUsage } from "@/lib/learning.functions";
 import { notifyFirstLogin, unreadNotificationsCount } from "@/lib/community.functions";
 import { amIAdmin } from "@/lib/admin.functions";
+import { pushPendingQuestReminders } from "@/lib/quests.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserStore, type UserProfile } from "@/store/user";
 import { Button } from "@/components/ui/button";
