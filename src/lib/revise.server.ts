@@ -1,3 +1,4 @@
+import { aiChat } from "@/lib/ai-router";
 import type { ReviseReference, ReviseTopic } from "./revise.types";
 
 type SupabaseContext = { supabase: { from: (table: string) => any } };
@@ -34,16 +35,8 @@ function isAiGenerationError(error: unknown): boolean {
 }
 
 async function callGemini<T>(prompt: string, schema: Record<string, unknown>): Promise<T> {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) throw new Error("AI is not configured right now.");
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Lovable-API-Key": key,
-    },
-    body: JSON.stringify({
-      model: "google/gemini-3.6-flash",
+  const json = await aiChat({
+      model: "google/gemini-2.5-flash",
       messages: [
         {
           role: "system",
@@ -59,12 +52,7 @@ async function callGemini<T>(prompt: string, schema: Record<string, unknown>): P
         },
       ],
       tool_choice: { type: "function", function: { name: "reply" } },
-    }),
   });
-  if (res.status === 429) throw new Error("AI is busy right now, try again in a moment.");
-  if (res.status === 402) throw new Error("AI credits exhausted. Showing offline revision content.");
-  if (!res.ok) throw new Error(`AI gateway error ${res.status}: ${await res.text()}`);
-  const json = await res.json();
   const args = json?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
   if (!args) throw new Error("AI returned no content");
   return JSON.parse(args) as T;
