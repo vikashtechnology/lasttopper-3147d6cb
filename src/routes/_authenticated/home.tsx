@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { StreakDetailsDialog } from "@/components/StreakDetailsDialog";
 import { useMonetagAds } from "@/lib/useMonetagAds";
+
 import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMyProfile, pingActivity } from "@/lib/user.functions";
 import { finalizeStaleSessions, getTodayUsage } from "@/lib/learning.functions";
@@ -51,6 +53,8 @@ function HomePage() {
   const navigate = useNavigate();
   useMonetagAds();
   const qc = useQueryClient();
+  const [streakOpen, setStreakOpen] = useState(false);
+
   const { data } = useSuspenseQuery(profileQuery);
   const setProfile = useUserStore((s) => s.setProfile);
   const clear = useUserStore((s) => s.clear);
@@ -116,13 +120,17 @@ function HomePage() {
       headerActions={
         <>
           <div className="mr-1 flex items-center gap-1.5">
-            <span
-              className="inline-flex items-center gap-1 rounded-full bg-orange-500/10 px-2 py-1 text-xs font-semibold text-orange-600 dark:text-orange-400"
+            <button
+              type="button"
+              onClick={() => setStreakOpen(true)}
+              className="inline-flex items-center gap-1 rounded-full bg-orange-500/10 px-2 py-1 text-xs font-semibold text-orange-600 transition-colors hover:bg-orange-500/20 dark:text-orange-400"
               title="Daily streak"
+              aria-label="View streak details"
             >
               <Flame className="h-3.5 w-3.5" />
               {p?.streak ?? 0}
-            </span>
+            </button>
+
             <span
               className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary"
               title="Experience points"
@@ -199,8 +207,10 @@ function HomePage() {
       </div>
 
 
+      <StreakDetailsDialog open={streakOpen} onOpenChange={setStreakOpen} fallbackStreak={p?.streak ?? 0} />
       <OnboardingFlow open={needsOnboarding} />
       <AiChatBubble />
+
     </AppShell>
   );
 }
