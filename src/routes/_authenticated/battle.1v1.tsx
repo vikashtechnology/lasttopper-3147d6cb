@@ -245,6 +245,39 @@ function OneVOne() {
     );
   }
 
+  if (phase === "notfound") {
+    return (
+      <ArenaShell>
+        <CenterPanel>
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-500/10">
+            <Users className="h-8 w-8 text-rose-400" />
+          </div>
+          <div className="mt-4 text-2xl font-bold text-white">Player not found</div>
+          <p className="mt-2 max-w-xs text-sm text-white/60">
+            No live rival is available right now. Invite a friend to a custom room, or duel a bot rival.
+          </p>
+          <div className="mt-4 rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-sm text-white/80">
+            Room code: <span className="font-black tracking-widest text-cyan-300">{roomCode}</span>
+          </div>
+          <div className="mt-5 flex flex-col gap-2">
+            <button
+              className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-[0_0_20px_rgba(34,211,238,0.35)]"
+              onClick={invite}
+            >Invite a friend</button>
+            <button
+              className="rounded-xl bg-gradient-to-r from-rose-500 to-fuchsia-600 px-5 py-2.5 text-sm font-bold text-white shadow-[0_0_20px_rgba(244,63,94,0.35)]"
+              onClick={() => { setPhase("countdown"); setCountdown(3); }}
+            >Play vs bot rival</button>
+            <button
+              className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/80 hover:bg-white/5"
+              onClick={() => setPhase("matching")}
+            >Search again</button>
+          </div>
+        </CenterPanel>
+      </ArenaShell>
+    );
+  }
+
   if (phase === "matching") {
     return (
       <ArenaShell>
