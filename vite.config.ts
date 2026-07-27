@@ -19,7 +19,7 @@ export default defineConfig({
       injectRegister: null,
       filename: "pwa-sw.js",
       devOptions: { enabled: false },
-      includeAssets: ["favicon.ico", "app-icon-512.png"],
+      includeAssets: ["app-icon-512.png"],
       manifest: false,
       workbox: {
         navigateFallback: "/",
