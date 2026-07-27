@@ -161,7 +161,7 @@ function HomePage() {
     >
       {/* Top row: quota + stats */}
       <section className="grid gap-4 md:grid-cols-3">
-        <div className="mantis-card p-5 md:col-span-2">
+        <div className="mantis-card p-5 md:col-span-2" data-tour="quota">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-xs uppercase tracking-wide text-muted-foreground">Today's questions</div>
