@@ -42,3 +42,38 @@ function renderMixed(input: string): string {
   if (lastIndex < input.length) parts.push(escapeHtml(input.slice(lastIndex)));
   return parts.join("");
 }
+
+/**
+ * Normalizes an AI/legacy formula string into "label" + LaTeX math.
+ * Handles items that arrive as plain text without $...$ delimiters.
+ */
+export function parseFormula(raw: string): { label: string | null; tex: string } {
+  const text = String(raw ?? "").trim();
+  const m = text.match(/^([^$:]{1,60}):\s*(.+)$/s);
+  const label = m ? m[1].trim() : null;
+  let body = (m ? m[2] : text).trim();
+
+  if (!/\$/.test(body)) {
+    body = body
+      .replace(/->|→/g, "\\rightarrow ")
+      .replace(/<=>|⇌/g, "\\rightleftharpoons ")
+      .replace(/\bdelta\b/gi, "\\Delta ")
+      .replace(/×/g, "\\times ")
+      .replace(/·/g, "\\cdot ");
+    body = `$${body}$`;
+  }
+  return { label, tex: body };
+}
+
+/** Renders one formula as a labelled, centered display equation. */
+export function Formula({ children }: { children: string }) {
+  const { label, tex } = parseFormula(children ?? "");
+  return (
+    <div className="space-y-1">
+      {label && (
+        <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</div>
+      )}
+      <Latex className="block overflow-x-auto text-[15px] leading-relaxed text-foreground">{tex}</Latex>
+    </div>
+  );
+}
