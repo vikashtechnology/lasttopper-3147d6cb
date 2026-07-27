@@ -207,8 +207,10 @@ function HomePage() {
       </div>
 
 
+      <StreakDetailsDialog open={streakOpen} onOpenChange={setStreakOpen} fallbackStreak={p?.streak ?? 0} />
       <OnboardingFlow open={needsOnboarding} />
       <AiChatBubble />
+
     </AppShell>
   );
 }
