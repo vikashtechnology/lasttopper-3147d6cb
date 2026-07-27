@@ -34,7 +34,7 @@ const BOT_NAMES = [
   "Karan Trivedi", "Yash Agarwal", "Nikhil Bhat", "Siddharth Mishra", "Manav Saxena",
 ];
 
-type Phase = "idle" | "matching" | "countdown" | "playing" | "done";
+type Phase = "idle" | "matching" | "notfound" | "countdown" | "playing" | "done";
 const TOTAL = 10;
 const PER_Q_SECONDS = 60;
 
