@@ -120,7 +120,7 @@ function HomePage() {
       footerNote={<>© {new Date().getFullYear()} Last Topper — Learn. Compete. Earn.</>}
       headerActions={
         <>
-          <div className="mr-1 flex items-center gap-1.5">
+          <div className="mr-1 flex items-center gap-1.5" data-tour="streak">
             <button
               type="button"
               onClick={() => setStreakOpen(true)}
