@@ -1093,6 +1093,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           balance: number
+          best_streak: number
           bio: string | null
           country_code: string
           created_at: string
@@ -1124,6 +1125,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           balance?: number
+          best_streak?: number
           bio?: string | null
           country_code?: string
           created_at?: string
@@ -1155,6 +1157,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           balance?: number
+          best_streak?: number
           bio?: string | null
           country_code?: string
           created_at?: string
