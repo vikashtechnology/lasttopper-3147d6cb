@@ -193,15 +193,16 @@ function TopicCard({
                   <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     Formulas / reactions
                   </div>
-                  <div className="space-y-1.5 rounded-lg border bg-background p-3">
+                  <div className="divide-y rounded-lg border bg-background">
                     {detail.formulas.map((f, i) => (
-                      <div key={i}>
-                        <Latex>{f}</Latex>
+                      <div key={i} className="px-3 py-2.5">
+                        <Formula>{f}</Formula>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
+
 
               {detail.refs?.length > 0 && (
                 <div>
