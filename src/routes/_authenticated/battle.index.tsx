@@ -66,7 +66,7 @@ function QuickBattle() {
       setAnswers({}); setIdx(0);
       setPhase("countdown"); setCountdown(3);
     },
-    onError: (e: Error) => toast.errorfailMessage(e, "Failed to start")),
+    onError: (e: Error) => toast.error(failMessage(e, "Failed to start")),
   });
 
   const submit = useMutation({
@@ -125,7 +125,7 @@ function QuickBattle() {
     fetchingRef.current = true;
     extendQuickBattle({ data: { id: sessionId } })
       .then((r) => { if (r.questions?.length) setQuestions(r.questions); })
-      .catch((e: Error) => toast.errorfailMessage(e, "Failed to load more")))
+      .catch((e: Error) => toast.error(failMessage(e, "Failed to load more")))
       .finally(() => { fetchingRef.current = false; });
   }, [idx, questions.length, phase, sessionId]);
 

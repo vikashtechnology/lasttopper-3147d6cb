@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Shield, ShieldOff, Sparkles, XCircle } from "lucide-react";
 import {
-import { failMessage } from "@/lib/friendly-error";
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
   component: AdminUsers,

@@ -22,7 +22,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
-import { failMessage } from "@/lib/friendly-error";
   CheckCircle2,
   XCircle,
   ChevronDown,
@@ -33,6 +32,7 @@ import { failMessage } from "@/lib/friendly-error";
   Flag,
   AlertCircle,
 } from "lucide-react";
+import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/results/$sessionId")({
   head: () => ({
