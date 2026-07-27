@@ -14,7 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { AppShell, defaultNavGroups } from "@/components/shell/AppShell";
 import { AiChatBubble } from "@/components/chat/AiChatBubble";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Zap } from "lucide-react";
 import {
   BookOpen,
   BookMarked,
