@@ -159,7 +159,7 @@ function MegaTest() {
       <div className="battle-glass p-5">
         <div className="mb-2 text-xs uppercase tracking-widest text-white/60">Prize pool (Topper Coins · 1 TC = ₹1)</div>
         <ul className="space-y-1 text-sm">
-          <li className="inline-flex items-center gap-1">🥇 Rank 1 — <TopperCoin size={14} />100 TC <span className="ml-1 rounded-full bg-fuchsia-400/15 px-1.5 py-0.5 text-[10px] uppercase tracking-widest text-fuchsia-200">+ Weekly Pro</span></li>
+          <li className="inline-flex items-center gap-1">🥇 Rank 1 — <TopperCoin size={14} />100 TC <span className="ml-1 rounded-full bg-fuchsia-400/15 px-1.5 py-0.5 text-[10px] uppercase tracking-widest text-fuchsia-200">+ Weekly Pro (50+ players)</span></li>
           <li className="inline-flex items-center gap-1">🥈 Rank 2 — <TopperCoin size={14} />50 TC</li>
           <li className="inline-flex items-center gap-1">🥉 Rank 3 — <TopperCoin size={14} />25 TC</li>
           <li className="inline-flex items-center gap-1">Ranks 4–10 — <TopperCoin size={14} />15 TC each</li>
