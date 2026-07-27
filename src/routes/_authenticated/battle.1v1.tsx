@@ -511,3 +511,12 @@ function ResultCard({
     </div>
   );
 }
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+      <div className="text-base font-bold text-white">{value}</div>
+      <div className="text-[11px] text-white/60">{label}</div>
+    </div>
+  );
+}
