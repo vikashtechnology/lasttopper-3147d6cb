@@ -210,6 +210,7 @@ function HomePage() {
 
       <StreakDetailsDialog open={streakOpen} onOpenChange={setStreakOpen} fallbackStreak={p?.streak ?? 0} />
       <OnboardingFlow open={needsOnboarding} />
+      <AppTour enabled={!!p && !needsOnboarding} />
       <AiChatBubble />
 
     </AppShell>
