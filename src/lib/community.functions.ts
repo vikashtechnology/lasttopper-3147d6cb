@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { sendTelegramAlert } from "@/lib/telegram-alert";
+import { sendTelegramAlert, sendTelegramDocument, safeFileName } from "@/lib/telegram-alert";
 
 // ==================== FORUMS ====================
 
@@ -470,8 +470,19 @@ export const reportContent = createServerFn({ method: "POST" })
       reason: data.reason, message: data.message ?? null,
     });
     if (error) throw error;
-    await sendTelegramAlert(
-      `🚩 Content reported\nType: ${data.target_type}\nID: ${data.target_id}\nReason: ${data.reason}`,
+    await sendTelegramDocument(
+      safeFileName([data.target_type, `report_${data.target_id}`], "txt"),
+      [
+        "CONTENT REPORT",
+        "====================",
+        `Type      : ${data.target_type}`,
+        `Target ID : ${data.target_id}`,
+        `Reason    : ${data.reason}`,
+        `Message   : ${data.message ?? "-"}`,
+        `Reporter  : ${context.userId}`,
+        `Time      : ${new Date().toISOString()}`,
+      ].join("\n"),
+      `🚩 <b>Content reported</b> — ${data.target_type}`,
     );
     return { ok: true };
   });
@@ -516,7 +527,18 @@ export const notifyFirstLogin = createServerFn({ method: "POST" })
     const { data: u } = await context.supabase.from("users")
       .select("email, full_name, last_active_date").eq("id", context.userId).maybeSingle();
     if (u && u.last_active_date === null) {
-      await sendTelegramAlert(`👤 New signup\n${u.full_name ?? "Unknown"} (${u.email ?? "no email"})`);
+      await sendTelegramDocument(
+        safeFileName([String(u.full_name ?? "user"), "first_login"], "txt"),
+        [
+          "FIRST LOGIN",
+          "====================",
+          `Name  : ${u.full_name ?? "Unknown"}`,
+          `Email : ${u.email ?? "no email"}`,
+          `User ID: ${context.userId}`,
+          `Time  : ${new Date().toISOString()}`,
+        ].join("\n"),
+        `👤 <b>First login</b> — ${u.full_name ?? "Unknown"}`,
+      );
     }
     return { ok: true };
   });
