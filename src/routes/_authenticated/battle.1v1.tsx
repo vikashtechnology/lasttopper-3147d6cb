@@ -349,6 +349,7 @@ function OneVOne() {
     );
   }
 
+  const attemptedCount = questions.slice(0, TOTAL).filter((q) => answers[q.id]).length;
   const won = myCorrect > botCorrect;
   const tie = myCorrect === botCorrect;
   return (
