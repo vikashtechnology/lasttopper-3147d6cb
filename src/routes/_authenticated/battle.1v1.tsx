@@ -110,9 +110,25 @@ function OneVOne() {
   useEffect(() => {
     if (phase !== "matching") return;
     const d = setInterval(() => setMatchDots((n) => (n + 1) % 4), 400);
-    const t = setTimeout(() => { setPhase("countdown"); setCountdown(3); }, 3200);
+    const t = setTimeout(() => setPhase("notfound"), 4200);
     return () => { clearInterval(d); clearTimeout(t); };
   }, [phase]);
+
+  const roomCode = useMemo(
+    () => Math.random().toString(36).slice(2, 8).toUpperCase(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [phase === "notfound"],
+  );
+
+  async function invite() {
+    const url = `${window.location.origin}/battle/1v1?room=${roomCode}`;
+    const text = `Join my 1v1 Last Topper battle! Room code: ${roomCode}\n${url}`;
+    try {
+      if (navigator.share) await navigator.share({ title: "1v1 Battle", text, url });
+      else { await navigator.clipboard.writeText(text); toast.success("Invite link copied"); }
+    } catch { /* dismissed */ }
+  }
+
 
   useEffect(() => {
     if (phase !== "countdown") return;
