@@ -145,7 +145,7 @@ function HomePage() {
               <ShieldCheck className="h-4 w-4" />
             </Link>
           )}
-          <Link to="/notifications" className="relative rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Notifications">
+          <Link to="/notifications" data-tour="notifications" className="relative rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Notifications">
             <Bell className="h-4 w-4" />
             {unread.data && unread.data.count > 0 ? (
               <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
