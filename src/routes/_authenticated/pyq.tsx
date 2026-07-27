@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { failMessage } from "@/lib/friendly-error";
 import { toast } from "sonner";
 import { getPyqOptions, startPyqQuiz } from "@/lib/pyq.functions";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,11 @@ function PyqPage() {
       startPyqQuiz({ data: { exam: o.exam, year: o.year, count } }),
     onSuccess: (r) => nav({ to: "/quiz/$sessionId", params: { sessionId: r.id } }),
     onError: (e: Error) =>
-      toast.error(e.message === "PRO_REQUIRED" ? "Upgrade to Pro for sets larger than 20." : e.message),
+      toast.error(
+        e.message === "PRO_REQUIRED"
+          ? "Upgrade to Pro for sets larger than 20."
+          : failMessage(e),
+      ),
   });
 
   return (
