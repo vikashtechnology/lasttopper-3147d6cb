@@ -14,7 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { AppShell, defaultNavGroups } from "@/components/shell/AppShell";
 import { AiChatBubble } from "@/components/chat/AiChatBubble";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Zap } from "lucide-react";
 import {
   BookOpen,
   BookMarked,
@@ -115,6 +115,22 @@ function HomePage() {
       footerNote={<>© {new Date().getFullYear()} Last Topper — Learn. Compete. Earn.</>}
       headerActions={
         <>
+          <div className="mr-1 flex items-center gap-1.5">
+            <span
+              className="inline-flex items-center gap-1 rounded-full bg-orange-500/10 px-2 py-1 text-xs font-semibold text-orange-600 dark:text-orange-400"
+              title="Daily streak"
+            >
+              <Flame className="h-3.5 w-3.5" />
+              {p?.streak ?? 0}
+            </span>
+            <span
+              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary"
+              title="Experience points"
+            >
+              <Zap className="h-3.5 w-3.5" />
+              {p?.reputation ?? 0} XP
+            </span>
+          </div>
           {admin.data?.admin && (
             <Link to="/admin" className="rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Admin">
               <ShieldCheck className="h-4 w-4" />
