@@ -78,6 +78,19 @@ function HomePage() {
   const admin = useQuery({ queryKey: ["am-i-admin"], queryFn: () => amIAdmin() });
   const todayUsage = useQuery({ queryKey: ["today-usage"], queryFn: () => getTodayUsage(), refetchInterval: 30000, refetchOnWindowFocus: true });
 
+  // Nudge the user about any quests they haven't finished today.
+  useQuery({
+    queryKey: ["quest-reminders"],
+    queryFn: async () => {
+      const res = await pushPendingQuestReminders().catch(() => ({ sent: 0 }));
+      if (res.sent) await qc.invalidateQueries({ queryKey: ["notif-unread"] });
+      return res;
+    },
+    enabled: !needsOnboarding,
+    staleTime: 3 * 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
   const p: UserProfile | null = (profile ?? (data as UserProfile | null)) as UserProfile | null;
   const usedToday = todayUsage.data?.used ?? 0;
   const limit = p?.daily_question_limit ?? 20;
