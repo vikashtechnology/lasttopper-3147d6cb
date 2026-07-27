@@ -227,12 +227,47 @@ function QuickBattle() {
     );
   }
 
+  const attempted = questions.filter((q) => answers[q.id]).length;
+  const accuracy = attempted ? Math.round((correctCount / attempted) * 100) : 0;
+  const secs = Math.max(1, Math.floor((Date.now() - startRef.current) / 1000));
+
   return (
     <div className="space-y-6">
       <div className="battle-glass battle-slide-up p-6 text-center">
-        <div className="battle-title text-3xl">Victory</div>
+        <div className="battle-title text-3xl">Quest complete</div>
         <div className="mt-3 text-5xl font-black text-cyan-300">{correctCount * 10}</div>
         <div className="mt-1 text-sm text-white/70">{correctCount} / {QUICK_TOTAL} correct</div>
+
+        <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <StatBox label="Accuracy" value={`${accuracy}%`} />
+          <StatBox label="Attempted" value={`${attempted}/${QUICK_TOTAL}`} />
+          <StatBox label="Skipped" value={`${QUICK_TOTAL - attempted}`} />
+          <StatBox label="Time" value={`${Math.floor(secs / 60)}m ${secs % 60}s`} />
+        </div>
+
+        <div className="mt-5 text-left">
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/50">Question progress</div>
+          <div className="flex flex-wrap gap-1.5">
+            {questions.slice(0, QUICK_TOTAL).map((q, i) => {
+              const a = answers[q.id];
+              const ok = a === q.correct;
+              return (
+                <span
+                  key={q.id}
+                  title={`Q${i + 1}: ${!a ? "skipped" : ok ? "correct" : "wrong"}`}
+                  className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${
+                    !a ? "bg-white/10 text-white/60" : ok ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"
+                  }`}
+                >{i + 1}</span>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/10">
+          <div className="h-full rounded-full bg-cyan-400" style={{ width: `${(correctCount / QUICK_TOTAL) * 100}%` }} />
+        </div>
+
         <div className="mt-5 flex justify-center gap-2">
           <button className="battle-btn" onClick={() => start.mutate()}>Play again</button>
           <button
@@ -244,6 +279,16 @@ function QuickBattle() {
     </div>
   );
 }
+
+function StatBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <div className="text-lg font-bold text-white">{value}</div>
+      <div className="text-[11px] text-white/60">{label}</div>
+    </div>
+  );
+}
+
 
 function LeaderboardList({
   items,

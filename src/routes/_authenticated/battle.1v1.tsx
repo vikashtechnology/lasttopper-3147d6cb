@@ -34,7 +34,7 @@ const BOT_NAMES = [
   "Karan Trivedi", "Yash Agarwal", "Nikhil Bhat", "Siddharth Mishra", "Manav Saxena",
 ];
 
-type Phase = "idle" | "matching" | "countdown" | "playing" | "done";
+type Phase = "idle" | "matching" | "notfound" | "countdown" | "playing" | "done";
 const TOTAL = 10;
 const PER_Q_SECONDS = 60;
 
@@ -110,9 +110,25 @@ function OneVOne() {
   useEffect(() => {
     if (phase !== "matching") return;
     const d = setInterval(() => setMatchDots((n) => (n + 1) % 4), 400);
-    const t = setTimeout(() => { setPhase("countdown"); setCountdown(3); }, 3200);
+    const t = setTimeout(() => setPhase("notfound"), 4200);
     return () => { clearInterval(d); clearTimeout(t); };
   }, [phase]);
+
+  const roomCode = useMemo(
+    () => Math.random().toString(36).slice(2, 8).toUpperCase(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [phase === "notfound"],
+  );
+
+  async function invite() {
+    const url = `${window.location.origin}/battle/1v1?room=${roomCode}`;
+    const text = `Join my 1v1 Last Topper battle! Room code: ${roomCode}\n${url}`;
+    try {
+      if (navigator.share) await navigator.share({ title: "1v1 Battle", text, url });
+      else { await navigator.clipboard.writeText(text); toast.success("Invite link copied"); }
+    } catch { /* dismissed */ }
+  }
+
 
   useEffect(() => {
     if (phase !== "countdown") return;
@@ -229,6 +245,39 @@ function OneVOne() {
     );
   }
 
+  if (phase === "notfound") {
+    return (
+      <ArenaShell>
+        <CenterPanel>
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-500/10">
+            <Users className="h-8 w-8 text-rose-400" />
+          </div>
+          <div className="mt-4 text-2xl font-bold text-white">Player not found</div>
+          <p className="mt-2 max-w-xs text-sm text-white/60">
+            No live rival is available right now. Invite a friend to a custom room, or duel a bot rival.
+          </p>
+          <div className="mt-4 rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-sm text-white/80">
+            Room code: <span className="font-black tracking-widest text-cyan-300">{roomCode}</span>
+          </div>
+          <div className="mt-5 flex flex-col gap-2">
+            <button
+              className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-[0_0_20px_rgba(34,211,238,0.35)]"
+              onClick={invite}
+            >Invite a friend</button>
+            <button
+              className="rounded-xl bg-gradient-to-r from-rose-500 to-fuchsia-600 px-5 py-2.5 text-sm font-bold text-white shadow-[0_0_20px_rgba(244,63,94,0.35)]"
+              onClick={() => { setPhase("countdown"); setCountdown(3); }}
+            >Play vs bot rival</button>
+            <button
+              className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/80 hover:bg-white/5"
+              onClick={() => setPhase("matching")}
+            >Search again</button>
+          </div>
+        </CenterPanel>
+      </ArenaShell>
+    );
+  }
+
   if (phase === "matching") {
     return (
       <ArenaShell>
@@ -333,6 +382,7 @@ function OneVOne() {
     );
   }
 
+  const attemptedCount = questions.slice(0, TOTAL).filter((q) => answers[q.id]).length;
   const won = myCorrect > botCorrect;
   const tie = myCorrect === botCorrect;
   return (
@@ -346,6 +396,31 @@ function OneVOne() {
             <ResultCard name={myName} correct={myCorrect} total={TOTAL} accent="cyan" winner={won} />
             <ResultCard name={bot?.name ?? "Rival"} correct={botCorrect} total={TOTAL} accent="rose" winner={!won && !tie} />
           </div>
+
+          <div className="mt-5 grid grid-cols-3 gap-2">
+            <MiniStat label="Accuracy" value={`${attemptedCount ? Math.round((myCorrect / attemptedCount) * 100) : 0}%`} />
+            <MiniStat label="Attempted" value={`${attemptedCount}/${TOTAL}`} />
+            <MiniStat label="Time" value={`${mm}:${ss}`} />
+          </div>
+
+          <div className="mt-5 text-left">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/50">Your progress</div>
+            <div className="flex flex-wrap gap-1.5">
+              {questions.slice(0, TOTAL).map((q, i) => {
+                const a = answers[q.id];
+                const ok = a === q.correct;
+                return (
+                  <span
+                    key={q.id}
+                    className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${
+                      !a ? "bg-white/10 text-white/60" : ok ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"
+                    }`}
+                  >{i + 1}</span>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="mt-6 flex justify-center gap-2">
             <button
               className="rounded-xl bg-gradient-to-r from-rose-500 to-fuchsia-600 px-5 py-2 text-sm font-bold text-white shadow-[0_0_20px_rgba(244,63,94,0.4)]"
@@ -433,6 +508,15 @@ function ResultCard({
       <div className="truncate text-sm font-semibold text-white">{name}</div>
       <div className={`mt-1 text-3xl font-black ${num}`}>{correct * 100}</div>
       <div className="text-xs text-white/60">{correct}/{total} correct</div>
+    </div>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/30 p-3">
+      <div className="text-base font-bold text-white">{value}</div>
+      <div className="text-[11px] text-white/60">{label}</div>
     </div>
   );
 }
