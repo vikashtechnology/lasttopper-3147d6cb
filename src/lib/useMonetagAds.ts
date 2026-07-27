@@ -1,7 +1,5 @@
 import { useEffect } from "react";
 
-const SW_PATH = "/sw.js";
-
 type AdTag = {
   key: string;
   src: string;
@@ -10,20 +8,8 @@ type AdTag = {
   appendTo?: "head" | "body";
 };
 
+/** Popup / vignette (interstitial) ads only — no push-notification ads. */
 const TAGS: AdTag[] = [
-  {
-    key: "monetag-tag-11392493",
-    src: "https://5gvci.com/act/files/tag.min.js?z=11392493",
-    zone: "11392493",
-    attrs: { "data-cfasync": "false" },
-    appendTo: "head",
-  },
-  {
-    key: "monetag-tag-11392534",
-    src: "https://nap5k.com/tag.min.js",
-    zone: "11392534",
-    appendTo: "body",
-  },
   {
     key: "monetag-vignette-11392544",
     src: "https://n6wxm.com/vignette.min.js",
@@ -32,7 +18,7 @@ const TAGS: AdTag[] = [
   },
 ];
 
-/** Loads Monetag ad tags + registers their service worker. Use on Home & Community only. */
+/** Loads Monetag popup ad tags. Use on Home & Community only. */
 export function useMonetagAds() {
   useEffect(() => {
     for (const tag of TAGS) {
@@ -47,10 +33,18 @@ export function useMonetagAds() {
       }
       (tag.appendTo === "body" ? document.body : document.head).appendChild(s);
     }
+
+    // Clean up any previously registered Monetag push service worker.
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
-        .register(SW_PATH, { scope: "/" })
-        .catch((e) => console.warn("Monetag SW failed", e));
+        .getRegistrations()
+        .then((regs) => {
+          for (const r of regs) {
+            const url = r.active?.scriptURL ?? r.installing?.scriptURL ?? "";
+            if (url.endsWith("/sw.js")) r.unregister();
+          }
+        })
+        .catch(() => {});
     }
   }, []);
 }
