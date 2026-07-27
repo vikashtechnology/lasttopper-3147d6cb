@@ -165,7 +165,7 @@ export const pingActivity = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { data: u } = await context.supabase
       .from("users")
-      .select("streak, last_streak_date")
+      .select("streak, best_streak, last_streak_date")
       .eq("id", context.userId)
       .maybeSingle();
 
@@ -185,7 +185,31 @@ export const pingActivity = createServerFn({ method: "POST" })
 
     await context.supabase
       .from("users")
-      .update({ streak: nextStreak, last_streak_date: todayStr, last_active_date: todayStr })
+      .update({
+        streak: nextStreak,
+        best_streak: Math.max(Number(u?.best_streak ?? 0), nextStreak),
+        last_streak_date: todayStr,
+        last_active_date: todayStr,
+      })
       .eq("id", context.userId);
     return { streak: nextStreak };
   });
+
+// Streak details for the home header chip modal.
+export const getStreakDetails = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("users")
+      .select("streak, best_streak, last_streak_date, last_active_date")
+      .eq("id", context.userId)
+      .maybeSingle();
+    if (error) throw error;
+    return {
+      streak: Number(data?.streak ?? 0),
+      best_streak: Math.max(Number(data?.best_streak ?? 0), Number(data?.streak ?? 0)),
+      last_streak_date: (data?.last_streak_date as string | null) ?? null,
+      last_active_date: (data?.last_active_date as string | null) ?? null,
+    };
+  });
+
