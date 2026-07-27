@@ -1,0 +1,2 @@
+ALTER TABLE public.battle_sessions DROP CONSTRAINT IF EXISTS battle_sessions_mode_check;
+ALTER TABLE public.battle_sessions ADD CONSTRAINT battle_sessions_mode_check CHECK (mode = ANY (ARRAY['quick'::text, 'mega'::text, '1v1'::text]));
