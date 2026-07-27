@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { aiChat } from "@/lib/ai-router";
 
 type MegaQuestion = {
   id: string;
@@ -11,24 +12,17 @@ type MegaQuestion = {
 };
 
 async function callGeminiMega(count: number, batchIdx: number): Promise<MegaQuestion[]> {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) return [];
+
   const prompt = `Generate exactly ${count} NCERT-only exam-style MCQ covering ONLY Physics and Chemistry (Class 11 & 12). Mix chapters and difficulty (30/40/30). Use LaTeX ($...$ / $$...$$). This is batch #${batchIdx + 1}; produce a fresh unique set. Return STRICT JSON: {"questions":[{"question":"...","options":{"A":"","B":"","C":"","D":""},"correct":"A|B|C|D","hint":"...","explanation":"..."}]}`;
   try {
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-      body: JSON.stringify({
-        model: "google/gemini-3.6-flash",
-        messages: [
-          { role: "system", content: "You are an NCERT-only exam question generator. Physics and Chemistry only. Output STRICT JSON only." },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" },
-      }),
+    const data = await aiChat({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: "You are an NCERT-only exam question generator. Physics and Chemistry only. Output STRICT JSON only." },
+        { role: "user", content: prompt },
+      ],
+      response_format: { type: "json_object" },
     });
-    if (!resp.ok) return [];
-    const data = await resp.json();
     const content: string = data?.choices?.[0]?.message?.content ?? "{}";
     const parsed = JSON.parse(content) as { questions?: Array<Omit<MegaQuestion, "id" | "chapter_id">> };
     return (parsed.questions ?? []).slice(0, count).map((q, i) => ({

@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { aiChat } from "@/lib/ai-router";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -72,9 +73,6 @@ async function callGeminiBatch(
   count: number,
   batchIndex: number,
 ): Promise<QuizQuestion[]> {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) throw new Error("Missing LOVABLE_API_KEY");
-
   const subjectLabel = profession === "pcm" ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
   const prompt = `Generate exactly ${count} exam-style multiple-choice questions for ${subjectLabel}, distributed across these chapters: ${chapterNames.join(", ")}.
 
@@ -93,29 +91,19 @@ Rules:
 - Return STRICT JSON only, no markdown, matching this schema:
 {"questions":[{"chapter":"<chapter name>","question":"...","options":{"A":"...","B":"...","C":"...","D":"..."},"correct":"A|B|C|D","hint":"...","explanation":"..."}]}`;
 
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
-    },
-    body: JSON.stringify({
+  let data: any;
+  try {
+    data = await aiChat({
       model: "google/gemini-2.5-flash",
       messages: [
         { role: "system", content: "You are an NCERT-only exam question generator. You must only use content that appears in official NCERT textbooks. Output STRICT JSON only." },
         { role: "user", content: prompt },
       ],
       response_format: { type: "json_object" },
-    }),
-  });
-
-  if (!resp.ok) {
-    const body = await resp.text();
-    if (resp.status === 429 || resp.status === 402) throw new Error("AI_BUSY");
-    throw new Error(`AI gateway error ${resp.status}: ${body}`);
+    });
+  } catch {
+    throw new Error("AI_BUSY");
   }
-
-  const data = await resp.json();
   const content: string = data?.choices?.[0]?.message?.content ?? "{}";
   let parsed: { questions?: Array<Omit<QuizQuestion, "id" | "chapter_id"> & { chapter: string }> } = {};
   try {

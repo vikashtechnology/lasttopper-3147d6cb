@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { aiChatText } from "@/lib/ai-router";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -30,25 +31,14 @@ export const chatWithTopperAi = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => chatSchema.parse(data))
   .handler(async ({ data }) => {
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
-
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-      body: JSON.stringify({
-        model: "google/gemini-3.6-flash",
+    let reply = "";
+    try {
+      reply = await aiChatText({
+        model: "google/gemini-2.5-flash",
         messages: [{ role: "system", content: SYSTEM_PROMPT }, ...data.messages],
-      }),
-    });
-
-    if (!resp.ok) {
-      const body = await resp.text();
-      if (resp.status === 429) return { reply: "I'm getting a lot of questions right now — please try again in a minute." };
-      if (resp.status === 402) return { reply: "AI credits are exhausted for now. Please try again later." };
-      throw new Error(`AI gateway error ${resp.status}: ${body}`);
+      });
+    } catch {
+      return { reply: "I'm getting a lot of questions right now — please try again in a minute." };
     }
-    const json = await resp.json();
-    const reply: string = json?.choices?.[0]?.message?.content ?? "";
     return { reply: reply.trim() || "Sorry, I couldn't generate a reply." };
   });

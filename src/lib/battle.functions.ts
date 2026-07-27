@@ -2,60 +2,32 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { QuizQuestion } from "@/lib/learning.functions";
+import { aiChat } from "@/lib/ai-router";
 
 /* ----------------------------- AI generation ----------------------------- */
 
-async function callGemini(prompt: string, count: number, model = "google/gemini-3.6-flash"): Promise<QuizQuestion[]> {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) throw new Error("Missing LOVABLE_API_KEY");
-  const fallbacks = [model, "google/gemini-3.6-flash", "google/gemini-3.1-flash-lite"];
-  const tried = new Set<string>();
-  let lastErr: Error | null = null;
-
-  for (const m of fallbacks) {
-    if (tried.has(m)) continue;
-    tried.add(m);
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      try {
-        const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-          body: JSON.stringify({
-            model: m,
-            messages: [
-              { role: "system", content: "You are an NCERT-only exam question generator. Only use content from official NCERT textbooks (Class 11 & 12). Output STRICT JSON only." },
-              { role: "user", content: prompt },
-            ],
-            response_format: { type: "json_object" },
-          }),
-        });
-        if (resp.status === 429) {
-          await new Promise((r) => setTimeout(r, 600 + attempt * 700));
-          lastErr = new Error("AI_BUSY");
-          continue;
-        }
-        if (resp.status === 402) throw new Error("AI credits exhausted. Please add credits.");
-        if (!resp.ok) { lastErr = new Error(`AI error ${resp.status}`); break; }
-        const data = await resp.json();
-        const content: string = data?.choices?.[0]?.message?.content ?? "{}";
-        const parsed = JSON.parse(content) as {
-          questions?: Array<Omit<QuizQuestion, "id" | "chapter_id">>;
-        };
-        return (parsed.questions ?? []).slice(0, count).map((q, i) => ({
-          id: `bq_${Date.now()}_${i}`,
-          chapter_id: "",
-          question: q.question,
-          options: q.options,
-          correct: q.correct,
-          hint: q.hint ?? "",
-          explanation: q.explanation ?? "",
-        }));
-      } catch (e) {
-        lastErr = e as Error;
-      }
-    }
-  }
-  throw lastErr ?? new Error("AI unavailable");
+async function callGemini(prompt: string, count: number, model = "google/gemini-2.5-flash"): Promise<QuizQuestion[]> {
+  const data = await aiChat({
+    model,
+    messages: [
+      { role: "system", content: "You are an NCERT-only exam question generator. Only use content from official NCERT textbooks (Class 11 & 12). Output STRICT JSON only." },
+      { role: "user", content: prompt },
+    ],
+    response_format: { type: "json_object" },
+  });
+  const content: string = data?.choices?.[0]?.message?.content ?? "{}";
+  const parsed = JSON.parse(content) as {
+    questions?: Array<Omit<QuizQuestion, "id" | "chapter_id">>;
+  };
+  return (parsed.questions ?? []).slice(0, count).map((q, i) => ({
+    id: `bq_${Date.now()}_${i}`,
+    chapter_id: "",
+    question: q.question,
+    options: q.options,
+    correct: q.correct,
+    hint: q.hint ?? "",
+    explanation: q.explanation ?? "",
+  }));
 }
 
 
