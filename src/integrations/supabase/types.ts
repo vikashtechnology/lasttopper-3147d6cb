@@ -148,6 +148,74 @@ export type Database = {
           },
         ]
       }
+      daily_challenge_attempts: {
+        Row: {
+          challenge_id: string
+          completed_at: string | null
+          correct_count: number
+          created_at: string
+          id: string
+          reward_tc: number
+          session_id: string | null
+          total_count: number
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          completed_at?: string | null
+          correct_count?: number
+          created_at?: string
+          id?: string
+          reward_tc?: number
+          session_id?: string | null
+          total_count?: number
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          completed_at?: string | null
+          correct_count?: number
+          created_at?: string
+          id?: string
+          reward_tc?: number
+          session_id?: string | null
+          total_count?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_challenge_attempts_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "daily_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_challenges: {
+        Row: {
+          challenge_date: string
+          created_at: string
+          id: string
+          profession: Database["public"]["Enums"]["profession"]
+          questions: Json
+        }
+        Insert: {
+          challenge_date: string
+          created_at?: string
+          id?: string
+          profession: Database["public"]["Enums"]["profession"]
+          questions?: Json
+        }
+        Update: {
+          challenge_date?: string
+          created_at?: string
+          id?: string
+          profession?: Database["public"]["Enums"]["profession"]
+          questions?: Json
+        }
+        Relationships: []
+      }
       doubt_replies: {
         Row: {
           body: string
@@ -606,6 +674,8 @@ export type Database = {
           correct: string
           created_at: string
           created_by: string | null
+          exam: string | null
+          exam_year: number | null
           explanation: string
           hint: string
           id: string
@@ -620,6 +690,8 @@ export type Database = {
           correct: string
           created_at?: string
           created_by?: string | null
+          exam?: string | null
+          exam_year?: number | null
           explanation?: string
           hint?: string
           id?: string
@@ -634,6 +706,8 @@ export type Database = {
           correct?: string
           created_at?: string
           created_by?: string | null
+          exam?: string | null
+          exam_year?: number | null
           explanation?: string
           hint?: string
           id?: string
@@ -746,6 +820,48 @@ export type Database = {
           timer_enabled?: boolean
           user_id?: string
           was_auto_submitted?: boolean
+        }
+        Relationships: []
+      }
+      review_items: {
+        Row: {
+          box: number
+          chapter_id: string | null
+          created_at: string
+          due_at: string
+          id: string
+          last_result: string | null
+          question: Json
+          question_key: string
+          reviewed_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          box?: number
+          chapter_id?: string | null
+          created_at?: string
+          due_at?: string
+          id?: string
+          last_result?: string | null
+          question: Json
+          question_key: string
+          reviewed_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          box?: number
+          chapter_id?: string | null
+          created_at?: string
+          due_at?: string
+          id?: string
+          last_result?: string | null
+          question?: Json
+          question_key?: string
+          reviewed_count?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
