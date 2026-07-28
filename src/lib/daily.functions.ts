@@ -25,6 +25,7 @@ export const getDailyChallenge = createServerFn({ method: "GET" })
 
     const ch = await ensureDailyChallenge(context.supabase, supabaseAdmin, profession);
     const { data: attempt } = await context.supabase
+
       .from("daily_challenge_attempts")
       .select("correct_count, reward_tc, completed_at")
       .eq("challenge_id", ch.id).eq("user_id", context.userId).maybeSingle();
