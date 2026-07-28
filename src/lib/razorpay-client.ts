@@ -40,9 +40,9 @@ function loadCheckout(): Promise<void> {
 }
 
 export type PayArgs =
-  | { purpose: "pro"; name?: string | null; email?: string | null; description?: string }
-  | { purpose: "pro_yearly"; name?: string | null; email?: string | null; description?: string }
-  | { purpose: "pro_weekly"; name?: string | null; email?: string | null; description?: string }
+  | { purpose: "pro"; name?: string | null; email?: string | null; description?: string; voucher_code?: string }
+  | { purpose: "pro_yearly"; name?: string | null; email?: string | null; description?: string; voucher_code?: string }
+  | { purpose: "pro_weekly"; name?: string | null; email?: string | null; description?: string; voucher_code?: string }
   | { purpose: "wallet_topup"; amount_inr: number; name?: string | null; email?: string | null; description?: string };
 
 export async function payWithRazorpay(args: PayArgs): Promise<{
@@ -50,12 +50,14 @@ export async function payWithRazorpay(args: PayArgs): Promise<{
   balance?: number;
 }> {
   await loadCheckout();
+  const voucherCode = args.purpose === "wallet_topup" ? undefined : args.voucher_code;
   const order = await createRazorpayOrder({
     data:
       args.purpose === "wallet_topup"
         ? { purpose: "wallet_topup", amount_inr: args.amount_inr }
-        : { purpose: args.purpose },
+        : { purpose: args.purpose, voucher_code: voucherCode },
   });
+
 
   return new Promise((resolve, reject) => {
     const rzp = new window.Razorpay!({
