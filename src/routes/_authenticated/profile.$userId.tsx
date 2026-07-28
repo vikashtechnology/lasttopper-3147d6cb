@@ -65,7 +65,7 @@ function Profile() {
             <div className="mt-2 text-xs text-muted-foreground">
               {p.data.followers_count} followers · {p.data.following_count} following
             </div>
-            {!isMe && (
+            {!isMe ? (
               <div className="mt-3">
                 {p.data.i_follow ? (
                   <Button size="sm" variant="outline" onClick={() => unfollow.mutate()}><UserMinus className="mr-1 h-3.5 w-3.5" />Unfollow</Button>
@@ -73,7 +73,14 @@ function Profile() {
                   <Button size="sm" onClick={() => follow.mutate()}><UserPlus className="mr-1 h-3.5 w-3.5" />Follow</Button>
                 )}
               </div>
+            ) : (
+              <div className="mt-3">
+                <Button size="sm" variant="outline" onClick={handleSignOut}>
+                  <LogOut className="mr-1 h-3.5 w-3.5" />Sign out
+                </Button>
+              </div>
             )}
+
           </div>
         </div>
 
