@@ -84,6 +84,7 @@ const verifySchema = z.object({
   razorpay_signature: z.string().min(1),
   purpose: z.enum(["pro", "pro_yearly", "pro_weekly", "wallet_topup"]),
   amount_inr: z.number().positive().optional(),
+  voucher_code: z.string().trim().min(4).max(24).optional(),
 });
 
 function verifySignature(orderId: string, paymentId: string, signature: string): boolean {
