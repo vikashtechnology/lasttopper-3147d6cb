@@ -18,7 +18,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 type Purpose = "pro" | "pro_yearly" | "pro_weekly" | "wallet_topup";
 
-const REFERRAL_REWARD_TC = 5;
 
 function amountFor(purpose: Purpose, requested?: number): number {
   if (purpose === "pro_weekly") return 4900; // ₹49 / week
