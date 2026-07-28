@@ -453,3 +453,10 @@ body[data-no-ads="1"] [class*="monetag"] {
   .ambient-particle,
   .ambient-ring { animation: none; }
 }
+
+/* Let the ambient layer show through opaque page shells. */
+.app-surface main.bg-background,
+.app-surface > div.bg-background,
+.app-surface .min-h-screen.bg-background {
+  background-color: color-mix(in oklab, var(--background) 80%, transparent);
+}
