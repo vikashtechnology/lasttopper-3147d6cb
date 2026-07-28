@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { registerPWA } from "@/lib/pwa-register";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { AmbientBackground } from "@/components/AmbientBackground";
 
 function NotFoundComponent() {
   return (
@@ -165,9 +166,13 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <Outlet />
+        <AmbientBackground />
+        <div className="app-surface relative z-[1]">
+          <Outlet />
+        </div>
         <Toaster richColors position="top-center" />
       </ThemeProvider>
     </QueryClientProvider>
   );
 }
+

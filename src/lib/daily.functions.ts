@@ -10,6 +10,9 @@ export type DailyChallengeView = {
   attempted: boolean;
   correct_count: number;
   reward_tc: number;
+  locked: boolean;
+  quota_used: number;
+  quota_limit: number;
 };
 
 export const getDailyChallenge = createServerFn({ method: "GET" })
@@ -25,11 +28,20 @@ export const getDailyChallenge = createServerFn({ method: "GET" })
 
     const ch = await ensureDailyChallenge(context.supabase, supabaseAdmin, profession);
     const { data: attempt } = await context.supabase
+
       .from("daily_challenge_attempts")
       .select("correct_count, reward_tc, completed_at")
       .eq("challenge_id", ch.id).eq("user_id", context.userId).maybeSingle();
 
+    const { getQuotaState } = await import("@/lib/quota.server");
+    const quota = await getQuotaState(context.supabase, context.userId);
+    const locked =
+      !attempt?.completed_at && !quota.is_pro && quota.remaining < (ch.questions ?? []).length;
+
     return {
+      locked,
+      quota_used: quota.used,
+      quota_limit: quota.limit,
       id: ch.id,
       date: todayKey(),
       questions: ch.questions,
@@ -64,6 +76,8 @@ export const submitDailyChallenge = createServerFn({ method: "POST" })
     }
 
     const questions = (ch.questions as QuizQuestion[]) ?? [];
+    const { assertQuota } = await import("@/lib/quota.server");
+    await assertQuota(context.supabase, context.userId, questions.length);
     let correct = 0;
     for (const q of questions) if (data.answers[q.id] === q.correct) correct += 1;
     const reward = rewardFor(correct);
