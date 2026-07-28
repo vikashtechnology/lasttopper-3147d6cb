@@ -78,6 +78,7 @@ export async function payWithRazorpay(args: PayArgs): Promise<{
               razorpay_signature: r.razorpay_signature,
               purpose: args.purpose,
               amount_inr: args.purpose === "wallet_topup" ? args.amount_inr : undefined,
+              voucher_code: voucherCode,
             },
           });
           resolve(res);
