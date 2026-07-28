@@ -217,6 +217,28 @@ function WalletPage() {
           <span>Invited: <b className="text-foreground">{ref.data?.invited ?? 0}</b></span>
           <span>Converted: <b className="text-foreground">{ref.data?.converted ?? 0}</b></span>
         </div>
+
+        {/* Milestone: every 10 converted referrals = 1 free week of Pro */}
+        <div className="rounded-lg border border-amber-400/30 bg-amber-400/10 p-2.5">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-500">
+            <Sparkles className="h-3.5 w-3.5" /> 10 referrals = 1 WEEK PRO FREE
+          </div>
+          <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-black/20">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all"
+              style={{
+                width: `${(((ref.data?.converted ?? 0) % (ref.data?.milestone_size ?? 10)) / (ref.data?.milestone_size ?? 10)) * 100}%`,
+              }}
+            />
+          </div>
+          <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
+            {ref.data?.to_next_milestone ?? 10} more converted referral
+            {(ref.data?.to_next_milestone ?? 10) === 1 ? "" : "s"} → 7 days of Pro, auto-activated.
+            {(ref.data?.milestones_earned ?? 0) > 0 && (
+              <> You've already unlocked <b className="text-amber-500">{(ref.data?.milestones_earned ?? 0) * 7} days</b>.</>
+            )}
+          </p>
+        </div>
         {!ref.data?.referred_by && (
           <div className="flex items-center gap-1.5 border-t border-border pt-2">
             <input
