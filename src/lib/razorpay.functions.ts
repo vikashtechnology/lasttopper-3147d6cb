@@ -140,23 +140,24 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
     });
 
 
-    // Referral reward: first-ever top-up credits referrer with 5 mega-test-only TC.
+    // Referral reward: first-ever top-up gives the referrer a one-time Pro
+    // discount voucher (15%–25% off any Pro plan).
     if (u?.referred_by && !u.referral_credited) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: ref } = await supabaseAdmin
-        .from("users").select("mega_credits").eq("id", u.referred_by).maybeSingle();
-      const cur2 = Number(ref?.mega_credits ?? 0);
-      await supabaseAdmin
-        .from("users")
-        .update({ mega_credits: cur2 + REFERRAL_REWARD_TC })
-        .eq("id", u.referred_by);
+      const { awardReferralVoucher } = await import("@/lib/voucher.server");
+      const voucher = await awardReferralVoucher(u.referred_by);
       await supabaseAdmin.from("users")
         .update({ referral_credited: true }).eq("id", context.userId);
-      await supabaseAdmin.from("wallet_transactions").insert({
-        user_id: u.referred_by, type: "credit", category: "referral",
-        amount: REFERRAL_REWARD_TC, balance_after: cur2 + REFERRAL_REWARD_TC,
-        note: "Referral reward (Mega Test only)", reference_id: null,
-      });
+      if (voucher) {
+        await supabaseAdmin.from("notifications").insert({
+          user_id: u.referred_by,
+          kind: "referral",
+          title: `🎁 You earned ${voucher.percent}% off Pro`,
+          body: `A friend you invited just topped up. Use code ${voucher.code} at checkout.`,
+          link: "/pricing",
+        });
+      }
     }
+
     return { ok: true as const, purpose: "wallet_topup" as const, balance: next };
   });
