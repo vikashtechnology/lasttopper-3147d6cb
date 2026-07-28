@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { XpProgress } from "@/components/XpProgress";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
 import { getDailyChallenge, submitDailyChallenge } from "@/lib/daily.functions";
@@ -31,7 +32,7 @@ function DailyPage() {
   const qc = useQueryClient();
   const [answers, setAnswers] = useState<Record<string, Letter>>({});
   const [idx, setIdx] = useState(0);
-  const [result, setResult] = useState<{ correct: number; total: number; reward: number } | null>(null);
+  const [result, setResult] = useState<{ correct: number; total: number; reward: number; xp_gained?: number } | null>(null);
 
   const challenge = useQuery({
     queryKey: ["daily-challenge"],
@@ -43,7 +44,7 @@ function DailyPage() {
     mutationFn: () =>
       submitDailyChallenge({ data: { challenge_id: challenge.data!.id, answers } }),
     onSuccess: (r) => {
-      setResult({ correct: r.correct, total: r.total, reward: r.reward });
+      setResult({ correct: r.correct, total: r.total, reward: r.reward, xp_gained: "xp_gained" in r ? r.xp_gained : 0 });
       if (!r.already) confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 } });
       qc.invalidateQueries({ queryKey: ["my-profile"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
@@ -118,6 +119,7 @@ function DailyPage() {
                 You scored {challenge.data.correct_count} and earned {challenge.data.reward_tc} TC. Come back tomorrow!
               </p>
             )}
+            <XpProgress className="mt-4 text-left" gained={result?.xp_gained} />
             <div className="mt-4 flex justify-center gap-2">
               <Button variant="outline" onClick={() => nav({ to: "/review" })}>Review mistakes</Button>
               <Button onClick={() => nav({ to: "/home" })}>Back home</Button>

@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
+import { XpProgress } from "@/components/XpProgress";
 import { toast } from "sonner";
 import {
   getQuizSession,
@@ -295,6 +296,7 @@ function ResultsPage() {
             <Stat label="Time" value={formatTime(timeTaken)} />
           </div>
         </div>
+        <XpProgress className="mt-4" />
         <div className="mt-4 flex flex-wrap gap-2">
           <Button className="flex-1 min-w-[140px]" onClick={practiceIncorrect} disabled={starting || incorrect === 0}>
             <Repeat className="mr-2 h-4 w-4" /> Practice incorrect
