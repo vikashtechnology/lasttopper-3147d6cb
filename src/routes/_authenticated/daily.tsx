@@ -6,7 +6,7 @@ import confetti from "canvas-confetti";
 import { getDailyChallenge, submitDailyChallenge } from "@/lib/daily.functions";
 import { Button } from "@/components/ui/button";
 import { Latex } from "@/components/Latex";
-import { ChevronLeft, CalendarCheck, Loader2, Trophy } from "lucide-react";
+import { ChevronLeft, CalendarCheck, Loader2, Trophy, Lock } from "lucide-react";
 import { TopperCoin } from "@/components/TopperCoin";
 import { failMessage } from "@/lib/friendly-error";
 
@@ -54,6 +54,7 @@ function DailyPage() {
   const questions = challenge.data?.questions ?? [];
   const q = questions[idx];
   const done = result !== null || challenge.data?.attempted;
+  const locked = !done && !!challenge.data?.locked;
 
   return (
     <main className="min-h-screen bg-background">
@@ -87,6 +88,21 @@ function DailyPage() {
           </div>
         )}
 
+        {locked && challenge.data && (
+          <div className="mantis-card p-6 text-center">
+            <Lock className="mx-auto h-8 w-8 text-muted-foreground" />
+            <h2 className="mt-3 text-lg font-semibold">Daily limit reached</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              You've used {challenge.data.quota_used} of {challenge.data.quota_limit} free questions today.
+              Upgrade to Pro for unlimited practice, or come back tomorrow.
+            </p>
+            <div className="mt-4 flex justify-center gap-2">
+              <Button variant="outline" onClick={() => nav({ to: "/home" })}>Back home</Button>
+              <Button onClick={() => nav({ to: "/pricing" })}>Upgrade to Pro</Button>
+            </div>
+          </div>
+        )}
+
         {done && challenge.data && (
           <div className="mantis-card p-6 text-center">
             <Trophy className="mx-auto h-8 w-8 text-amber-500" />
@@ -109,7 +125,7 @@ function DailyPage() {
           </div>
         )}
 
-        {!done && q && (
+        {!done && !locked && q && (
           <div className="space-y-4">
             <div className="mantis-card p-5">
               <Latex className="block text-sm leading-relaxed">{q.question}</Latex>
