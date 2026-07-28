@@ -50,6 +50,18 @@ function PricingPage() {
   const isPro = !!p?.is_pro;
   const [plan, setPlan] = useState<Plan>("yearly");
   const [loading, setLoading] = useState(false);
+  const [code, setCode] = useState("");
+
+  const vouchers = useQuery({ queryKey: ["my-vouchers"], queryFn: () => getMyVouchers() });
+  const best = vouchers.data?.best ?? null;
+
+  useEffect(() => {
+    if (best?.code && !code) setCode(best.code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [best?.code]);
+
+  const applied = best && code.trim().toUpperCase() === best.code.toUpperCase() ? best : null;
+  const percentOff = applied?.percent ?? 0;
 
   const subscribe = async () => {
     setLoading(true);
@@ -58,9 +70,11 @@ function PricingPage() {
         purpose: plan === "yearly" ? "pro_yearly" : plan === "weekly" ? "pro_weekly" : "pro",
         name: p?.full_name,
         email: p?.email,
+        voucher_code: code.trim() ? code.trim().toUpperCase() : undefined,
       });
       toast.success("Welcome to Pro! 🎉");
       qc.invalidateQueries({ queryKey: ["my-profile"] });
+      qc.invalidateQueries({ queryKey: ["my-vouchers"] });
     } catch (e) {
       const msg = failMessage(e, "Payment failed");
       if (msg !== "Payment cancelled") toast.error(msg);
@@ -69,9 +83,14 @@ function PricingPage() {
     }
   };
 
-  const price = plan === "yearly" ? "₹1499" : plan === "weekly" ? "₹49" : "₹149";
+  const base = plan === "yearly" ? 1499 : plan === "weekly" ? 49 : 149;
+  const payable = percentOff ? Math.max(1, Math.round((base * (100 - percentOff)) / 100)) : base;
+  const price = `₹${payable}`;
   const period = plan === "yearly" ? "/ year" : plan === "weekly" ? "/ week" : "/ month";
-  const cta = plan === "yearly" ? "Subscribe ₹1499/yr" : plan === "weekly" ? "Subscribe ₹49/wk" : "Subscribe ₹149/mo";
+  const unit = plan === "yearly" ? "yr" : plan === "weekly" ? "wk" : "mo";
+  const cta = `Subscribe ₹${payable}/${unit}`;
+  const strike = percentOff ? `₹${base}` : undefined;
+
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
