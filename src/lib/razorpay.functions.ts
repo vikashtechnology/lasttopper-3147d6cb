@@ -42,6 +42,7 @@ export const getRazorpayKeyId = createServerFn({ method: "GET" }).handler(async 
 const createOrderSchema = z.object({
   purpose: z.enum(["pro", "pro_yearly", "pro_weekly", "wallet_topup"]),
   amount_inr: z.number().positive().optional(),
+  voucher_code: z.string().trim().min(4).max(24).optional(),
 });
 
 export const createRazorpayOrder = createServerFn({ method: "POST" })
@@ -52,9 +53,18 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
     const secret = process.env.RAZORPAY_KEY_SECRET;
     if (!key || !secret) throw new Error("Razorpay not configured");
 
-    const amount = amountFor(data.purpose, data.amount_inr);
+    let amount = amountFor(data.purpose, data.amount_inr);
+    let discountPercent = 0;
+    if (data.voucher_code && data.purpose !== "wallet_topup") {
+      const { findRedeemableVoucher } = await import("@/lib/voucher.server");
+      const v = await findRedeemableVoucher(context.userId, data.voucher_code);
+      if (!v) throw new Error("This discount code is not valid or already used");
+      discountPercent = v.percent;
+      amount = Math.max(100, Math.round((amount * (100 - discountPercent)) / 100));
+    }
     const auth = Buffer.from(`${key}:${secret}`).toString("base64");
     const receipt = `${data.purpose}_${context.userId.slice(0, 8)}_${Date.now()}`;
+
 
     const res = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",
