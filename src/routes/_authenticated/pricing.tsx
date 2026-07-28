@@ -149,6 +149,37 @@ function PricingPage() {
           </div>
         </div>
 
+        {!isPro && (
+          <div className="mx-auto mt-6 max-w-md rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Gift className="h-4 w-4 text-primary" /> Discount voucher
+            </div>
+            {best ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                You have a <b className="text-primary">{best.percent}% off</b> referral voucher — expires{" "}
+                {new Date(best.expires_at as string).toLocaleDateString()}.
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Invite friends to earn 15–25% off vouchers for any Pro plan.
+              </p>
+            )}
+            <div className="mt-3 flex items-center gap-2">
+              <Input
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="Enter voucher code"
+                className="h-9"
+              />
+              {percentOff > 0 && (
+                <span className="whitespace-nowrap rounded-full bg-emerald-500/15 px-2 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                  −{percentOff}%
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="mt-6 grid gap-5 md:grid-cols-2">
           <PlanCard
             name="Free"
@@ -165,9 +196,11 @@ function PricingPage() {
             highlight
             name="Pro"
             price={price}
+            strike={strike}
             period={period}
             tag="Serious aspirants"
             features={PRO}
+
             cta={
               isPro ? (
                 <Button className="w-full" disabled>
