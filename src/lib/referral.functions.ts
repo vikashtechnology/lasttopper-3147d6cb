@@ -31,6 +31,27 @@ export const getMyReferral = createServerFn({ method: "GET" })
     };
   });
 
+/** Pro discount vouchers earned by this user (referral rewards). */
+export const getMyVouchers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase
+      .from("pro_vouchers")
+      .select("id, code, percent, used_at, expires_at, note")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    const now = Date.now();
+    const rows = data ?? [];
+    return {
+      vouchers: rows,
+      best:
+        rows
+          .filter((v) => !v.used_at && new Date(v.expires_at as string).getTime() > now)
+          .sort((a, b) => b.percent - a.percent)[0] ?? null,
+    };
+  });
+
 const applySchema = z.object({ code: z.string().trim().min(4).max(16) });
 
 export const applyReferralCode = createServerFn({ method: "POST" })
