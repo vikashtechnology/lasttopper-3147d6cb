@@ -131,6 +131,28 @@ function RootComponent() {
     void registerPWA();
   }, []);
 
+  // Android hardware/system back button: go one step back in history instead
+  // of closing the app or jumping home. Exits only when history is empty.
+  useEffect(() => {
+    let remove: (() => void) | undefined;
+    void (async () => {
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        if (!Capacitor.isNativePlatform()) return;
+        const { App } = await import("@capacitor/app");
+        const handle = await App.addListener("backButton", ({ canGoBack }) => {
+          if (canGoBack || window.history.length > 1) window.history.back();
+          else void App.exitApp();
+        });
+        remove = () => void handle.remove();
+      } catch {
+        /* not running natively */
+      }
+    })();
+    return () => remove?.();
+  }, []);
+
+
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
