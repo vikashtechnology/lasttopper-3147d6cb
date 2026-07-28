@@ -98,7 +98,11 @@ export const Route = createFileRoute("/api/public/hooks/razorpay")({
                 link: "/pricing",
               });
             }
+            // Every 10 converted referrals → 1 free week of Pro.
+            const { maybeGrantReferralMilestone } = await import("@/lib/referral.server");
+            await maybeGrantReferralMilestone(u.referred_by).catch(() => null);
           }
+
           return new Response("ok");
         }
 
