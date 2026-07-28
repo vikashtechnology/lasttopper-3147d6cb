@@ -23,8 +23,18 @@ export function isProRequired(err: unknown): boolean {
   return rawMessage(err).includes("PRO_REQUIRED");
 }
 
+export function isAiLimit(err: unknown): boolean {
+  return rawMessage(err).includes("AI_LIMIT");
+}
+
+export function isProOnly(err: unknown): boolean {
+  return rawMessage(err).includes("PRO_ONLY") || isProRequired(err);
+}
+
 export function failMessage(err: unknown, fallback: string = GENERIC): string {
   if (err) console.error("[error]", err);
   if (isDailyLimit(err)) return "Daily free question limit reached. Upgrade to Pro for unlimited practice.";
+  if (isAiLimit(err)) return "You've used today's free Topper AI messages. Go Pro for unlimited tutoring.";
+  if (isProOnly(err)) return "This is a Pro feature. Upgrade to unlock it.";
   return fallback;
 }
