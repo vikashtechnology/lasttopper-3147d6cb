@@ -18,7 +18,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 type Purpose = "pro" | "pro_yearly" | "pro_weekly" | "wallet_topup";
 
-const REFERRAL_REWARD_TC = 5;
 
 function amountFor(purpose: Purpose, requested?: number): number {
   if (purpose === "pro_weekly") return 4900; // ₹49 / week
@@ -42,6 +41,7 @@ export const getRazorpayKeyId = createServerFn({ method: "GET" }).handler(async 
 const createOrderSchema = z.object({
   purpose: z.enum(["pro", "pro_yearly", "pro_weekly", "wallet_topup"]),
   amount_inr: z.number().positive().optional(),
+  voucher_code: z.string().trim().min(4).max(24).optional(),
 });
 
 export const createRazorpayOrder = createServerFn({ method: "POST" })
@@ -52,9 +52,18 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
     const secret = process.env.RAZORPAY_KEY_SECRET;
     if (!key || !secret) throw new Error("Razorpay not configured");
 
-    const amount = amountFor(data.purpose, data.amount_inr);
+    let amount = amountFor(data.purpose, data.amount_inr);
+    let discountPercent = 0;
+    if (data.voucher_code && data.purpose !== "wallet_topup") {
+      const { findRedeemableVoucher } = await import("@/lib/voucher.server");
+      const v = await findRedeemableVoucher(context.userId, data.voucher_code);
+      if (!v) throw new Error("This discount code is not valid or already used");
+      discountPercent = v.percent;
+      amount = Math.max(100, Math.round((amount * (100 - discountPercent)) / 100));
+    }
     const auth = Buffer.from(`${key}:${secret}`).toString("base64");
     const receipt = `${data.purpose}_${context.userId.slice(0, 8)}_${Date.now()}`;
+
 
     const res = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",
@@ -75,7 +84,7 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
       throw new Error(`Failed to create order: ${res.status}`);
     }
     const order = (await res.json()) as { id: string; amount: number; currency: string };
-    return { order_id: order.id, amount: order.amount, currency: order.currency, key_id: key };
+    return { order_id: order.id, amount: order.amount, currency: order.currency, key_id: key, discount_percent: discountPercent };
   });
 
 const verifySchema = z.object({
@@ -84,6 +93,7 @@ const verifySchema = z.object({
   razorpay_signature: z.string().min(1),
   purpose: z.enum(["pro", "pro_yearly", "pro_weekly", "wallet_topup"]),
   amount_inr: z.number().positive().optional(),
+  voucher_code: z.string().trim().min(4).max(24).optional(),
 });
 
 function verifySignature(orderId: string, paymentId: string, signature: string): boolean {
@@ -111,8 +121,14 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
         .from("users")
         .update({ is_pro: true, pro_since: new Date().toISOString(), pro_until: until })
         .eq("id", context.userId);
+      if (data.voucher_code) {
+        const { findRedeemableVoucher, consumeVoucher } = await import("@/lib/voucher.server");
+        const v = await findRedeemableVoucher(context.userId, data.voucher_code);
+        if (v) await consumeVoucher(v.id);
+      }
       return { ok: true as const, purpose: data.purpose };
     }
+
 
     // wallet_topup
     const amount = data.amount_inr ?? 0;
@@ -140,23 +156,24 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
     });
 
 
-    // Referral reward: first-ever top-up credits referrer with 5 mega-test-only TC.
+    // Referral reward: first-ever top-up gives the referrer a one-time Pro
+    // discount voucher (15%–25% off any Pro plan).
     if (u?.referred_by && !u.referral_credited) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: ref } = await supabaseAdmin
-        .from("users").select("mega_credits").eq("id", u.referred_by).maybeSingle();
-      const cur2 = Number(ref?.mega_credits ?? 0);
-      await supabaseAdmin
-        .from("users")
-        .update({ mega_credits: cur2 + REFERRAL_REWARD_TC })
-        .eq("id", u.referred_by);
+      const { awardReferralVoucher } = await import("@/lib/voucher.server");
+      const voucher = await awardReferralVoucher(u.referred_by);
       await supabaseAdmin.from("users")
         .update({ referral_credited: true }).eq("id", context.userId);
-      await supabaseAdmin.from("wallet_transactions").insert({
-        user_id: u.referred_by, type: "credit", category: "referral",
-        amount: REFERRAL_REWARD_TC, balance_after: cur2 + REFERRAL_REWARD_TC,
-        note: "Referral reward (Mega Test only)", reference_id: null,
-      });
+      if (voucher) {
+        await supabaseAdmin.from("notifications").insert({
+          user_id: u.referred_by,
+          kind: "referral",
+          title: `🎁 You earned ${voucher.percent}% off Pro`,
+          body: `A friend you invited just topped up. Use code ${voucher.code} at checkout.`,
+          link: "/pricing",
+        });
+      }
     }
+
     return { ok: true as const, purpose: "wallet_topup" as const, balance: next };
   });

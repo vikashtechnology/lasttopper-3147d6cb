@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getPublicProfile, followUser, unfollowUser } from "@/lib/community.functions";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Flame, Target, Award, ArrowLeft, UserPlus, UserMinus } from "lucide-react";
+import { Flame, Target, Award, ArrowLeft, UserPlus, UserMinus, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useUserStore } from "@/store/user";
 import { toast } from "sonner";
 import { failMessage } from "@/lib/friendly-error";
@@ -39,6 +40,14 @@ function Profile() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["profile", userId] }),
   });
 
+  async function handleSignOut() {
+    await qc.cancelQueries();
+    qc.clear();
+    useUserStore.getState().clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
+
   if (p.isLoading) return <div className="p-6 text-sm">Loading…</div>;
   if (!p.data?.user) return <div className="p-6 text-sm">User not found.</div>;
   const u = p.data.user;
@@ -65,7 +74,7 @@ function Profile() {
             <div className="mt-2 text-xs text-muted-foreground">
               {p.data.followers_count} followers · {p.data.following_count} following
             </div>
-            {!isMe && (
+            {!isMe ? (
               <div className="mt-3">
                 {p.data.i_follow ? (
                   <Button size="sm" variant="outline" onClick={() => unfollow.mutate()}><UserMinus className="mr-1 h-3.5 w-3.5" />Unfollow</Button>
@@ -73,7 +82,14 @@ function Profile() {
                   <Button size="sm" onClick={() => follow.mutate()}><UserPlus className="mr-1 h-3.5 w-3.5" />Follow</Button>
                 )}
               </div>
+            ) : (
+              <div className="mt-3">
+                <Button size="sm" variant="outline" onClick={handleSignOut}>
+                  <LogOut className="mr-1 h-3.5 w-3.5" />Sign out
+                </Button>
+              </div>
             )}
+
           </div>
         </div>
 

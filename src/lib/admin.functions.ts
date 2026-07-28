@@ -43,7 +43,10 @@ export const adminListUsers = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => z.object({ q: z.string().optional() }).parse(d ?? {}))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    let q = context.supabase.from("users")
+    // RLS on `users` limits reads to the caller's own row, so the admin list
+    // must go through the service-role client (after the admin check above).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let q = supabaseAdmin.from("users")
       .select("id, email, full_name, phone, profession, is_banned, balance, reputation, streak, created_at, is_pro, pro_until")
       .order("created_at", { ascending: false }).limit(100);
     if (data.q) q = q.or(`email.ilike.%${data.q}%,full_name.ilike.%${data.q}%,phone.ilike.%${data.q}%`);
@@ -62,20 +65,21 @@ export const adminGrantPro = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     if (data.plan === "revoke") {
-      const { error } = await context.supabase.from("users")
+      const { error } = await supabaseAdmin.from("users")
         .update({ is_pro: false, pro_until: null }).eq("id", data.user_id);
       if (error) throw error;
       return { ok: true };
     }
     const days = data.plan === "yearly" ? 365 : data.plan === "monthly" ? 30 : 7;
-    const { data: u } = await context.supabase
+    const { data: u } = await supabaseAdmin
       .from("users").select("pro_until").eq("id", data.user_id).maybeSingle();
     const base = u?.pro_until && new Date(u.pro_until as string).getTime() > Date.now()
       ? new Date(u.pro_until as string).getTime()
       : Date.now();
     const until = new Date(base + days * 86400_000).toISOString();
-    const { error } = await context.supabase.from("users")
+    const { error } = await supabaseAdmin.from("users")
       .update({ is_pro: true, pro_since: new Date().toISOString(), pro_until: until })
       .eq("id", data.user_id);
     if (error) throw error;
@@ -87,7 +91,8 @@ export const adminSetBan = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ user_id: z.string().uuid(), banned: z.boolean() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { error } = await context.supabase.from("users")
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("users")
       .update({ is_banned: data.banned }).eq("id", data.user_id);
     if (error) throw error;
     return { ok: true };

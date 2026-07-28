@@ -1,12 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Sparkles, ChevronLeft, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useSuspenseQuery, useQueryClient, useQuery } from "@tanstack/react-query";
+import { Check, Sparkles, ChevronLeft, Loader2, Gift } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getMyProfile } from "@/lib/user.functions";
+import { getMyVouchers } from "@/lib/referral.functions";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { payWithRazorpay } from "@/lib/razorpay-client";
 import { failMessage } from "@/lib/friendly-error";
+
 
 const profileQuery = { queryKey: ["my-profile"], queryFn: () => getMyProfile() } as const;
 
@@ -47,6 +50,18 @@ function PricingPage() {
   const isPro = !!p?.is_pro;
   const [plan, setPlan] = useState<Plan>("yearly");
   const [loading, setLoading] = useState(false);
+  const [code, setCode] = useState("");
+
+  const vouchers = useQuery({ queryKey: ["my-vouchers"], queryFn: () => getMyVouchers() });
+  const best = vouchers.data?.best ?? null;
+
+  useEffect(() => {
+    if (best?.code && !code) setCode(best.code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [best?.code]);
+
+  const applied = best && code.trim().toUpperCase() === best.code.toUpperCase() ? best : null;
+  const percentOff = applied?.percent ?? 0;
 
   const subscribe = async () => {
     setLoading(true);
@@ -55,9 +70,11 @@ function PricingPage() {
         purpose: plan === "yearly" ? "pro_yearly" : plan === "weekly" ? "pro_weekly" : "pro",
         name: p?.full_name,
         email: p?.email,
+        voucher_code: code.trim() ? code.trim().toUpperCase() : undefined,
       });
       toast.success("Welcome to Pro! 🎉");
       qc.invalidateQueries({ queryKey: ["my-profile"] });
+      qc.invalidateQueries({ queryKey: ["my-vouchers"] });
     } catch (e) {
       const msg = failMessage(e, "Payment failed");
       if (msg !== "Payment cancelled") toast.error(msg);
@@ -66,9 +83,14 @@ function PricingPage() {
     }
   };
 
-  const price = plan === "yearly" ? "₹1499" : plan === "weekly" ? "₹49" : "₹149";
+  const base = plan === "yearly" ? 1499 : plan === "weekly" ? 49 : 149;
+  const payable = percentOff ? Math.max(1, Math.round((base * (100 - percentOff)) / 100)) : base;
+  const price = `₹${payable}`;
   const period = plan === "yearly" ? "/ year" : plan === "weekly" ? "/ week" : "/ month";
-  const cta = plan === "yearly" ? "Subscribe ₹1499/yr" : plan === "weekly" ? "Subscribe ₹49/wk" : "Subscribe ₹149/mo";
+  const unit = plan === "yearly" ? "yr" : plan === "weekly" ? "wk" : "mo";
+  const cta = `Subscribe ₹${payable}/${unit}`;
+  const strike = percentOff ? `₹${base}` : undefined;
+
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -127,6 +149,37 @@ function PricingPage() {
           </div>
         </div>
 
+        {!isPro && (
+          <div className="mx-auto mt-6 max-w-md rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Gift className="h-4 w-4 text-primary" /> Discount voucher
+            </div>
+            {best ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                You have a <b className="text-primary">{best.percent}% off</b> referral voucher — expires{" "}
+                {new Date(best.expires_at as string).toLocaleDateString()}.
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Invite friends to earn 15–25% off vouchers for any Pro plan.
+              </p>
+            )}
+            <div className="mt-3 flex items-center gap-2">
+              <Input
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="Enter voucher code"
+                className="h-9"
+              />
+              {percentOff > 0 && (
+                <span className="whitespace-nowrap rounded-full bg-emerald-500/15 px-2 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                  −{percentOff}%
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="mt-6 grid gap-5 md:grid-cols-2">
           <PlanCard
             name="Free"
@@ -143,9 +196,11 @@ function PricingPage() {
             highlight
             name="Pro"
             price={price}
+            strike={strike}
             period={period}
             tag="Serious aspirants"
             features={PRO}
+
             cta={
               isPro ? (
                 <Button className="w-full" disabled>
@@ -172,6 +227,7 @@ function PricingPage() {
 function PlanCard({
   name,
   price,
+  strike,
   period,
   tag,
   features,
@@ -180,6 +236,7 @@ function PlanCard({
 }: {
   name: string;
   price: string;
+  strike?: string;
   period?: string;
   tag: string;
   features: string[];
@@ -200,9 +257,11 @@ function PlanCard({
         )}
       </div>
       <div className="mt-4 flex items-baseline gap-1">
+        {strike && <span className="mr-1 text-base text-muted-foreground line-through">{strike}</span>}
         <span className="text-3xl font-bold">{price}</span>
         {period && <span className="text-sm text-muted-foreground">{period}</span>}
       </div>
+
       <ul className="mt-5 space-y-2 text-sm">
         {features.map((f) => (
           <li key={f} className="flex items-start gap-2">

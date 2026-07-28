@@ -668,6 +668,42 @@ export type Database = {
         }
         Relationships: []
       }
+      pro_vouchers: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          note: string | null
+          percent: number
+          source: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          note?: string | null
+          percent: number
+          source?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          note?: string | null
+          percent?: number
+          source?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       question_bank: {
         Row: {
           chapter_id: string | null
