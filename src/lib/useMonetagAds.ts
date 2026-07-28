@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getMyProfile } from "@/lib/user.functions";
 
 type AdTag = {
   key: string;
@@ -18,9 +20,13 @@ const TAGS: AdTag[] = [
   },
 ];
 
-/** Loads Monetag popup ad tags. Use on Home & Community only. */
+/** Loads Monetag popup ad tags. Use on Home & Community only. Pro members are ad-free. */
 export function useMonetagAds() {
+  const profile = useQuery({ queryKey: ["my-profile"], queryFn: () => getMyProfile() });
+  const isPro = !!(profile.data as { is_pro?: boolean } | undefined)?.is_pro;
+
   useEffect(() => {
+    if (isPro) return;
     for (const tag of TAGS) {
       if (document.querySelector(`script[data-monetag-key="${tag.key}"]`)) continue;
       const s = document.createElement("script");
@@ -46,5 +52,5 @@ export function useMonetagAds() {
         })
         .catch(() => {});
     }
-  }, []);
+  }, [isPro]);
 }
