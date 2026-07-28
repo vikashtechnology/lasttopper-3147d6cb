@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUserStore } from "@/store/user";
 import { toast } from "sonner";
 import { failMessage } from "@/lib/friendly-error";
+import { RankBadge } from "@/components/RankBadge";
 
 export const Route = createFileRoute("/_authenticated/profile/$userId")({
   head: () => ({
@@ -70,6 +71,7 @@ function Profile() {
           <div className="flex-1">
             <div className="text-xl font-semibold">{u.full_name ?? "Anonymous"}</div>
             <div className="text-xs text-muted-foreground">{u.profession?.toUpperCase()} · rep {u.reputation}</div>
+            <RankBadge xp={Number(u.reputation ?? 0)} showProgress className="mt-2 max-w-[220px]" />
             {u.bio && <p className="mt-2 text-sm">{u.bio}</p>}
             <div className="mt-2 text-xs text-muted-foreground">
               {p.data.followers_count} followers · {p.data.following_count} following
@@ -96,7 +98,7 @@ function Profile() {
         <div className="mt-6 grid grid-cols-3 gap-3">
           <Stat icon={<Flame className="h-4 w-4" />} label="Streak" value={`${u.streak}d`} />
           <Stat icon={<Target className="h-4 w-4" />} label="Accuracy" value={`${Math.round(Number(u.total_accuracy ?? 0))}%`} />
-          <Stat icon={<Award className="h-4 w-4" />} label="Reputation" value={String(u.reputation)} />
+          <Stat icon={<Award className="h-4 w-4" />} label="XP" value={String(u.reputation)} />
         </div>
 
         <div className="mt-6">

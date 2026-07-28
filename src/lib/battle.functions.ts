@@ -194,7 +194,9 @@ export const submitBattle = createServerFn({ method: "POST" })
         .update({ score, correct_count: correct })
         .eq("mega_test_id", s.mega_test_id).eq("user_id", context.userId);
     }
-    return { already: false as const, correct, total: qs.length, score };
+    const { awardQuestionXp } = await import("@/lib/xp.server");
+    const xp = await awardQuestionXp(context.supabase, context.userId, correct).catch(() => null);
+    return { already: false as const, correct, total: qs.length, score, xp_gained: xp?.gained ?? 0 };
   });
 
 export const getBattleSession = createServerFn({ method: "POST" })
