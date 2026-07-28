@@ -57,7 +57,7 @@ function WalletPage() {
     if (!code) return;
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const inviteUrl = `${origin}/auth?ref=${encodeURIComponent(code)}`;
-    const text = `Join me on Last Topper — use my code ${code} at signup and I earn 5 TC (Mega Test only) on your first wallet top-up. ${inviteUrl}`;
+    const text = `Join me on Last Topper — use my code ${code} at signup and I earn a Pro discount voucher (15–25% off) on your first wallet top-up. ${inviteUrl}`;
     const nav = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
     try {
       if (nav.share) {
