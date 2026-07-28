@@ -68,6 +68,8 @@ export const gradeReview = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { BOX_DAYS } = await import("@/lib/review.server");
+    const { assertQuota } = await import("@/lib/quota.server");
+    await assertQuota(context.supabase, context.userId, 1);
     const { data: item } = await context.supabase
       .from("review_items")
       .select("box, reviewed_count")
