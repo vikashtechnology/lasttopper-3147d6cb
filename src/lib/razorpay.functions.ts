@@ -85,7 +85,7 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
       throw new Error(`Failed to create order: ${res.status}`);
     }
     const order = (await res.json()) as { id: string; amount: number; currency: string };
-    return { order_id: order.id, amount: order.amount, currency: order.currency, key_id: key };
+    return { order_id: order.id, amount: order.amount, currency: order.currency, key_id: key, discount_percent: discountPercent };
   });
 
 const verifySchema = z.object({
