@@ -9,9 +9,7 @@ import { finalizeStaleSessions, getTodayUsage } from "@/lib/learning.functions";
 import { notifyFirstLogin, unreadNotificationsCount } from "@/lib/community.functions";
 import { amIAdmin } from "@/lib/admin.functions";
 import { pushPendingQuestReminders } from "@/lib/quests.functions";
-import { supabase } from "@/integrations/supabase/client";
 import { useUserStore, type UserProfile } from "@/store/user";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { AppTour } from "@/components/onboarding/AppTour";
@@ -23,7 +21,7 @@ import {
   BookMarked,
   Flame,
   Target,
-  LogOut,
+  UserRound,
   History,
   BarChart3,
   AlertOctagon,
@@ -58,7 +56,6 @@ function HomePage() {
 
   const { data } = useSuspenseQuery(profileQuery);
   const setProfile = useUserStore((s) => s.setProfile);
-  const clear = useUserStore((s) => s.clear);
   const profile = useUserStore((s) => s.profile);
 
   useEffect(() => {
