@@ -53,6 +53,28 @@ function toGrokModel(model: string): string {
 function buildProviders(): Provider[] {
   const list: Provider[] = [];
 
+  // 0. Self-hosted OmniRoute (fastest / cheapest — tried first).
+  const omniBase = process.env.OMNIROUTE_BASE_URL?.trim().replace(/\/+$/, "");
+  if (omniBase) {
+    const omniModel = (m: string) => process.env.OMNIROUTE_MODEL?.trim() || m;
+    const omniKeys = ["OMNIROUTE_API_KEY_1", "OMNIROUTE_API_KEY_2", "OMNIROUTE_API_KEY_3"]
+      .map((n) => ({ name: n, key: process.env[n]?.trim() }))
+      .filter((x) => !!x.key);
+    if (omniKeys.length === 0) omniKeys.push({ name: "OMNIROUTE", key: "" });
+    for (const { name, key } of omniKeys) {
+      list.push({
+        label: name,
+        url: `${omniBase}/chat/completions`,
+        headers: {
+          "Content-Type": "application/json",
+          ...(key ? { Authorization: `Bearer ${key}` } : {}),
+        },
+        model: omniModel,
+      });
+    }
+  }
+
+
   for (const name of ["GEMINI_API_KEY_1", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3"]) {
     const key = process.env[name]?.trim();
     if (!key) continue;
