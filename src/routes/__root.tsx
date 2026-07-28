@@ -165,9 +165,13 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <Outlet />
+        <AmbientBackground />
+        <div className="relative z-[1]">
+          <Outlet />
+        </div>
         <Toaster richColors position="top-center" />
       </ThemeProvider>
     </QueryClientProvider>
   );
 }
+
