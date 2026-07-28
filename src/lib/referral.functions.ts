@@ -22,12 +22,19 @@ export const getMyReferral = createServerFn({ method: "GET" })
       .eq("referred_by", context.userId)
       .eq("referral_credited", true);
 
+    const converted = paidCount ?? 0;
+    const MILESTONE = 10;
+
     return {
       code: (me?.referral_code as string | null) ?? null,
       referred_by: (me?.referred_by as string | null) ?? null,
       mega_credits: Number(me?.mega_credits ?? 0),
       invited: count ?? 0,
-      converted: paidCount ?? 0,
+      converted,
+      milestone_size: MILESTONE,
+      milestone_reward_days: 7,
+      milestones_earned: Math.floor(converted / MILESTONE),
+      to_next_milestone: MILESTONE - (converted % MILESTONE),
     };
   });
 
