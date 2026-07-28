@@ -111,8 +111,14 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
         .from("users")
         .update({ is_pro: true, pro_since: new Date().toISOString(), pro_until: until })
         .eq("id", context.userId);
+      if (data.voucher_code) {
+        const { findRedeemableVoucher, consumeVoucher } = await import("@/lib/voucher.server");
+        const v = await findRedeemableVoucher(context.userId, data.voucher_code);
+        if (v) await consumeVoucher(v.id);
+      }
       return { ok: true as const, purpose: data.purpose };
     }
+
 
     // wallet_topup
     const amount = data.amount_inr ?? 0;
