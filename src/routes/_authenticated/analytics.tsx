@@ -1,5 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
+import { getProStudyPlan } from "@/lib/pro.functions";
+import { ProLock, ProChip } from "@/components/ProLock";
 import { toast } from "sonner";
 import { useState } from "react";
 import {
@@ -53,6 +55,7 @@ function AnalyticsPage() {
   const { data: a } = useSuspenseQuery(analyticsQuery);
   const { data: profile } = useSuspenseQuery(profileQuery);
   const [starting, setStarting] = useState(false);
+  const plan = useQuery({ queryKey: ["pro-study-plan"], queryFn: () => getProStudyPlan() });
 
   async function practiceWeak() {
     const chapterIds = a.weakChapters.map((c) => c.chapter_id).slice(0, 5);
@@ -103,6 +106,36 @@ function AnalyticsPage() {
           <KpiCard icon={<Target className="h-4 w-4" />} label="Accuracy" value={`${a.overallAccuracy.toFixed(1)}%`} />
           <KpiCard icon={<Flame className="h-4 w-4" />} label="Streak" value={`${profile?.streak ?? 0}d`} />
         </div>
+      </section>
+
+      <section className="mx-auto max-w-3xl px-5 pt-6">
+        <div className="mb-3 flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-muted-foreground">AI weak-chapter study plan</h2>
+          <ProChip />
+        </div>
+        {plan.isLoading ? (
+          <div className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground">Building your plan…</div>
+        ) : plan.data?.is_pro ? (
+          <div className="rounded-2xl border bg-card p-5">
+            {plan.data.weak.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                {plan.data.weak.map((w) => (
+                  <span key={w.chapter} className="rounded-full bg-muted px-2 py-0.5 text-[11px]">
+                    {w.chapter} · {w.accuracy.toFixed(0)}%
+                  </span>
+                ))}
+              </div>
+            )}
+            <p className="whitespace-pre-wrap text-sm leading-relaxed">
+              {plan.data.plan ?? "Plan unavailable right now — try again shortly."}
+            </p>
+          </div>
+        ) : (
+          <ProLock
+            title="Your personalised 7-day plan"
+            body="Pro members get an AI study plan built from their weakest chapters, refreshed with every quiz."
+          />
+        )}
       </section>
 
       <section className="mx-auto max-w-3xl px-5 py-6">
