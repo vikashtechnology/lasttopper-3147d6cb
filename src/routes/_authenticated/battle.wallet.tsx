@@ -193,11 +193,12 @@ function WalletPage() {
       <div className="battle-glass p-3 space-y-2 text-xs">
         <div className="flex items-center gap-1.5 text-muted-foreground">
           <Gift className="h-3.5 w-3.5" />
-          <span className="text-[10px] uppercase tracking-widest">Refer & earn — 5 TC per friend</span>
+          <span className="text-[10px] uppercase tracking-widest">Refer & earn — 15–25% off Pro per friend</span>
         </div>
         <p className="text-[11px] text-muted-foreground leading-snug">
-          Friend signs up + first top-up → you get <TopperCoin size={10} className="inline" /> 5 TC (Mega Test only).
+          Friend signs up + first top-up → you get a Pro discount voucher (15%–25% off any plan), redeemable on the Pricing page.
         </p>
+
 
         {ref.data?.code && (
           <div className="flex items-center gap-1.5">
