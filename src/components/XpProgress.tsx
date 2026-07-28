@@ -15,7 +15,9 @@ export function XpProgress({
   className?: string;
 }) {
   const profile = useQuery({ queryKey: ["my-profile"], queryFn: () => getMyProfile() });
-  const xp = Number((profile.data as { reputation?: number } | undefined)?.reputation ?? 0);
+  const prof = profile.data as { reputation?: number; is_pro?: boolean } | undefined;
+  const xp = Number(prof?.reputation ?? 0);
+  const isPro = !!prof?.is_pro;
   const { tier, next, percent, toNext } = tierProgress(xp);
 
   return (
@@ -26,8 +28,13 @@ export function XpProgress({
         >
           <span aria-hidden>{tier.icon}</span>
           {tier.name}
-          <span className="opacity-70">{tier.multiplier}×</span>
+          <span className="opacity-70">{tier.multiplier * (isPro ? 2 : 1)}×</span>
         </span>
+        {isPro ? (
+          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">
+            Pro 2× XP
+          </span>
+        ) : null}
         <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
           <Zap className="h-3.5 w-3.5" />
           {xp} XP

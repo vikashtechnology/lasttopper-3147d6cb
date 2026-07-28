@@ -70,16 +70,19 @@ export function tierForXp(xp: number): XpTier {
   return XP_TIERS[0];
 }
 
-export function xpPerQuestion(xp: number): number {
-  return BASE_XP_PER_QUESTION * tierForXp(xp).multiplier;
+export function xpPerQuestion(xp: number, boost = 1): number {
+  return BASE_XP_PER_QUESTION * tierForXp(xp).multiplier * boost;
 }
 
-/** XP gained for N correct answers, applying the multiplier of each tier crossed. */
-export function xpForCorrect(currentXp: number, correctCount: number): number {
+/**
+ * XP gained for N correct answers, applying the multiplier of each tier crossed.
+ * `boost` is the Pro multiplier (2× for Pro members).
+ */
+export function xpForCorrect(currentXp: number, correctCount: number, boost = 1): number {
   let xp = Math.max(0, Number(currentXp) || 0);
   let gained = 0;
   for (let i = 0; i < Math.max(0, correctCount); i += 1) {
-    const step = xpPerQuestion(xp);
+    const step = xpPerQuestion(xp, boost);
     gained += step;
     xp += step;
   }

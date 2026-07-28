@@ -17,17 +17,19 @@ export async function awardQuestionXp(
 
   const { data: row } = await client
     .from("users")
-    .select("reputation")
+    .select("reputation, is_pro")
     .eq("id", userId)
     .maybeSingle();
 
+  const { PRO_XP_MULTIPLIER } = await import("@/lib/pro");
   const current = Number(row?.reputation ?? 0);
-  const gained = xpForCorrect(current, correctCount);
+  const boost = row?.is_pro ? PRO_XP_MULTIPLIER : 1;
+  const gained = xpForCorrect(current, correctCount, boost);
   const next = current + gained;
 
   await client.from("users").update({ reputation: next }).eq("id", userId);
 
   const beforeTier = tierForXp(current);
   const afterTier = tierForXp(next);
-  return { gained, xp: next, tierUp: beforeTier.key !== afterTier.key, tier: afterTier.key };
+  return { gained, xp: next, boost, tierUp: beforeTier.key !== afterTier.key, tier: afterTier.key };
 }

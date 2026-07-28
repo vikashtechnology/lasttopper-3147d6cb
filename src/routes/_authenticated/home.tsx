@@ -129,7 +129,7 @@ function HomePage() {
               <Zap className="h-3.5 w-3.5" />
               {p?.reputation ?? 0} XP
             </span>
-            <RankBadge xp={p?.reputation ?? 0} className="hidden sm:block" />
+            <RankBadge xp={p?.reputation ?? 0} isPro={!!p?.is_pro} className="hidden sm:block" />
           </div>
           {admin.data?.admin && (
             <Link to="/admin" className="hidden rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground sm:inline-flex" aria-label="Admin">

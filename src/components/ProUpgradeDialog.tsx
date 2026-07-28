@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Check } from "lucide-react";
+import { PRO_PERKS } from "@/lib/pro";
 
 type Props = {
   open: boolean;
@@ -25,12 +26,7 @@ export function ProUpgradeDialog({ open, onOpenChange, title, reason }: Props) {
           </DialogDescription>
         </DialogHeader>
         <ul className="mt-2 space-y-2 text-sm">
-          {[
-            "Up to 100 questions per set",
-            "Higher daily quota",
-            "Priority AI generation",
-            "Cancel anytime",
-          ].map((f) => (
+          {[...PRO_PERKS, "Cancel anytime"].map((f) => (
             <li key={f} className="flex items-center gap-2">
               <Check className="h-4 w-4 text-emerald-500" /> {f}
             </li>

@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { XpProgress } from "@/components/XpProgress";
+import { ProSolution } from "@/components/ProSolution";
 import { toast } from "sonner";
 import {
   getQuizSession,
@@ -366,6 +367,7 @@ function ResultsPage() {
                       <div className="mb-1 text-xs font-semibold text-muted-foreground">Step-by-step explanation</div>
                       <Latex className="block">{q.explanation}</Latex>
                     </div>
+                    <ProSolution question={q} />
                     <div className="mt-3 flex justify-end">
                       <Button
                         variant="ghost"

@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { X, Send, Sparkles } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { getAiChatQuota } from "@/lib/chatbot.functions";
+import { isAiLimit } from "@/lib/friendly-error";
+import { ProChip } from "@/components/ProLock";
 import avatarSrc from "@/assets/topper-ai-avatar.jpg";
 
 import { chatWithTopperAi } from "@/lib/chatbot.functions";
@@ -15,19 +19,30 @@ const INTRO: Msg = {
 };
 
 export function AiChatBubble() {
+  const nav = useNavigate();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([INTRO]);
   const [input, setInput] = useState("");
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
+  const quota = useQuery({ queryKey: ["ai-chat-quota"], queryFn: () => getAiChatQuota() });
+
   const send = useMutation({
     mutationFn: (history: Msg[]) => chatWithTopperAi({ data: { messages: history } }),
-    onSuccess: (res) => setMessages((m) => [...m, { role: "assistant", content: res.reply }]),
-    onError: () =>
+    onSuccess: (res) => {
+      setMessages((m) => [...m, { role: "assistant", content: res.reply }]);
+      quota.refetch();
+    },
+    onError: (e) =>
       setMessages((m) => [
         ...m,
-        { role: "assistant", content: "Something went wrong. Please try again." },
+        {
+          role: "assistant",
+          content: isAiLimit(e)
+            ? "You've used all your free Topper AI messages for today 🔒\n\n**Go Pro** for unlimited tutoring and step-by-step solutions."
+            : "Something went wrong. Please try again.",
+        },
       ]),
   });
 
@@ -54,7 +69,20 @@ export function AiChatBubble() {
             </div>
             <div className="flex-1">
               <div className="text-sm font-semibold">Topper AI</div>
-              <div className="text-[11px] text-muted-foreground">NCERT tutor · App help</div>
+              <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                NCERT tutor · App help
+                {quota.data?.is_pro ? (
+                  <ProChip />
+                ) : quota.data ? (
+                  <button
+                    type="button"
+                    onClick={() => nav({ to: "/pricing" })}
+                    className="underline decoration-dotted"
+                  >
+                    {quota.data.remaining} free left today
+                  </button>
+                ) : null}
+              </div>
             </div>
             <button
               onClick={() => setOpen(false)}
