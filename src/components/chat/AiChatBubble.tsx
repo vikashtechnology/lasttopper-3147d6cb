@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { X, Send, Sparkles } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { chatWithTopperAi as _c, getAiChatQuota } from "@/lib/chatbot.functions";
+import { getAiChatQuota } from "@/lib/chatbot.functions";
 import { isAiLimit } from "@/lib/friendly-error";
 import { ProChip } from "@/components/ProLock";
 import avatarSrc from "@/assets/topper-ai-avatar.jpg";
