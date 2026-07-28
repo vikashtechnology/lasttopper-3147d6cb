@@ -103,14 +103,6 @@ function HomePage() {
     refetchOnWindowFocus: false,
   });
 
-  async function handleSignOut() {
-    await qc.cancelQueries();
-    qc.clear();
-    clear();
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
-  }
-
   const groups = defaultNavGroups({ profileUserId: p?.id, admin: admin.data?.admin });
 
   return (
@@ -120,7 +112,7 @@ function HomePage() {
       footerNote={<>© {new Date().getFullYear()} Last Topper — Learn. Compete. Earn.</>}
       headerActions={
         <>
-          <div className="mr-1 flex items-center gap-1.5" data-tour="streak">
+          <div className="mr-0.5 flex items-center gap-1.5" data-tour="streak">
             <button
               type="button"
               onClick={() => setStreakOpen(true)}
@@ -133,7 +125,7 @@ function HomePage() {
             </button>
 
             <span
-              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary"
+              className="hidden items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary sm:inline-flex"
               title="Experience points"
             >
               <Zap className="h-3.5 w-3.5" />
@@ -141,7 +133,7 @@ function HomePage() {
             </span>
           </div>
           {admin.data?.admin && (
-            <Link to="/admin" className="rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Admin">
+            <Link to="/admin" className="hidden rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground sm:inline-flex" aria-label="Admin">
               <ShieldCheck className="h-4 w-4" />
             </Link>
           )}
@@ -153,11 +145,19 @@ function HomePage() {
               </span>
             ) : null}
           </Link>
-          <Button variant="ghost" size="icon" onClick={handleSignOut} aria-label="Sign out">
-            <LogOut className="h-4 w-4" />
-          </Button>
+          {p?.id && (
+            <Link
+              to="/profile/$userId"
+              params={{ userId: p.id }}
+              className="rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+              aria-label="My profile"
+            >
+              <UserRound className="h-4 w-4" />
+            </Link>
+          )}
         </>
       }
+
     >
       {/* Top row: quota + stats */}
       <section className="grid gap-4 md:grid-cols-3">
