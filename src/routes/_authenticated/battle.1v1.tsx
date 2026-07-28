@@ -70,6 +70,9 @@ function OneVOne() {
 
   const myRank = useMemo(() => 100 + Math.floor(Math.random() * 400), []);
 
+  const [joinCode, setJoinCode] = useState("");
+  const joinRef = useRef(false);
+
   const start = useMutation({
     mutationFn: () => start1v1Battle(),
     onSuccess: (res) => {
@@ -89,8 +92,10 @@ function OneVOne() {
       }));
       setBot({ name, rank: 80 + Math.floor(Math.random() * 400), plan });
       setBotIdx(0); setBotCorrect(0);
-      setPhase("matching");
+      if (joinRef.current) { joinRef.current = false; setCountdown(3); setPhase("countdown"); }
+      else setPhase("matching");
     },
+
     onError: (e: Error) => toast.error(failMessage(e, "Failed to start")),
   });
 
