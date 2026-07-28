@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getPublicProfile, followUser, unfollowUser } from "@/lib/community.functions";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Flame, Target, Award, ArrowLeft, UserPlus, UserMinus } from "lucide-react";
+import { Flame, Target, Award, ArrowLeft, UserPlus, UserMinus, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useUserStore } from "@/store/user";
 import { toast } from "sonner";
 import { failMessage } from "@/lib/friendly-error";
@@ -38,6 +39,14 @@ function Profile() {
     mutationFn: () => unfollowUser({ data: { user_id: userId } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["profile", userId] }),
   });
+
+  async function handleSignOut() {
+    await qc.cancelQueries();
+    qc.clear();
+    useUserStore.getState().clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
 
   if (p.isLoading) return <div className="p-6 text-sm">Loading…</div>;
   if (!p.data?.user) return <div className="p-6 text-sm">User not found.</div>;
