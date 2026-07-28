@@ -262,6 +262,22 @@ function OneVOne() {
             >
               <Users className="mr-2 inline h-4 w-4" /> Find Rival
             </button>
+            <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-3">
+              <div className="text-[11px] uppercase tracking-widest text-white/50">Have a room code?</div>
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                  placeholder="ENTER CODE"
+                  maxLength={8}
+                  className="flex-1 rounded-lg border border-white/15 bg-black/50 px-3 py-2 text-center font-mono text-sm tracking-[0.3em] text-cyan-300 placeholder:tracking-normal placeholder:text-white/30"
+                />
+                <button
+                  onClick={() => joinRoom()}
+                  className="rounded-lg bg-cyan-500/20 px-4 py-2 text-sm font-bold text-cyan-300 hover:bg-cyan-500/30"
+                >Join</button>
+              </div>
+            </div>
           </div>
         </div>
       </ArenaShell>
@@ -295,6 +311,19 @@ function OneVOne() {
               className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/80 hover:bg-white/5"
               onClick={() => setPhase("matching")}
             >Search again</button>
+            <div className="mt-1 flex items-center gap-2">
+              <input
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                placeholder="ENTER ROOM CODE"
+                maxLength={8}
+                className="flex-1 rounded-lg border border-white/15 bg-black/50 px-3 py-2 text-center font-mono text-sm tracking-[0.25em] text-cyan-300 placeholder:tracking-normal placeholder:text-white/30"
+              />
+              <button
+                onClick={() => joinRoom()}
+                className="rounded-lg bg-cyan-500/20 px-4 py-2 text-sm font-bold text-cyan-300 hover:bg-cyan-500/30"
+              >Join</button>
+            </div>
           </div>
         </CenterPanel>
       </ArenaShell>
