@@ -153,7 +153,7 @@ export async function aiChat(body: ChatBody): Promise<any> {
         const resp = await fetch(p.url, {
           method: "POST",
           headers: p.headers,
-          body: JSON.stringify({ ...body, model: p.model(requested) }),
+          body: JSON.stringify({ ...body, stream: false, model: p.model(requested) }),
         });
 
         if (resp.ok) return await resp.json();
