@@ -16,6 +16,7 @@ import { AppTour } from "@/components/onboarding/AppTour";
 import { AppShell, defaultNavGroups } from "@/components/shell/AppShell";
 import { AiChatBubble } from "@/components/chat/AiChatBubble";
 import { Sparkles, Zap } from "lucide-react";
+import { RankBadge } from "@/components/RankBadge";
 import {
   BookOpen,
   BookMarked,
@@ -128,6 +129,7 @@ function HomePage() {
               <Zap className="h-3.5 w-3.5" />
               {p?.reputation ?? 0} XP
             </span>
+            <RankBadge xp={p?.reputation ?? 0} className="hidden sm:block" />
           </div>
           {admin.data?.admin && (
             <Link to="/admin" className="hidden rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground sm:inline-flex" aria-label="Admin">
