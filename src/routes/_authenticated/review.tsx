@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Latex } from "@/components/Latex";
 import { ChevronLeft, Repeat2, Loader2, CheckCircle2 } from "lucide-react";
 import { failMessage } from "@/lib/friendly-error";
+import { XpProgress } from "@/components/XpProgress";
 
 export const Route = createFileRoute("/_authenticated/review")({
   head: () => ({
@@ -37,6 +38,7 @@ function ReviewPage() {
       setPicked(null);
       setPos((p) => p + 1);
       qc.invalidateQueries({ queryKey: ["review-queue"] });
+      qc.invalidateQueries({ queryKey: ["my-profile"] });
     },
     onError: (e: Error) => toast.error(failMessage(e)),
   });
@@ -118,6 +120,8 @@ function ReviewPage() {
                 </div>
               )}
             </div>
+
+            <XpProgress />
 
             {picked && (
               <Button
