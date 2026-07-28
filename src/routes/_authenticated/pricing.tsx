@@ -227,6 +227,7 @@ function PricingPage() {
 function PlanCard({
   name,
   price,
+  strike,
   period,
   tag,
   features,
@@ -235,6 +236,7 @@ function PlanCard({
 }: {
   name: string;
   price: string;
+  strike?: string;
   period?: string;
   tag: string;
   features: string[];
@@ -255,9 +257,11 @@ function PlanCard({
         )}
       </div>
       <div className="mt-4 flex items-baseline gap-1">
+        {strike && <span className="mr-1 text-base text-muted-foreground line-through">{strike}</span>}
         <span className="text-3xl font-bold">{price}</span>
         {period && <span className="text-sm text-muted-foreground">{period}</span>}
       </div>
+
       <ul className="mt-5 space-y-2 text-sm">
         {features.map((f) => (
           <li key={f} className="flex items-start gap-2">
