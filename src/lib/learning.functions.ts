@@ -177,6 +177,11 @@ export const generateQuestions = createServerFn({ method: "POST" })
     if (data.question_count > 20 && !profile?.is_pro) {
       throw new Error("PRO_REQUIRED");
     }
+    {
+      const { assertQuota } = await import("@/lib/quota.server");
+      await assertQuota(context.supabase, context.userId, data.question_count);
+    }
+
 
     const { data: cached } = await context.supabase
       .from("generated_questions")
@@ -306,6 +311,11 @@ export const startProgressiveQuiz = createServerFn({ method: "POST" })
     const { data: profile } = await context.supabase
       .from("users").select("is_pro").eq("id", context.userId).maybeSingle();
     if (data.target_count > 20 && !profile?.is_pro) throw new Error("PRO_REQUIRED");
+    {
+      const { assertQuota } = await import("@/lib/quota.server");
+      await assertQuota(context.supabase, context.userId, data.target_count);
+    }
+
 
     const firstCount = Math.min(PROG_BATCH, data.target_count);
     let first: QuizQuestion[];
