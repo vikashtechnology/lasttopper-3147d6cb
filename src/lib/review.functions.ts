@@ -79,6 +79,11 @@ export const gradeReview = createServerFn({ method: "POST" })
     const box = data.correct ? Math.min(5, Number(item.box ?? 1) + 1) : 1;
     const dueAt = new Date(Date.now() + BOX_DAYS[box] * 24 * 60 * 60 * 1000).toISOString();
 
+    if (data.correct) {
+      const { awardQuestionXp } = await import("@/lib/xp.server");
+      await awardQuestionXp(context.supabase, context.userId, 1).catch(() => null);
+    }
+
     if (data.correct && box >= 5) {
       await context.supabase.from("review_items").delete().eq("id", data.id).eq("user_id", context.userId);
       return { retired: true, box, due_at: dueAt };

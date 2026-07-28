@@ -504,7 +504,10 @@ export const submitQuizSession = createServerFn({ method: "POST" })
         .eq("id", context.userId);
     }
 
-    return { correct, incorrect, total, accuracy };
+    const { awardQuestionXp } = await import("@/lib/xp.server");
+    const xp = await awardQuestionXp(context.supabase, context.userId, correct).catch(() => null);
+
+    return { correct, incorrect, total, accuracy, xp_gained: xp?.gained ?? 0, xp_total: xp?.xp ?? 0 };
   });
 
 // Lazy check: auto-submit any live session whose last_heartbeat is stale (>2 min).

@@ -102,5 +102,8 @@ export const submitDailyChallenge = createServerFn({ method: "POST" })
       await upsertReviewItems(supabaseAdmin, context.userId, wrong);
     }
 
-    return { correct, total: questions.length, reward, already: false };
+    const { awardQuestionXp } = await import("@/lib/xp.server");
+    const xp = await awardQuestionXp(context.supabase, context.userId, correct).catch(() => null);
+
+    return { correct, total: questions.length, reward, already: false, xp_gained: xp?.gained ?? 0 };
   });
