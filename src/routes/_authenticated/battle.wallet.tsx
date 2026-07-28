@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Wallet, ArrowDownToLine, Plus, Gift, Copy, Share2 } from "lucide-react";
+import { Wallet, ArrowDownToLine, Plus, Gift, Copy, Share2, Sparkles } from "lucide-react";
 import { TopperCoin } from "@/components/TopperCoin";
 import { supabase } from "@/integrations/supabase/client";
 import { getWallet, requestWithdrawal, getWithdrawals } from "@/lib/battle.functions";
