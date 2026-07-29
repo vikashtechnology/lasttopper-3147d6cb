@@ -56,11 +56,15 @@ function Board() {
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm">
                     {r.user.full_name ?? r.user.email ?? "Player"}
-                    {r.is_me && <span className="ml-1 text-xs text-cyan-300">(you)</span>}
+                    {r.is_me && <span className="ml-1 text-xs text-primary">(you)</span>}
                   </div>
-                  <div className="text-xs text-white/50">{r.correct_count} correct · {r.time_taken_seconds}s</div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{r.correct_count} correct · {r.time_taken_seconds}s</span>
+                    {r.is_demo ? <RankBadge xp={r.xp ?? 0} /> : null}
+                  </div>
                 </div>
-                <div className="text-lg font-bold text-cyan-300">{r.score}</div>
+                <div className="text-lg font-bold text-primary">{r.score}</div>
+
               </li>
             ))}
           </ol>
