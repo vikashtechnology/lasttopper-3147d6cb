@@ -163,3 +163,33 @@ git tag v1.0.0 && git push origin v1.0.0
 Download `lasttopper-release` from the run and upload the `.aab` to Play Console.
 For iOS, download `lasttopper-ios-unsigned`, open it in Xcode, sign with your
 team and Archive → upload.
+
+## 7. Login, referral, share & payment inside the app
+
+- **Logo/icons** — `public/app-icon-1024.png`, `app-icon-512.png`, `app-icon-192.png`,
+  `apple-touch-icon.png` and `favicon.png` all come from the Last Topper logo.
+  Generate the native launcher icons from `app-icon-1024.png`
+  (Android Studio → Image Asset, or Xcode → AppIcon).
+- **Google login** — the shell reports a normal Chrome user agent
+  (`overrideUserAgent` in `capacitor.config.ts`) so Google doesn't block sign-in
+  with `disallowed_useragent`. `accounts.google.com` is in `allowNavigation`, so
+  the flow stays inside the app.
+- **Referral links** — `https://lasttopper.lovable.app/auth?ref=CODE` opens the
+  installed app via App Links / Universal Links. `src/lib/referral-link.ts`
+  stores the code (from the URL or the `appUrlOpen` deep-link listener) and the
+  onboarding screen prefills it automatically.
+- **Sharing** — `src/lib/native-share.ts` uses the native share sheet
+  (`@capacitor/share`) on Android/iOS, the Web Share API in mobile browsers, and
+  clipboard/download as a fallback. Used by the wallet invite and the scorecard.
+- **Payments** — Razorpay checkout runs in-app; `*.razorpay.com`,
+  `checkout.razorpay.com` and `api.razorpay.com` are allow-listed. For UPI apps
+  to open from checkout, add to `AndroidManifest.xml`:
+
+  ```xml
+  <queries>
+    <intent>
+      <action android:name="android.intent.action.VIEW" />
+      <data android:scheme="upi" />
+    </intent>
+  </queries>
+  ```

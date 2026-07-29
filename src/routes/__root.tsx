@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { registerPWA } from "@/lib/pwa-register";
+import { storeReferralFromUrl } from "@/lib/referral-link";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { AmbientBackground } from "@/components/AmbientBackground";
@@ -97,7 +98,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
-      { rel: "apple-touch-icon", href: "/app-icon-512.png" },
+      { rel: "icon", href: "/app-icon-192.png", type: "image/png", sizes: "192x192" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
@@ -130,7 +132,36 @@ function RootComponent() {
 
   useEffect(() => {
     void registerPWA();
+    storeReferralFromUrl();
   }, []);
+
+  // Deep links (https://lasttopper.lovable.app/...) opened while the native app
+  // is running: keep the user in-app and capture any ?ref= invite code.
+  useEffect(() => {
+    let remove: (() => void) | undefined;
+    void (async () => {
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        if (!Capacitor.isNativePlatform()) return;
+        const { App } = await import("@capacitor/app");
+        const handle = await App.addListener("appUrlOpen", ({ url }) => {
+          storeReferralFromUrl(url);
+          try {
+            const parsed = new URL(url);
+            const path = `${parsed.pathname}${parsed.search}`;
+            if (path && path !== "/") void router.navigate({ href: path });
+          } catch {
+            /* ignore */
+          }
+        });
+        remove = () => void handle.remove();
+      } catch {
+        /* not running natively */
+      }
+    })();
+    return () => remove?.();
+  }, [router]);
+
 
   // Android hardware/system back button: go one step back in history instead
   // of closing the app or jumping home. Exits only when history is empty.

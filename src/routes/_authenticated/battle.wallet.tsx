@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getWallet, requestWithdrawal, getWithdrawals } from "@/lib/battle.functions";
 import { getMyProfile } from "@/lib/user.functions";
 import { getMyReferral, applyReferralCode } from "@/lib/referral.functions";
+import { shareOrCopy } from "@/lib/native-share";
 import { payWithRazorpay } from "@/lib/razorpay-client";
 import { failMessage } from "@/lib/friendly-error";
 
@@ -57,22 +58,15 @@ function WalletPage() {
     if (!code) return;
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const inviteUrl = `${origin}/auth?ref=${encodeURIComponent(code)}`;
-    const text = `Join me on Last Topper — use my code ${code} at signup and I earn a Pro discount voucher (15–25% off) on your first wallet top-up. ${inviteUrl}`;
-    const nav = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
+    const text = `Join me on Last Topper — use my code ${code} at signup and I earn a Pro discount voucher (15–25% off) on your first wallet top-up.`;
     try {
-      if (nav.share) {
-        await nav.share({ title: "Last Topper invite", text, url: inviteUrl });
-      } else {
-        await navigator.clipboard.writeText(inviteUrl);
-        toast.success("Invite link copied");
-      }
+      const result = await shareOrCopy({ title: "Last Topper invite", text, url: inviteUrl });
+      if (result === "copied") toast.success("Invite link copied");
     } catch {
-      try {
-        await navigator.clipboard.writeText(inviteUrl);
-        toast.success("Invite link copied");
-      } catch { /* ignore */ }
+      toast.error(failMessage(null, "Failed to share"));
     }
   };
+
 
 
   const copyCode = async () => {

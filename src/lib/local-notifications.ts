@@ -76,7 +76,7 @@ export async function notifyNow(title: string, body: string, extraId?: number) {
       return;
     }
     if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-      new Notification(title, { body, icon: "/favicon.ico" });
+      new Notification(title, { body, icon: "/app-icon-192.png" });
     }
   } catch {
     /* ignore */

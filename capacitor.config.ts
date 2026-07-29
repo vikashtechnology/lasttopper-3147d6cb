@@ -8,10 +8,16 @@ const config: CapacitorConfig = {
     // Prevents screenshots and screen-recording in the native Android app
     // (FLAG_SECURE is set in MainActivity — see ANDROID.md).
     allowMixedContent: false,
+    // Google blocks sign-in from user agents that look like an embedded
+    // WebView, so present the shell as a normal Chrome browser.
+    appendUserAgent: "LastTopperApp",
+    overrideUserAgent:
+      "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36 LastTopperApp",
   },
   ios: {
     contentInset: "always",
-    limitsNavigationsToAppBoundDomains: true,
+    limitsNavigationsToAppBoundDomains: false,
+    appendUserAgent: "LastTopperApp",
   },
   server: {
     // The native shell loads the published web build.
@@ -20,8 +26,20 @@ const config: CapacitorConfig = {
     cleartext: false,
     androidScheme: "https",
     iosScheme: "https",
-    // Links to these domains stay inside the app instead of opening a browser.
-    allowNavigation: ["lasttopper.lovable.app", "*.lovable.app", "*.razorpay.com", "*.supabase.co"],
+    // Links to these domains stay inside the app instead of opening a browser:
+    // the site itself, Google sign-in, Razorpay checkout/UPI, and the backend.
+    allowNavigation: [
+      "lasttopper.lovable.app",
+      "*.lovable.app",
+      "accounts.google.com",
+      "*.google.com",
+      "*.googleapis.com",
+      "*.gstatic.com",
+      "*.razorpay.com",
+      "api.razorpay.com",
+      "checkout.razorpay.com",
+      "*.supabase.co",
+    ],
   },
   plugins: {
     LocalNotifications: {
@@ -30,6 +48,7 @@ const config: CapacitorConfig = {
       sound: "beep.wav",
     },
   },
+
 };
 
 export default config;
