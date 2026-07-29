@@ -216,6 +216,39 @@ export type Database = {
         }
         Relationships: []
       }
+      demo_players: {
+        Row: {
+          avatar_url: string | null
+          correct_count: number
+          created_at: string
+          full_name: string
+          id: string
+          score: number
+          time_taken_seconds: number
+          xp: number
+        }
+        Insert: {
+          avatar_url?: string | null
+          correct_count?: number
+          created_at?: string
+          full_name: string
+          id?: string
+          score?: number
+          time_taken_seconds?: number
+          xp?: number
+        }
+        Update: {
+          avatar_url?: string | null
+          correct_count?: number
+          created_at?: string
+          full_name?: string
+          id?: string
+          score?: number
+          time_taken_seconds?: number
+          xp?: number
+        }
+        Relationships: []
+      }
       doubt_replies: {
         Row: {
           body: string
