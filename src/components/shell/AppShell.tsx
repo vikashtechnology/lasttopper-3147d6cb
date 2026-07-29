@@ -193,6 +193,7 @@ export function AppShell({
                   </ul>
                 </div>
               ))}
+              <SocialLinksDropdown onNavigate={() => setMobileOpen(false)} />
             </div>
           </div>
         )}
