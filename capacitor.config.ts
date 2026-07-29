@@ -5,6 +5,9 @@ const config: CapacitorConfig = {
   appName: "Last Topper",
   webDir: "dist",
   android: {
+
+    
+    minSdkVersion: 26,
     // Prevents screenshots and screen-recording in the native Android app
     // (FLAG_SECURE is set in MainActivity — see ANDROID.md).
     allowMixedContent: false,
