@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Swords, Trophy, Wallet, History, Zap, Users } from "lucide-react";
 import { failMessage } from "@/lib/friendly-error";
 
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/battle")({
 
 function BattleLayout() {
   const navigate = useNavigate();
-  const router = useRouter();
+  
 
   return (
     <div className="battle-theme battle-noselect">
@@ -41,10 +41,7 @@ function BattleLayout() {
       >
         <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3">
           <button
-            onClick={() => {
-              if (typeof window !== "undefined" && window.history.length > 1) router.history.back();
-              else navigate({ to: "/home" });
-            }}
+            onClick={() => navigate({ to: "/home" })}
             className="rounded-full p-2 opacity-70 hover:opacity-100"
             aria-label="Go back"
           >
