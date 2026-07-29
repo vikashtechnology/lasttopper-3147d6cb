@@ -243,7 +243,7 @@ function OneVOne() {
     return (
       <ArenaShell>
         <div className="mx-auto max-w-md space-y-5">
-          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#1a0e1e] to-[#0d0a1a] p-6 shadow-[0_0_40px_rgba(236,72,153,0.15)]">
+          <div className="battle-glass p-6">
             <div className="flex items-center gap-2 text-rose-400">
               <Swords className="h-5 w-5" />
               <h1 className="text-xl font-black tracking-wide">1v1 LIVE BATTLES</h1>
