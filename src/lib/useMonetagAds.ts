@@ -27,6 +27,11 @@ export function useMonetagAds() {
 
   useEffect(() => {
     if (isPro) return;
+    // Desktop only — no ads on phones or tablets.
+    const isDesktop =
+      typeof window !== "undefined" &&
+      window.matchMedia("(min-width: 1024px) and (pointer: fine)").matches;
+    if (!isDesktop) return;
     for (const tag of TAGS) {
       if (document.querySelector(`script[data-monetag-key="${tag.key}"]`)) continue;
       const s = document.createElement("script");
