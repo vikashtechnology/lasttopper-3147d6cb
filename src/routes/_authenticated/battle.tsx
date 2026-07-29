@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Swords, Trophy, Wallet, History, Zap, Users } from "lucide-react";
 import { failMessage } from "@/lib/friendly-error";
 
