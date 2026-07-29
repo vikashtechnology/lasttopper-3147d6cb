@@ -20,6 +20,7 @@ import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import logoAsset from "@/assets/site-logo.jpg.asset.json";
+import { SocialLinksDropdown } from "@/components/SocialLinks";
 
 type NavItem = { to: string; label: string; icon: ReactNode; params?: Record<string, string> };
 
