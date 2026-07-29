@@ -9,6 +9,7 @@ import { useUserStore } from "@/store/user";
 import { toast } from "sonner";
 import { failMessage } from "@/lib/friendly-error";
 import { RankBadge } from "@/components/RankBadge";
+import { SocialLinksRow } from "@/components/SocialLinks";
 
 export const Route = createFileRoute("/_authenticated/profile/$userId")({
   head: () => ({
@@ -117,6 +118,8 @@ function Profile() {
             </div>
           )}
         </div>
+
+        <SocialLinksRow className="mt-8 border-t border-border pt-6" />
       </section>
     </main>
   );
