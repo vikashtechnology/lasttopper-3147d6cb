@@ -367,7 +367,7 @@ function OneVOne() {
       <ArenaShell>
         <div className="mx-auto max-w-md space-y-4">
           {/* battle card */}
-          <div className="rounded-3xl border border-white/10 bg-[#0d0a1a]/80 p-5 shadow-[0_0_50px_rgba(99,102,241,0.15)]">
+          <div className="battle-glass p-5">
             {/* live header */}
             <div className="flex items-center justify-between text-xs">
               <span className="inline-flex items-center gap-1.5 font-bold text-rose-400">
@@ -440,7 +440,7 @@ function OneVOne() {
   return (
     <ArenaShell>
       <div className="mx-auto max-w-md space-y-5 text-center">
-        <div className="rounded-3xl border border-white/10 bg-[#0d0a1a]/80 p-6 shadow-[0_0_50px_rgba(244,63,94,0.2)]">
+        <div className="battle-glass p-6">
           <div className={`text-3xl font-black ${won ? "text-emerald-400" : tie ? "text-amber-300" : "text-rose-400"}`}>
             {won ? "Victory 🏆" : tie ? "Draw 🤝" : "Defeat 💥"}
           </div>
@@ -503,7 +503,7 @@ function ArenaShell({ children }: { children: React.ReactNode }) {
 function CenterPanel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="rounded-2xl border border-white/10 bg-[#0d0a1a]/80 p-8 text-center shadow-[0_0_40px_rgba(99,102,241,0.15)]">
+      <div className="battle-glass p-8 text-center">
         {children}
       </div>
     </div>
