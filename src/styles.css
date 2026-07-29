@@ -216,6 +216,34 @@ html:not(.dark) .battle-theme [class*="text-white"] { color: var(--battle-fg); }
 html:not(.dark) .battle-theme [class*="border-white"] { border-color: var(--battle-border); }
 html:not(.dark) .battle-theme [class*="bg-white\\/"] { background-color: color-mix(in oklab, var(--color-foreground) 5%, transparent); }
 
+/* Light theme: darken low-contrast accent text (yellow / amber / pink / cyan / lime). */
+html:not(.dark) .text-yellow-200,
+html:not(.dark) .text-yellow-300,
+html:not(.dark) .text-yellow-400,
+html:not(.dark) .text-amber-200,
+html:not(.dark) .text-amber-300,
+html:not(.dark) .text-amber-400 { color: oklch(0.55 0.14 75); }
+
+html:not(.dark) .text-pink-300,
+html:not(.dark) .text-pink-400,
+html:not(.dark) .text-fuchsia-300,
+html:not(.dark) .text-fuchsia-400 { color: oklch(0.55 0.2 350); }
+
+html:not(.dark) .text-cyan-200,
+html:not(.dark) .text-cyan-300,
+html:not(.dark) .text-cyan-400,
+html:not(.dark) .text-sky-300 { color: oklch(0.55 0.12 220); }
+
+html:not(.dark) .text-lime-300,
+html:not(.dark) .text-lime-400,
+html:not(.dark) .text-green-300,
+html:not(.dark) .text-emerald-300 { color: oklch(0.55 0.14 155); }
+
+html:not(.dark) .text-rose-300 { color: oklch(0.55 0.19 20); }
+html:not(.dark) .text-violet-300,
+html:not(.dark) .text-purple-300,
+html:not(.dark) .text-indigo-300 { color: oklch(0.52 0.17 285); }
+
 /* Live-battle scoped: force high-contrast whites over the dark play bg. */
 .battle-live [class*="text-white"] { color: #fff !important; }
 .battle-live [class*="border-white"] { border-color: rgba(255,255,255,0.15) !important; }
