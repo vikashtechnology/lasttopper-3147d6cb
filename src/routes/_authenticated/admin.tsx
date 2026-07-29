@@ -51,6 +51,7 @@ function AdminLayout() {
     { to: "/admin/withdrawals", icon: Wallet, label: "Withdrawals" },
     { to: "/admin/bank", icon: Database, label: "Question Bank" },
     { to: "/admin/announcements", icon: Megaphone, label: "Announcements" },
+    { to: "/admin/social", icon: Share2, label: "Social links" },
 
     ...(owner.data?.owner ? [{ to: "/admin/admins", icon: Crown, label: "Admins" }] : []),
   ];
