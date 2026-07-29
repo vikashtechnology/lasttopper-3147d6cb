@@ -16,6 +16,7 @@ import { Atom, Dna, Timer, Brain, BookMarked } from "lucide-react";
 import { toast } from "sonner";
 import { saveSignupDetails, setProfession, completeOnboarding } from "@/lib/user.functions";
 import { applyReferralCode } from "@/lib/referral.functions";
+import { getPendingReferral, clearPendingReferral } from "@/lib/referral-link";
 import { useUserStore, type Profession } from "@/store/user";
 import { failMessage } from "@/lib/friendly-error";
 
@@ -77,7 +78,7 @@ export function OnboardingFlow({ open }: { open: boolean }) {
       if (code.length >= 4) {
         try {
           const res = await applyReferralCode({ data: { code } });
-          if (res.ok) toast.success("Referral code applied");
+          if (res.ok) { toast.success("Referral code applied"); clearPendingReferral(); }
           else toast.error(res.error);
         } catch (err) {
           toast.error(failMessage(err, "Invalid referral code"));
