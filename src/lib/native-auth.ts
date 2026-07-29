@@ -42,7 +42,7 @@ export function clearStoredOAuthState() {
   }
 }
 
-/** Opens the Google consent flow in the system browser. */
+/** Opens the Google consent flow in the real external browser (Chrome/Safari). */
 export async function startNativeGoogleSignIn(
   extraParams?: Record<string, string>,
 ) {
@@ -61,11 +61,36 @@ export async function startNativeGoogleSignIn(
   });
 
   const url = `${window.location.origin}/~oauth/initiate?${params.toString()}`;
-  const { Browser } = await import("@capacitor/browser");
-  await Browser.open({ url, presentationStyle: "popover" });
+
+  // Preferred: hand the URL to the device's default browser app (Chrome /
+  // Safari), so Google sees a real browser and the app is fully backgrounded.
+  try {
+    const { InAppBrowser } = await import("@capacitor/inappbrowser");
+    await InAppBrowser.openInExternalBrowser({ url });
+    return;
+  } catch {
+    /* plugin unavailable — fall back below */
+  }
+
+  // Fallback: Chrome Custom Tab / SFSafariViewController.
+  try {
+    const { Browser } = await import("@capacitor/browser");
+    await Browser.open({ url, presentationStyle: "popover" });
+    return;
+  } catch {
+    /* fall through */
+  }
+
+  window.location.href = url;
 }
 
 export async function closeNativeBrowser() {
+  try {
+    const { InAppBrowser } = await import("@capacitor/inappbrowser");
+    await InAppBrowser.close();
+  } catch {
+    /* not open / not native */
+  }
   try {
     const { Browser } = await import("@capacitor/browser");
     await Browser.close();
@@ -73,6 +98,7 @@ export async function closeNativeBrowser() {
     /* browser already closed or not native */
   }
 }
+
 
 export type OAuthCallbackTokens = {
   access_token: string;

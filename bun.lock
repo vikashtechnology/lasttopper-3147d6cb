@@ -8,6 +8,7 @@
         "@capacitor/app": "^8.1.1",
         "@capacitor/browser": "^8.0.4",
         "@capacitor/core": "^8.4.2",
+        "@capacitor/inappbrowser": "^4.0.1",
         "@capacitor/local-notifications": "^8.2.1",
         "@capacitor/share": "^8.0.1",
         "@hookform/resolvers": "^5.2.2",
@@ -291,6 +292,8 @@
     "@capacitor/browser": ["@capacitor/browser@8.0.4", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/browser/-/browser-8.0.4.tgz", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-ORZ4u/y+7aMuu6yVuk6SP529fUZyqcbnuHB1q5McpA3o2SYfVoi28iB8rsQjI2ad1qlKJd29ZUuGtspXLBDlWg=="],
 
     "@capacitor/core": ["@capacitor/core@8.4.2", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/core/-/core-8.4.2.tgz", { "dependencies": { "tslib": "^2.1.0" } }, "sha512-fQPRb3JXRaU2pnufDUvqOjhsrYxDQeFRZyaj/sHydIUxD2NxOGHKMpmKUdI+U4OOmKuGZyvRpi7TSJU+7Bjbmg=="],
+
+    "@capacitor/inappbrowser": ["@capacitor/inappbrowser@4.0.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/inappbrowser/-/inappbrowser-4.0.1.tgz", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-XlbF6o/SaW1i2PA30mMLMTrYPguk1yb1FWT0bkhNulgn8hmV0FMGUjV13yubYZ48BengaehZgRq2u/DqHu0NDQ=="],
 
     "@capacitor/local-notifications": ["@capacitor/local-notifications@8.2.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@capacitor/local-notifications/-/local-notifications-8.2.1.tgz", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-Bkim+MGl7UrDTjDferV4ECq0aWciTsa0k15+MX2jnx2PeWgEPvlBy5yrqzBlwEZPrtHFUvPVxPi5V66MPGHkAw=="],
 
