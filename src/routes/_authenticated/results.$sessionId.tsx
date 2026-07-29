@@ -35,6 +35,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { failMessage } from "@/lib/friendly-error";
+import { shareOrCopy } from "@/lib/native-share";
 
 export const Route = createFileRoute("/_authenticated/results/$sessionId")({
   head: () => ({
