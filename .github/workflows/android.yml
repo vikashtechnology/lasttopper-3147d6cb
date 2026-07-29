@@ -1,0 +1,175 @@
+name: Build Android app
+
+# Builds the Capacitor Android app (com.lasttopper.app).
+# - Every push/PR to main: debug APK
+# - Manual run or tag v*: release AAB + APK (signed when keystore secrets exist)
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Build a release AAB/APK"
+        type: boolean
+        default: true
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build web bundle
+        run: |
+          bun run build || true
+          # The native shell loads the live site (capacitor.config.ts -> server.url),
+          # so webDir only needs to exist with a fallback document.
+          mkdir -p dist
+          if [ ! -f dist/index.html ]; then
+            echo '<!doctype html><meta charset="utf-8"><title>Last Topper</title><body>Loading…</body>' > dist/index.html
+          fi
+
+      - name: Add Capacitor Android platform
+        run: |
+          bun add -d @capacitor/cli
+          bun add @capacitor/android
+          npx cap add android || true
+          npx cap sync android
+
+      - name: Enable FLAG_SECURE + deep links
+        run: |
+          MAIN=android/app/src/main/java/com/lasttopper/app/MainActivity.java
+          mkdir -p "$(dirname "$MAIN")"
+          cat > "$MAIN" <<'JAVA'
+          package com.lasttopper.app;
+
+          import android.os.Bundle;
+          import android.view.WindowManager;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  getWindow().setFlags(
+                      WindowManager.LayoutParams.FLAG_SECURE,
+                      WindowManager.LayoutParams.FLAG_SECURE
+                  );
+              }
+          }
+          JAVA
+
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          python3 - "$MANIFEST" <<'PY'
+          import sys, re
+          p = sys.argv[1]
+          s = open(p).read()
+          if 'lasttopper.lovable.app' not in s:
+              filt = '''
+                      <intent-filter android:autoVerify="true">
+                          <action android:name="android.intent.action.VIEW" />
+                          <category android:name="android.intent.category.DEFAULT" />
+                          <category android:name="android.intent.category.BROWSABLE" />
+                          <data android:scheme="https" android:host="lasttopper.lovable.app" />
+                      </intent-filter>
+          '''
+              s = s.replace('</activity>', filt + '        </activity>', 1)
+          for perm in ("android.permission.POST_NOTIFICATIONS", "android.permission.SCHEDULE_EXACT_ALARM"):
+              if perm not in s:
+                  s = s.replace('</manifest>', f'    <uses-permission android:name="{perm}" />\n</manifest>')
+          open(p, 'w').write(s)
+          PY
+
+      - name: Build debug APK
+        run: cd android && ./gradlew assembleDebug --no-daemon
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: lasttopper-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+
+      - name: Decode signing keystore
+        id: keystore
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.jks
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No ANDROID_KEYSTORE_BASE64 secret — building unsigned release."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure release signing
+        if: steps.keystore.outputs.signed == 'true'
+        run: |
+          cat >> android/keystore.properties <<EOF
+          storeFile=release.jks
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+          python3 - <<'PY'
+          p = "android/app/build.gradle"
+          s = open(p).read()
+          if "signingConfigs" not in s:
+              props = '''
+          def keystorePropertiesFile = rootProject.file("keystore.properties")
+          def keystoreProperties = new Properties()
+          if (keystorePropertiesFile.exists()) {
+              keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+          }
+          '''
+              s = props + s
+              s = s.replace("android {", """android {
+              signingConfigs {
+                  release {
+                      if (keystoreProperties['storeFile']) {
+                          storeFile file(keystoreProperties['storeFile'])
+                          storePassword keystoreProperties['storePassword']
+                          keyAlias keystoreProperties['keyAlias']
+                          keyPassword keystoreProperties['keyPassword']
+                      }
+                  }
+              }
+          """, 1)
+              s = s.replace("buildTypes {", """buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+          """, 1)
+              open(p, "w").write(s)
+          PY
+
+      - name: Build release bundle + APK
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        run: cd android && ./gradlew bundleRelease assembleRelease --no-daemon
+
+      - name: Upload release artifacts
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lasttopper-release
+          path: |
+            android/app/build/outputs/bundle/release/*.aab
+            android/app/build/outputs/apk/release/*.apk
