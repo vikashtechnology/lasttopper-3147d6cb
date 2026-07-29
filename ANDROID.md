@@ -119,3 +119,47 @@ npx cap open ios       # Product → Archive → upload to App Store Connect
 
 Re-run `bun run build && npx cap sync` after every web change — or skip it,
 since the shell loads the live URL and web updates appear instantly.
+
+## 6. Build automatically on GitHub (no local setup)
+
+Two workflows live in `.github/workflows/`:
+
+| File | What it makes | When it runs |
+| --- | --- | --- |
+| `android.yml` | debug APK, release AAB + APK | push/PR to `main`, tag `v*`, or **Run workflow** |
+| `ios.yml` | unsigned `.app` for Xcode signing | tag `v*` or **Run workflow** |
+
+Both generate the `android/` and `ios/` folders with `npx cap add` at build time,
+apply FLAG_SECURE, the deep-link intent filter and the notification permissions,
+then upload the results as **Actions → workflow run → Artifacts**.
+
+### Getting a Play-Store-signable AAB
+
+Add these repository secrets (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | `base64 -w0 my-release-key.jks` output |
+| `ANDROID_KEYSTORE_PASSWORD` | keystore password |
+| `ANDROID_KEY_ALIAS` | key alias |
+| `ANDROID_KEY_PASSWORD` | key password |
+
+Create the keystore once with:
+
+```bash
+keytool -genkey -v -keystore my-release-key.jks -keyalg RSA \
+  -keysize 2048 -validity 10000 -alias lasttopper
+```
+
+Without those secrets the release build still runs, but the AAB is unsigned and
+Play Console will reject it.
+
+### Releasing
+
+```bash
+git tag v1.0.0 && git push origin v1.0.0
+```
+
+Download `lasttopper-release` from the run and upload the `.aab` to Play Console.
+For iOS, download `lasttopper-ios-unsigned`, open it in Xcode, sign with your
+team and Archive → upload.
