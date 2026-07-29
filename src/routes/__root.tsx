@@ -131,7 +131,36 @@ function RootComponent() {
 
   useEffect(() => {
     void registerPWA();
+    storeReferralFromUrl();
   }, []);
+
+  // Deep links (https://lasttopper.lovable.app/...) opened while the native app
+  // is running: keep the user in-app and capture any ?ref= invite code.
+  useEffect(() => {
+    let remove: (() => void) | undefined;
+    void (async () => {
+      try {
+        const { Capacitor } = await import("@capacitor/core");
+        if (!Capacitor.isNativePlatform()) return;
+        const { App } = await import("@capacitor/app");
+        const handle = await App.addListener("appUrlOpen", ({ url }) => {
+          storeReferralFromUrl(url);
+          try {
+            const parsed = new URL(url);
+            const path = `${parsed.pathname}${parsed.search}`;
+            if (path && path !== "/") void router.navigate({ href: path });
+          } catch {
+            /* ignore */
+          }
+        });
+        remove = () => void handle.remove();
+      } catch {
+        /* not running natively */
+      }
+    })();
+    return () => remove?.();
+  }, [router]);
+
 
   // Android hardware/system back button: go one step back in history instead
   // of closing the app or jumping home. Exits only when history is empty.
