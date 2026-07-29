@@ -147,7 +147,9 @@ export function AppShell({
                 </ul>
               </div>
             ))}
+            <SocialLinksDropdown />
           </nav>
+
         </aside>
 
         {/* Mobile drawer */}
