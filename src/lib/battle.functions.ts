@@ -229,22 +229,54 @@ export const getQuickLeaderboard = createServerFn({ method: "GET" })
       ? await supabaseAdmin.from("public_profiles").select("id, full_name, avatar_url").in("id", userIds)
       : { data: [] as Array<{ id: string; full_name: string | null; avatar_url: string | null }> };
     const map = new Map((users ?? []).map((u) => [u.id, u] as const));
-    return rows.map((r, i) => {
+
+    // Showcase-only demo players (display in leaderboard/history; cannot join mega battles)
+    const { data: demo } = await (supabaseAdmin as any)
+      .from("demo_players")
+      .select("id, full_name, avatar_url, xp, score, correct_count, time_taken_seconds");
+
+    type Row = {
+      key: string;
+      user: { full_name: string | null; avatar_url: string | null; email: string | null };
+      score: number;
+      correct_count: number;
+      time_taken_seconds: number | null;
+      xp: number | null;
+      is_me: boolean;
+      is_demo: boolean;
+    };
+
+    const real: Row[] = rows.map((r) => {
       const u = map.get(r.user_id as string);
       return {
-        rank: i + 1,
-        user: {
-          full_name: u?.full_name ?? null,
-          avatar_url: u?.avatar_url ?? null,
-          email: null as string | null,
-        },
+        key: r.id as string,
+        user: { full_name: u?.full_name ?? null, avatar_url: u?.avatar_url ?? null, email: null },
         score: r.score as number,
         correct_count: r.correct_count as number,
         time_taken_seconds: r.time_taken_seconds as number | null,
+        xp: null,
         is_me: r.user_id === context.userId,
+        is_demo: false,
       };
     });
+
+    const demoRows: Row[] = ((demo ?? []) as any[]).map((d) => ({
+      key: `demo-${d.id}`,
+      user: { full_name: d.full_name as string, avatar_url: (d.avatar_url as string | null) ?? null, email: null },
+      score: Number(d.score ?? 0),
+      correct_count: Number(d.correct_count ?? 0),
+      time_taken_seconds: Number(d.time_taken_seconds ?? 0),
+      xp: Number(d.xp ?? 0),
+      is_me: false,
+      is_demo: true,
+    }));
+
+    return [...real, ...demoRows]
+      .sort((a, b) => b.score - a.score || (a.time_taken_seconds ?? 9999) - (b.time_taken_seconds ?? 9999))
+      .slice(0, 50)
+      .map((r, i) => ({ rank: i + 1, ...r }));
   });
+
 
 /* --------------------------------- Mega Test ----------------------------- */
 
