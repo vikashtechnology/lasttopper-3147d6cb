@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getWallet, requestWithdrawal, getWithdrawals } from "@/lib/battle.functions";
 import { getMyProfile } from "@/lib/user.functions";
 import { getMyReferral, applyReferralCode } from "@/lib/referral.functions";
+import { shareOrCopy } from "@/lib/native-share";
 import { payWithRazorpay } from "@/lib/razorpay-client";
 import { failMessage } from "@/lib/friendly-error";
 
