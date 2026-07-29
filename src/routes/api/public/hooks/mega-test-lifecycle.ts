@@ -202,7 +202,10 @@ export const Route = createFileRoute("/api/public/hooks/mega-test-lifecycle")({
             .select("id, questions")
             .eq("scheduled_start", start.toISOString());
           const needsGen = (rows ?? []).some((r) => !r.questions || (r.questions as unknown[]).length === 0);
-          if (needsGen) {
+          // Only build the paper within 24h of the scheduled start (fresher questions,
+          // and avoids burning AI credits a week early).
+          const within24h = start.getTime() - nowD.getTime() <= 24 * 60 * 60 * 1000;
+          if (needsGen && within24h) {
             const questions = await generateMegaQuestionSet();
             if (questions.length > 0) {
               for (const r of rows ?? []) {
