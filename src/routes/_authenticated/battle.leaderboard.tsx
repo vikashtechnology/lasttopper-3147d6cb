@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { getQuickLeaderboard } from "@/lib/battle.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy } from "lucide-react";
+import { RankBadge } from "@/components/RankBadge";
+
 
 export const Route = createFileRoute("/_authenticated/battle/leaderboard")({
   head: () => ({
@@ -36,16 +38,16 @@ function Board() {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Trophy className="h-5 w-5 text-yellow-300" />
-        <h1 className="battle-title text-xl">Live Top 10 · 24h</h1>
+        <h1 className="battle-title text-xl">Live Top Players · 24h</h1>
       </div>
       <div className="battle-glass p-4">
         {items.length === 0 ? (
-          <p className="text-sm text-white/50">No plays yet — be first.</p>
+          <p className="text-sm text-muted-foreground">No plays yet — be first.</p>
         ) : (
           <ol className="space-y-1.5">
             {items.map((r) => (
               <li
-                key={`${r.rank}-${r.user.email ?? r.user.full_name}`}
+                key={r.key}
                 className={`flex items-center gap-3 rounded-xl border p-2.5 ${
                   r.is_me ? "border-cyan-400/60 bg-cyan-400/10" : "border-white/5 bg-white/[0.02]"
                 }`}
@@ -56,11 +58,15 @@ function Board() {
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm">
                     {r.user.full_name ?? r.user.email ?? "Player"}
-                    {r.is_me && <span className="ml-1 text-xs text-cyan-300">(you)</span>}
+                    {r.is_me && <span className="ml-1 text-xs text-primary">(you)</span>}
                   </div>
-                  <div className="text-xs text-white/50">{r.correct_count} correct · {r.time_taken_seconds}s</div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{r.correct_count} correct · {r.time_taken_seconds}s</span>
+                    {r.is_demo ? <RankBadge xp={r.xp ?? 0} /> : null}
+                  </div>
                 </div>
-                <div className="text-lg font-bold text-cyan-300">{r.score}</div>
+                <div className="text-lg font-bold text-primary">{r.score}</div>
+
               </li>
             ))}
           </ol>
