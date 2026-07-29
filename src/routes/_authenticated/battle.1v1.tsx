@@ -493,13 +493,7 @@ function OneVOne() {
 
 function ArenaShell({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="battle-live arena-live-bg -mx-4 -my-6 min-h-[calc(100vh-8rem)] rounded-2xl px-4 py-6"
-      style={{
-        background:
-          "radial-gradient(900px 420px at 50% -10%, rgba(99,102,241,0.28), transparent 65%), #0b1020",
-      }}
-    >
+    <div className="arena-live-bg -mx-4 -my-6 min-h-[calc(100vh-8rem)] rounded-2xl px-4 py-6">
       {children}
     </div>
   );
