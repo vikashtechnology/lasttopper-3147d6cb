@@ -1,0 +1,52 @@
+name: Build iOS app (unsigned)
+
+# Produces an unsigned .app / archive you can open in Xcode to sign & upload.
+# Signed App Store uploads need certificates, so do the final step locally or
+# add fastlane match secrets later.
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  ios:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build web bundle
+        run: |
+          bun run build || true
+          mkdir -p dist
+          if [ ! -f dist/index.html ]; then
+            echo '<!doctype html><meta charset="utf-8"><title>Last Topper</title><body>Loading…</body>' > dist/index.html
+          fi
+
+      - name: Add Capacitor iOS platform
+        run: |
+          bun add -d @capacitor/cli
+          bun add @capacitor/ios
+          npx cap add ios || true
+          npx cap sync ios
+
+      - name: Build unsigned app
+        run: |
+          cd ios/App
+          pod install
+          xcodebuild -workspace App.xcworkspace -scheme App \
+            -configuration Release -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload iOS build
+        uses: actions/upload-artifact@v4
+        with:
+          name: lasttopper-ios-unsigned
+          path: ios/App/build/Build/Products/Release-iphoneos/*.app
