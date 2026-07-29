@@ -27,19 +27,17 @@ const config: CapacitorConfig = {
     androidScheme: "https",
     iosScheme: "https",
     // Links to these domains stay inside the app instead of opening a browser:
-    // the site itself, Google sign-in, Razorpay checkout/UPI, and the backend.
+    // the site itself, Razorpay checkout/UPI, and the backend. Google sign-in
+    // is deliberately NOT listed — it must open in the external browser.
     allowNavigation: [
       "lasttopper.lovable.app",
       "*.lovable.app",
-      "accounts.google.com",
-      "*.google.com",
-      "*.googleapis.com",
-      "*.gstatic.com",
       "*.razorpay.com",
       "api.razorpay.com",
       "checkout.razorpay.com",
       "*.supabase.co",
     ],
+
   },
   plugins: {
     LocalNotifications: {
