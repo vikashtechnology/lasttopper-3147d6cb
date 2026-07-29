@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { isNativeApp, startNativeGoogleSignIn } from "@/lib/native-auth";
+
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { GraduationCap } from "lucide-react";
@@ -37,6 +39,12 @@ function AuthPage() {
   async function handleGoogle() {
     setBusy(true);
     try {
+      // Native app: Google blocks WebView sign-in, so open the system browser
+      // and come back via the /auth/callback app link.
+      if (await isNativeApp()) {
+        await startNativeGoogleSignIn();
+        return;
+      }
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
       });
@@ -53,6 +61,7 @@ function AuthPage() {
       setBusy(false);
     }
   }
+
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-6">

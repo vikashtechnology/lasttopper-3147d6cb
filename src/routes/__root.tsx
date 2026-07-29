@@ -14,6 +14,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { registerPWA } from "@/lib/pwa-register";
 import { storeReferralFromUrl } from "@/lib/referral-link";
+import { parseOAuthCallback, closeNativeBrowser, clearStoredOAuthState } from "@/lib/native-auth";
+
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { AmbientBackground } from "@/components/AmbientBackground";
@@ -146,13 +148,30 @@ function RootComponent() {
         const { App } = await import("@capacitor/app");
         const handle = await App.addListener("appUrlOpen", ({ url }) => {
           storeReferralFromUrl(url);
-          try {
-            const parsed = new URL(url);
-            const path = `${parsed.pathname}${parsed.search}`;
-            if (path && path !== "/") void router.navigate({ href: path });
-          } catch {
-            /* ignore */
-          }
+          void (async () => {
+            // Google sign-in finished in the system browser and handed the
+            // tokens back to the app — set the session here.
+            const tokens = parseOAuthCallback(url);
+            if (tokens && !tokens.error) {
+              await closeNativeBrowser();
+              const { error } = await supabase.auth.setSession({
+                access_token: tokens.access_token,
+                refresh_token: tokens.refresh_token,
+              });
+              clearStoredOAuthState();
+              if (!error) {
+                void router.navigate({ to: "/home", replace: true });
+                return;
+              }
+            }
+            try {
+              const parsed = new URL(url);
+              const path = `${parsed.pathname}${parsed.search}`;
+              if (path && path !== "/") void router.navigate({ href: path });
+            } catch {
+              /* ignore */
+            }
+          })();
         });
         remove = () => void handle.remove();
       } catch {
@@ -161,6 +180,7 @@ function RootComponent() {
     })();
     return () => remove?.();
   }, [router]);
+
 
 
   // Android hardware/system back button: go one step back in history instead
