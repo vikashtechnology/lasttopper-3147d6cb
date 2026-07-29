@@ -117,6 +117,8 @@ function Profile() {
             </div>
           )}
         </div>
+
+        <SocialLinksRow className="mt-8 border-t border-border pt-6" />
       </section>
     </main>
   );
