@@ -36,16 +36,16 @@ function Board() {
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Trophy className="h-5 w-5 text-yellow-300" />
-        <h1 className="battle-title text-xl">Live Top 10 · 24h</h1>
+        <h1 className="battle-title text-xl">Live Top Players · 24h</h1>
       </div>
       <div className="battle-glass p-4">
         {items.length === 0 ? (
-          <p className="text-sm text-white/50">No plays yet — be first.</p>
+          <p className="text-sm text-muted-foreground">No plays yet — be first.</p>
         ) : (
           <ol className="space-y-1.5">
             {items.map((r) => (
               <li
-                key={`${r.rank}-${r.user.email ?? r.user.full_name}`}
+                key={r.key}
                 className={`flex items-center gap-3 rounded-xl border p-2.5 ${
                   r.is_me ? "border-cyan-400/60 bg-cyan-400/10" : "border-white/5 bg-white/[0.02]"
                 }`}
