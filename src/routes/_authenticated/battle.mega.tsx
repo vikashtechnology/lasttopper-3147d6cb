@@ -66,7 +66,7 @@ function MegaTest() {
     onError: (e: Error) => toast.error(failMessage(e)),
   });
 
-  if (q.isLoading) return <div className="text-white/60 text-sm">Loading…</div>;
+  if (q.isLoading) return <div className="text-muted-foreground text-sm">Loading…</div>;
   const info = q.data;
   if (!info) return <div className="battle-glass p-5 text-sm">Complete onboarding first.</div>;
 
@@ -88,7 +88,7 @@ function MegaTest() {
         <h1 className="battle-title mt-2 text-2xl">
           Prove your skill.
         </h1>
-        <p className="mt-2 inline-flex flex-wrap items-center gap-1 text-sm text-white/70">
+        <p className="mt-2 inline-flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
           180 questions · 3-hour window · entry <TopperCoin size={14} />{Number(test.entry_fee)} TC
         </p>
 
@@ -103,7 +103,7 @@ function MegaTest() {
           />
         </div>
 
-        <div className="mt-2 text-xs text-white/50">
+        <div className="mt-2 text-xs text-muted-foreground">
           If fewer than {test.min_participants} players join, entry fee is auto-refunded.
         </div>
 
@@ -158,9 +158,9 @@ function MegaTest() {
       </div>
 
       <div className="battle-glass p-5">
-        <div className="mb-2 text-xs uppercase tracking-widest text-white/60">Prize pool (Topper Coins · 1 TC = ₹1)</div>
+        <div className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">Prize pool (Topper Coins · 1 TC = ₹1)</div>
         <ul className="space-y-1 text-sm">
-          <li className="inline-flex items-center gap-1">🥇 Rank 1 — <TopperCoin size={14} />100 TC <span className="ml-1 rounded-full bg-fuchsia-400/15 px-1.5 py-0.5 text-[10px] uppercase tracking-widest text-fuchsia-200">+ Weekly Pro (50+ players)</span></li>
+          <li className="inline-flex items-center gap-1">🥇 Rank 1 — <TopperCoin size={14} />100 TC <span className="ml-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] uppercase tracking-widest text-primary font-semibold">+ Weekly Pro (50+ players)</span></li>
           <li className="inline-flex items-center gap-1">🥈 Rank 2 — <TopperCoin size={14} />50 TC</li>
           <li className="inline-flex items-center gap-1">🥉 Rank 3 — <TopperCoin size={14} />25 TC</li>
           <li className="inline-flex items-center gap-1">Ranks 4–10 — <TopperCoin size={14} />15 TC each</li>
@@ -174,7 +174,7 @@ function MegaTest() {
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-      <div className="flex items-center gap-1.5 text-xs text-white/60">{icon}{label}</div>
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">{icon}{label}</div>
       <div className="mt-1 text-lg font-bold text-white">{value}</div>
     </div>
   );
