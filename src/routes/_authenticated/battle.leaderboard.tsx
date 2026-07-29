@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { getQuickLeaderboard } from "@/lib/battle.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy } from "lucide-react";
+import { RankBadge } from "@/components/RankBadge";
+
 
 export const Route = createFileRoute("/_authenticated/battle/leaderboard")({
   head: () => ({
