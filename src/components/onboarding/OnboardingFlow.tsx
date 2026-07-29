@@ -37,7 +37,8 @@ export function OnboardingFlow({ open }: { open: boolean }) {
   const [saving, setSaving] = useState(false);
   const [prof, setProf] = useState<Profession | null>(profile?.profession ?? null);
   const [tutorialStep, setTutorialStep] = useState(0);
-  const [refCode, setRefCode] = useState("");
+  // Prefilled from an invite link (?ref=CODE) opened in the browser or the app.
+  const [refCode, setRefCode] = useState(() => getPendingReferral());
 
   async function submitDetails() {
     if (fullName.trim().length < 2) {
