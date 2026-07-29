@@ -41,10 +41,7 @@ function BattleLayout() {
       >
         <div className="mx-auto flex max-w-4xl items-center gap-3 px-4 py-3">
           <button
-            onClick={() => {
-              if (typeof window !== "undefined" && window.history.length > 1) router.history.back();
-              else navigate({ to: "/home" });
-            }}
+            onClick={() => navigate({ to: "/home" })}
             className="rounded-full p-2 opacity-70 hover:opacity-100"
             aria-label="Go back"
           >
