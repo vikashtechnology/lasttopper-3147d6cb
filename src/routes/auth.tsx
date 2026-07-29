@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { isNativeApp, startNativeGoogleSignIn } from "@/lib/native-auth";
+
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { GraduationCap } from "lucide-react";
