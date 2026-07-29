@@ -37,6 +37,12 @@ function AuthPage() {
   async function handleGoogle() {
     setBusy(true);
     try {
+      // Native app: Google blocks WebView sign-in, so open the system browser
+      // and come back via the /auth/callback app link.
+      if (await isNativeApp()) {
+        await startNativeGoogleSignIn();
+        return;
+      }
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
       });
@@ -53,6 +59,7 @@ function AuthPage() {
       setBusy(false);
     }
   }
+
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-6">
