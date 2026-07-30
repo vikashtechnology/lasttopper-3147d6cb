@@ -64,6 +64,14 @@ jobs:
           PY
           npx cap sync android
 
+      - name: Generate app icons + splash from brand logo
+        run: |
+          # assets/icon.png, icon-foreground/background.png and splash*.png are
+          # committed in the repo; this writes every Android density so the app
+          # never falls back to the default Capacitor icon.
+          npx @capacitor/assets generate --android --iconBackgroundColor '#0B1020' --iconBackgroundColorDark '#0B1020' --splashBackgroundColor '#0B1020' --splashBackgroundColorDark '#0B1020'
+          npx cap sync android
+
       - name: Enable FLAG_SECURE + deep links
         run: |
           MAIN=android/app/src/main/java/com/lasttopper/app/MainActivity.java
