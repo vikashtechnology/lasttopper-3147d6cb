@@ -198,6 +198,17 @@ export function AiChatBubble() {
             >
               <History className="h-4 w-4" />
             </button>
+            {handwrittenUrls.length > 0 && (
+              <button
+                onClick={() => exportPdf(handwrittenUrls)}
+                disabled={pdfBusy}
+                className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
+                aria-label="Download handwritten pages as PDF"
+                title="Download handwritten pages as PDF"
+              >
+                <FileDown className="h-4 w-4" />
+              </button>
+            )}
             <button
               onClick={startNewThread}
               className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -205,6 +216,7 @@ export function AiChatBubble() {
             >
               <Plus className="h-4 w-4" />
             </button>
+
             <button
               onClick={() => setOpen(false)}
               className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
