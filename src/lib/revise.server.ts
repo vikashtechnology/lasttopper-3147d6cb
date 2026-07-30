@@ -34,8 +34,12 @@ function isAiGenerationError(error: unknown): boolean {
   return error instanceof Error && /AI|credits|busy|gateway|LOVABLE_API_KEY/i.test(error.message);
 }
 
-async function callGemini<T>(prompt: string, schema: Record<string, unknown>): Promise<T> {
-  const json = await aiChat({
+async function callAi<T>(
+  prompt: string,
+  schema: Record<string, unknown>,
+  runner: (body: any) => Promise<any> = aiChat,
+): Promise<T> {
+  const json = await runner({
       model: "google/gemini-2.5-flash",
       messages: [
         {
@@ -57,6 +61,35 @@ async function callGemini<T>(prompt: string, schema: Record<string, unknown>): P
   if (!args) throw new Error("AI returned no content");
   return JSON.parse(args) as T;
 }
+
+const callGemini = <T,>(prompt: string, schema: Record<string, unknown>) => callAi<T>(prompt, schema);
+
+const DIAGRAM_SCHEMA = {
+  type: "object",
+  properties: { diagram: { type: "string" }, diagram_caption: { type: "string" } },
+  required: ["diagram"],
+} as const;
+
+/** Diagram runs on the dedicated OpenRouter keys and is cached in the DB for all users. */
+async function generateDiagram(
+  topicTitle: string,
+  chapter: ChapterDetails,
+): Promise<{ diagram: string | null; diagram_caption: string | null }> {
+  try {
+    const ai = await callAi<{ diagram?: string; diagram_caption?: string }>(
+      `Create ONE Mermaid diagram that visually explains the NCERT topic "${topicTitle}" from the Class ${chapter.class_level} ${chapter.subjects?.name ?? ""} chapter "${chapter.name}".
+Rules: start with "flowchart TD" (or "graph LR", "mindmap"). Every node label MUST be wrapped in double quotes, e.g. A["Ideal gas"] --> B["PV = nRT"]. Plain text only inside labels — NO LaTeX, no $, no parentheses, no <br>, no emojis, no semicolons. 6-12 nodes maximum. Output raw Mermaid code with no markdown fences.
+Also return diagram_caption: one short line (max 90 chars).`,
+      DIAGRAM_SCHEMA as unknown as Record<string, unknown>,
+      openRouterChat,
+    );
+    return { diagram: sanitizeDiagram(ai.diagram), diagram_caption: sanitizeTitle(ai.diagram_caption) };
+  } catch (error) {
+    if (!isAiGenerationError(error)) throw error;
+    return { diagram: null, diagram_caption: null };
+  }
+}
+
 
 async function firecrawlReferences(topic: string, chapter: string): Promise<ReviseReference[]> {
   const lovKey = process.env.LOVABLE_API_KEY;
