@@ -35,8 +35,26 @@ export function AiChatBubble() {
   const [messages, setMessages] = useState<Msg[]>([INTRO]);
   const [input, setInput] = useState("");
   const [penOpen, setPenOpen] = useState(false);
+  const [pdfBusy, setPdfBusy] = useState(false);
+
+  const handwrittenUrls = messages
+    .map((m) => m.image_url)
+    .filter((u): u is string => Boolean(u));
+
+  const exportPdf = async (urls: string[], name = "topper-ai-notes.pdf") => {
+    setPdfBusy(true);
+    try {
+      const { downloadHandwrittenPdf } = await import("@/lib/handwriting-pdf");
+      await downloadHandwrittenPdf(urls, name);
+    } catch {
+      /* silent: friendly failure */
+    } finally {
+      setPdfBusy(false);
+    }
+  };
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
+
 
   const quota = useQuery({ queryKey: ["ai-chat-quota"], queryFn: () => getAiChatQuota() });
   const isPro = !!quota.data?.is_pro;
