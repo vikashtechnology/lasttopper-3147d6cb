@@ -257,7 +257,11 @@ export async function readTopicRevision(topicId: string, context: SupabaseContex
 
   const topicRecord = topic as Record<string, unknown> & { chapters?: ChapterDetails };
   const { chapters, ...rest } = topicRecord;
-  if (topicRecord.summary && topicRecord.generated_at) return rest as unknown as ReviseTopic;
+  // Older notes were generated before diagrams existed — regenerate those once
+  // so every topic ends up with a visual.
+  if (topicRecord.summary && topicRecord.generated_at && topicRecord.diagram) {
+    return rest as unknown as ReviseTopic;
+  }
 
   const chapter = chapters ?? { name: "NCERT", class_level: null, subjects: { name: "subject" } };
   try {
