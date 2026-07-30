@@ -148,7 +148,7 @@ function buildTopicRows(chapterId: string, titles: string[]) {
     .slice(0, 12);
 }
 
-function fallbackRevision(topicTitle: string, chapter: ChapterDetails): Pick<ReviseTopic, "summary" | "key_points" | "formulas" | "refs"> {
+function fallbackRevision(topicTitle: string, chapter: ChapterDetails): Pick<ReviseTopic, "summary" | "key_points" | "formulas" | "refs" | "diagram" | "diagram_caption"> {
   const subject = chapter.subjects?.name ?? "subject";
   const classText = chapter.class_level ? `Class ${chapter.class_level}` : "NCERT";
   const formulas = /math|physics|chem/i.test(subject)
@@ -167,8 +167,26 @@ function fallbackRevision(topicTitle: string, chapter: ChapterDetails): Pick<Rev
     ],
     formulas,
     refs: fallbackReferences(),
+    diagram: `flowchart TD\n  A["${topicTitle.replace(/"/g, "")}"] --> B["NCERT definitions"]\n  A --> C["Core concept / process"]\n  A --> D["Formulas & conditions"]\n  C --> E["Solved examples"]\n  D --> E\n  E --> F["Exercise practice"]`,
+    diagram_caption: "Quick revision map for this topic.",
   };
 }
+
+/** Mermaid is strict — keep only what we can safely render. */
+function sanitizeDiagram(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const code = value
+    .replace(/^\s*```(?:mermaid)?/i, "")
+    .replace(/```\s*$/, "")
+    .trim()
+    .slice(0, 3000);
+  if (!code) return null;
+  if (!/^(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram(-v2)?|mindmap|erDiagram|timeline)\b/i.test(code)) {
+    return null;
+  }
+  return code;
+}
+
 
 export async function listChapterTopics(
   chapterId: string,
