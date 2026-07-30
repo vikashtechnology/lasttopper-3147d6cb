@@ -290,20 +290,33 @@ export async function readTopicRevision(topicId: string, context: SupabaseContex
 
   const topicRecord = topic as Record<string, unknown> & { chapters?: ChapterDetails };
   const { chapters, ...rest } = topicRecord;
-  // Older notes were generated before diagrams existed — regenerate those once
-  // so every topic ends up with a visual.
+  const chapter = chapters ?? { name: "NCERT", class_level: null, subjects: { name: "subject" } };
+
+  // Fully cached note (text + diagram) — served identically to every user.
   if (topicRecord.summary && topicRecord.generated_at && topicRecord.diagram) {
     return rest as unknown as ReviseTopic;
   }
 
-  const chapter = chapters ?? { name: "NCERT", class_level: null, subjects: { name: "subject" } };
+  // Note already exists but has no diagram yet: generate the diagram only
+  // (OpenRouter) and store it once, so it becomes fixed for all users.
+  if (topicRecord.summary && topicRecord.generated_at) {
+    const dia = await generateDiagram(String(topicRecord.title ?? "Revision"), chapter);
+    if (!dia.diagram) return rest as unknown as ReviseTopic;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: updated } = await supabaseAdmin
+      .from("revise_topics")
+      .update({ diagram: dia.diagram, diagram_caption: dia.diagram_caption })
+      .eq("id", topicId)
+      .select("*")
+      .maybeSingle();
+    return (updated ?? { ...(rest as any), ...dia }) as unknown as ReviseTopic;
+  }
+
   try {
     const ai = await callGemini<{
       summary: string;
       key_points: string[];
       formulas: string[];
-      diagram?: string;
-      diagram_caption?: string;
     }>(
       `Write a concise NCERT-only revision note for the topic "${topicRecord.title}" from the Class ${chapter.class_level} ${chapter.subjects?.name ?? ""} chapter "${chapter.name}".
 
@@ -311,8 +324,6 @@ Return:
 - summary: 120-180 word plain-language explanation, exam-focused.
 - key_points: 5-8 crisp bullet points a student must remember.
 - formulas: array of important formulas or reactions. STRICT FORMAT: each item MUST be "Label: $latex$" where the maths part is valid LaTeX wrapped in single dollar signs (e.g. "Kinetic energy: $K=\\tfrac{1}{2}mv^2$", "Ideal gas law: $PV=nRT$"). Use \\frac, ^, _, \\times, \\Delta, \\rightarrow for reactions, and never use plain-text symbols like "1/2" or "->". Empty array if none.
-- diagram: ONE Mermaid diagram that visually explains this topic (concept map, process flow, classification tree, cycle, or ray/energy flow). Rules: start with "flowchart TD" (or "graph LR", "mindmap", "sequenceDiagram", "stateDiagram-v2"). Every node label MUST be wrapped in double quotes, e.g. A["Ideal gas"] --> B["PV = nRT"]. Use plain text only inside labels — NO LaTeX, no $, no parentheses, no <br>, no emojis, no semicolons. 6-12 nodes maximum. Output raw Mermaid code with no markdown fences.
-- diagram_caption: one short line (max 90 chars) describing the diagram.
 
 Do NOT include copyrighted text from any textbook — write in your own words.`,
       {
@@ -321,14 +332,15 @@ Do NOT include copyrighted text from any textbook — write in your own words.`,
           summary: { type: "string" },
           key_points: { type: "array", items: { type: "string" } },
           formulas: { type: "array", items: { type: "string" } },
-          diagram: { type: "string" },
-          diagram_caption: { type: "string" },
         },
-        required: ["summary", "key_points", "formulas", "diagram"],
+        required: ["summary", "key_points", "formulas"],
       },
     );
 
-    const refs = await firecrawlReferences(String(topicRecord.title ?? "Revision"), chapter.name);
+    const [refs, dia] = await Promise.all([
+      firecrawlReferences(String(topicRecord.title ?? "Revision"), chapter.name),
+      generateDiagram(String(topicRecord.title ?? "Revision"), chapter),
+    ]);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: updated, error: upErr } = await supabaseAdmin
       .from("revise_topics")
@@ -336,12 +348,11 @@ Do NOT include copyrighted text from any textbook — write in your own words.`,
         summary: ai.summary,
         key_points: ai.key_points,
         formulas: ai.formulas,
-        diagram: sanitizeDiagram(ai.diagram),
-        diagram_caption: sanitizeTitle(ai.diagram_caption),
+        diagram: dia.diagram,
+        diagram_caption: dia.diagram_caption,
         refs,
         generated_at: new Date().toISOString(),
       })
-
       .eq("id", topicId)
       .select("*")
       .maybeSingle();
@@ -353,3 +364,4 @@ Do NOT include copyrighted text from any textbook — write in your own words.`,
     return { ...(rest as unknown as ReviseTopic), ...fallback };
   }
 }
+
