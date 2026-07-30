@@ -35,6 +35,8 @@ jobs:
           bun add @capacitor/ios
           npx cap add ios || true
           npx cap sync ios
+          npx @capacitor/assets generate --ios --splashBackgroundColor '#0B1020' --splashBackgroundColorDark '#0B1020'
+          npx cap sync ios
 
       - name: Build unsigned app
         run: |
