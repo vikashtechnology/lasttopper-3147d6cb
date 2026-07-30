@@ -70,11 +70,23 @@ const DIAGRAM_SCHEMA = {
   required: ["diagram"],
 } as const;
 
-/** Diagram runs on the dedicated OpenRouter keys and is cached in the DB for all users. */
+/** Deterministic concept map so a topic is never left without a visual. */
+function fallbackDiagram(topicTitle: string): { diagram: string; diagram_caption: string } {
+  const t = topicTitle.replace(/"/g, "");
+  return {
+    diagram: `flowchart TD\n  A["${t}"] --> B["NCERT definitions"]\n  A --> C["Core concept / process"]\n  A --> D["Formulas & conditions"]\n  C --> E["Solved examples"]\n  D --> E\n  E --> F["Exercise practice"]`,
+    diagram_caption: "Quick revision map for this topic.",
+  };
+}
+
+/**
+ * Diagram runs on the dedicated OpenRouter keys and is cached in the DB, so
+ * every generated topic ends up with one diagram shared by all users.
+ */
 async function generateDiagram(
   topicTitle: string,
   chapter: ChapterDetails,
-): Promise<{ diagram: string | null; diagram_caption: string | null }> {
+): Promise<{ diagram: string; diagram_caption: string | null }> {
   try {
     const ai = await callAi<{ diagram?: string; diagram_caption?: string }>(
       `Create ONE Mermaid diagram that visually explains the NCERT topic "${topicTitle}" from the Class ${chapter.class_level} ${chapter.subjects?.name ?? ""} chapter "${chapter.name}".
@@ -83,12 +95,14 @@ Also return diagram_caption: one short line (max 90 chars).`,
       DIAGRAM_SCHEMA as unknown as Record<string, unknown>,
       openRouterChat,
     );
-    return { diagram: sanitizeDiagram(ai.diagram), diagram_caption: sanitizeTitle(ai.diagram_caption) };
+    const diagram = sanitizeDiagram(ai.diagram);
+    if (diagram) return { diagram, diagram_caption: sanitizeTitle(ai.diagram_caption) };
   } catch (error) {
     if (!isAiGenerationError(error)) throw error;
-    return { diagram: null, diagram_caption: null };
   }
+  return fallbackDiagram(topicTitle);
 }
+
 
 
 async function firecrawlReferences(topic: string, chapter: string): Promise<ReviseReference[]> {
