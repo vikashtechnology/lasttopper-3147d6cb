@@ -15,6 +15,16 @@ import {
   type AppRelease,
 } from "@/lib/app-release.functions";
 
+type ReleaseInput = {
+  id?: string;
+  version: string;
+  version_code: number;
+  download_url: string;
+  notes: string;
+  mandatory: boolean;
+  is_active: boolean;
+};
+
 export const Route = createFileRoute("/_authenticated/admin/app-update")({
   head: () => ({
     meta: [
@@ -40,7 +50,7 @@ function AdminAppUpdate() {
   const [mandatory, setMandatory] = useState(false);
 
   const save = useMutation({
-    mutationFn: (row: Parameters<typeof adminSaveRelease>[0]["data"]) => adminSaveRelease({ data: row }),
+    mutationFn: (row: ReleaseInput) => adminSaveRelease({ data: row }),
     onSuccess: () => {
       toast.success("Saved");
       qc.invalidateQueries({ queryKey: ["admin-app-releases"] });
