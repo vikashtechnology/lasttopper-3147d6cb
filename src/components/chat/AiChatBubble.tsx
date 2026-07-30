@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { X, Send, PenLine, Plus, History, Trash2, Lock } from "lucide-react";
+import { X, Send, PenLine, Plus, History, Trash2, Lock, FileDown } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { getAiChatQuota } from "@/lib/chatbot.functions";
