@@ -4,7 +4,8 @@ import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-q
 import { getChapterTopics, getTopicRevision, type ReviseTopic } from "@/lib/revise.functions";
 import { Button } from "@/components/ui/button";
 import { Latex, Formula } from "@/components/Latex";
-import { ChevronLeft, ChevronDown, Loader2, ExternalLink, Sparkles, BookMarked } from "lucide-react";
+import { ReviseDiagram } from "@/components/ReviseDiagram";
+import { ChevronLeft, ChevronDown, Loader2, ExternalLink, Sparkles, BookMarked, Network } from "lucide-react";
 import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/revise/$chapterId")({
