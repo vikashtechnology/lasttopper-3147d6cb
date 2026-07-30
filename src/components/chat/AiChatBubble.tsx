@@ -300,14 +300,26 @@ export function AiChatBubble() {
                   }`}
                 >
                   {m.image_url ? (
-                    <a href={m.image_url} target="_blank" rel="noreferrer">
-                      <img
-                        src={m.image_url}
-                        alt="Handwritten page"
-                        className="mb-1 max-h-72 w-full rounded-lg object-contain"
-                      />
-                    </a>
+                    <>
+                      <a href={m.image_url} target="_blank" rel="noreferrer">
+                        <img
+                          src={m.image_url}
+                          alt="Handwritten page"
+                          className="mb-1 max-h-72 w-full rounded-lg object-contain"
+                        />
+                      </a>
+                      <button
+                        type="button"
+                        disabled={pdfBusy}
+                        onClick={() => exportPdf([m.image_url!], `handwritten-page-${i + 1}.pdf`)}
+                        className="mb-1 inline-flex items-center gap-1 rounded-full bg-background/70 px-2 py-1 text-xs text-foreground hover:bg-background disabled:opacity-50"
+                      >
+                        <FileDown className="h-3.5 w-3.5" />
+                        {pdfBusy ? "Preparing…" : "Download PDF"}
+                      </button>
+                    </>
                   ) : null}
+
                   {m.role === "assistant" ? <Latex>{m.content}</Latex> : m.content}
                 </div>
               </div>
