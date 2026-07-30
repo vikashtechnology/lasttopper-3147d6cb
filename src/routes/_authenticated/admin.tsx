@@ -52,6 +52,7 @@ function AdminLayout() {
     { to: "/admin/bank", icon: Database, label: "Question Bank" },
     { to: "/admin/announcements", icon: Megaphone, label: "Announcements" },
     { to: "/admin/social", icon: Share2, label: "Social links" },
+    { to: "/admin/app-update", icon: Download, label: "App update" },
 
     ...(owner.data?.owner ? [{ to: "/admin/admins", icon: Crown, label: "Admins" }] : []),
   ];
