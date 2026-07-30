@@ -184,3 +184,37 @@ export async function aiChatText(body: ChatBody): Promise<string> {
   const json = await aiChat(body);
   return (json?.choices?.[0]?.message?.content ?? "") as string;
 }
+
+/**
+ * Diagram generation runs on OpenRouter only (dedicated keys), so it keeps
+ * working even when the shared Gemini/OmniRoute quota is exhausted.
+ * Falls back to the normal router if no OpenRouter key is configured.
+ */
+export async function openRouterChat(body: ChatBody): Promise<any> {
+  const keys = ["OPENROUTER_API_KEY_1", "OPENROUTER_API_KEY_2"]
+    .map((n) => process.env[n]?.trim())
+    .filter(Boolean) as string[];
+  if (keys.length === 0) return aiChat(body);
+
+  const model = toOpenRouterModel(body.model ?? "google/gemini-2.5-flash");
+  let lastStatus = 503;
+  let lastText = "AI unavailable";
+
+  for (const key of keys) {
+    try {
+      const resp = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+        body: JSON.stringify({ ...body, stream: false, model }),
+      });
+      if (resp.ok) return await resp.json();
+      lastStatus = resp.status;
+      lastText = await resp.text().catch(() => "");
+      console.error(`[ai-router] openrouter(diagram) -> ${resp.status} ${lastText.slice(0, 200)}`);
+    } catch (e) {
+      lastText = e instanceof Error ? e.message : String(e);
+      console.error(`[ai-router] openrouter(diagram) network error: ${lastText}`);
+    }
+  }
+  throw new AiUnavailableError(`Diagram provider failed (last ${lastStatus})`, lastStatus);
+}
