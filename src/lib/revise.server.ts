@@ -1,4 +1,4 @@
-import { aiChat } from "@/lib/ai-router";
+import { aiChat, openRouterChat } from "@/lib/ai-router";
 import type { ReviseReference, ReviseTopic } from "./revise.types";
 
 type SupabaseContext = { supabase: { from: (table: string) => any } };
