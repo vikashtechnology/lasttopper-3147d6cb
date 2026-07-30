@@ -977,6 +977,8 @@ export type Database = {
         Row: {
           chapter_id: string
           created_at: string
+          diagram: string | null
+          diagram_caption: string | null
           display_order: number
           formulas: Json
           generated_at: string | null
@@ -991,6 +993,8 @@ export type Database = {
         Insert: {
           chapter_id: string
           created_at?: string
+          diagram?: string | null
+          diagram_caption?: string | null
           display_order?: number
           formulas?: Json
           generated_at?: string | null
@@ -1005,6 +1009,8 @@ export type Database = {
         Update: {
           chapter_id?: string
           created_at?: string
+          diagram?: string | null
+          diagram_caption?: string | null
           display_order?: number
           formulas?: Json
           generated_at?: string | null
