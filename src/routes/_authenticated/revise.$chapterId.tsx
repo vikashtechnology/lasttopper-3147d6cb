@@ -4,7 +4,8 @@ import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-q
 import { getChapterTopics, getTopicRevision, type ReviseTopic } from "@/lib/revise.functions";
 import { Button } from "@/components/ui/button";
 import { Latex, Formula } from "@/components/Latex";
-import { ChevronLeft, ChevronDown, Loader2, ExternalLink, Sparkles, BookMarked } from "lucide-react";
+import { ReviseDiagram } from "@/components/ReviseDiagram";
+import { ChevronLeft, ChevronDown, Loader2, ExternalLink, Sparkles, BookMarked, Network } from "lucide-react";
 import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/revise/$chapterId")({
@@ -203,6 +204,17 @@ function TopicCard({
                   </div>
                 </div>
               )}
+
+              {detail.diagram && (
+                <div>
+                  <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <Network className="h-3.5 w-3.5" /> Diagram
+                  </div>
+                  <ReviseDiagram code={detail.diagram} caption={detail.diagram_caption} />
+                </div>
+              )}
+
+
 
 
               {detail.refs?.length > 0 && (
