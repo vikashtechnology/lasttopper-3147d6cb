@@ -423,3 +423,14 @@ body[data-no-ads="1"] [class*="monetag"] {
 .app-surface .min-h-screen.bg-background {
   background-color: color-mix(in oklab, var(--background) 80%, transparent);
 }
+
+/* Hide Lovable branding widget entirely (badge + close button) */
+#lovable-badge,
+#lovable-badge *,
+[id^="lovable-badge"],
+a[href*="lovable.dev"][target="_blank"][class*="badge"] {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
