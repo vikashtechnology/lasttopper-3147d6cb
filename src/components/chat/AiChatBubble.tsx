@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { X, Send, PenLine, Plus, History, Trash2, Lock } from "lucide-react";
+import { X, Send, PenLine, Plus, History, Trash2, Lock, FileDown } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { getAiChatQuota } from "@/lib/chatbot.functions";
@@ -35,8 +35,26 @@ export function AiChatBubble() {
   const [messages, setMessages] = useState<Msg[]>([INTRO]);
   const [input, setInput] = useState("");
   const [penOpen, setPenOpen] = useState(false);
+  const [pdfBusy, setPdfBusy] = useState(false);
+
+  const handwrittenUrls = messages
+    .map((m) => m.image_url)
+    .filter((u): u is string => Boolean(u));
+
+  const exportPdf = async (urls: string[], name = "topper-ai-notes.pdf") => {
+    setPdfBusy(true);
+    try {
+      const { downloadHandwrittenPdf } = await import("@/lib/handwriting-pdf");
+      await downloadHandwrittenPdf(urls, name);
+    } catch {
+      /* silent: friendly failure */
+    } finally {
+      setPdfBusy(false);
+    }
+  };
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
+
 
   const quota = useQuery({ queryKey: ["ai-chat-quota"], queryFn: () => getAiChatQuota() });
   const isPro = !!quota.data?.is_pro;
@@ -198,6 +216,17 @@ export function AiChatBubble() {
             >
               <History className="h-4 w-4" />
             </button>
+            {handwrittenUrls.length > 0 && (
+              <button
+                onClick={() => exportPdf(handwrittenUrls)}
+                disabled={pdfBusy}
+                className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50"
+                aria-label="Download handwritten pages as PDF"
+                title="Download handwritten pages as PDF"
+              >
+                <FileDown className="h-4 w-4" />
+              </button>
+            )}
             <button
               onClick={startNewThread}
               className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -205,6 +234,7 @@ export function AiChatBubble() {
             >
               <Plus className="h-4 w-4" />
             </button>
+
             <button
               onClick={() => setOpen(false)}
               className="rounded-full p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -270,14 +300,26 @@ export function AiChatBubble() {
                   }`}
                 >
                   {m.image_url ? (
-                    <a href={m.image_url} target="_blank" rel="noreferrer">
-                      <img
-                        src={m.image_url}
-                        alt="Handwritten page"
-                        className="mb-1 max-h-72 w-full rounded-lg object-contain"
-                      />
-                    </a>
+                    <>
+                      <a href={m.image_url} target="_blank" rel="noreferrer">
+                        <img
+                          src={m.image_url}
+                          alt="Handwritten page"
+                          className="mb-1 max-h-72 w-full rounded-lg object-contain"
+                        />
+                      </a>
+                      <button
+                        type="button"
+                        disabled={pdfBusy}
+                        onClick={() => exportPdf([m.image_url!], `handwritten-page-${i + 1}.pdf`)}
+                        className="mb-1 inline-flex items-center gap-1 rounded-full bg-background/70 px-2 py-1 text-xs text-foreground hover:bg-background disabled:opacity-50"
+                      >
+                        <FileDown className="h-3.5 w-3.5" />
+                        {pdfBusy ? "Preparing…" : "Download PDF"}
+                      </button>
+                    </>
                   ) : null}
+
                   {m.role === "assistant" ? <Latex>{m.content}</Latex> : m.content}
                 </div>
               </div>
