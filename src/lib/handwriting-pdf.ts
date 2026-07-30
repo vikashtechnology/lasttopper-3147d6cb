@@ -36,5 +36,31 @@ export async function downloadHandwrittenPdf(urls: string[], fileName = "topper-
     doc.addImage(img.src, "PNG", (pw - w) / 2, (ph - h) / 2, w, h, undefined, "FAST");
   }
 
+  // Native app (Android/iOS): browser downloads don't work in the WebView,
+  // so write the file to storage and open the share sheet.
+  try {
+    const { Capacitor } = await import("@capacitor/core");
+    if (Capacitor.isNativePlatform()) {
+      const base64 = doc.output("datauristring").split(",")[1];
+      const { Filesystem, Directory } = await import("@capacitor/filesystem");
+      const written = await Filesystem.writeFile({
+        path: fileName,
+        data: base64,
+        directory: Directory.Cache,
+      });
+      const { Share } = await import("@capacitor/share");
+      await Share.share({
+        title: "Handwritten notes",
+        text: fileName,
+        url: written.uri,
+        dialogTitle: "Save or share your notes",
+      });
+      return;
+    }
+  } catch {
+    /* fall through to browser download */
+  }
+
   doc.save(fileName);
 }
+
