@@ -53,6 +53,15 @@ jobs:
           bun add -d @capacitor/cli
           bun add @capacitor/android
           npx cap add android || true
+          # The app targets Android 8.0+ (API 26); Capacitor scaffolds 23/24.
+          python3 - <<'PY'
+          import re, pathlib
+          p = pathlib.Path("android/variables.gradle")
+          if p.exists():
+              s = p.read_text()
+              s = re.sub(r"minSdkVersion\s*=\s*\d+", "minSdkVersion = 26", s)
+              p.write_text(s)
+          PY
           npx cap sync android
 
       - name: Enable FLAG_SECURE + deep links

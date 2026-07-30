@@ -38,6 +38,45 @@ export type Database = {
         }
         Relationships: []
       }
+      app_releases: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          download_url: string
+          id: string
+          is_active: boolean
+          mandatory: boolean
+          notes: string | null
+          updated_at: string
+          version: string
+          version_code: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          download_url: string
+          id?: string
+          is_active?: boolean
+          mandatory?: boolean
+          notes?: string | null
+          updated_at?: string
+          version: string
+          version_code?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          download_url?: string
+          id?: string
+          is_active?: boolean
+          mandatory?: boolean
+          notes?: string | null
+          updated_at?: string
+          version?: string
+          version_code?: number
+        }
+        Relationships: []
+      }
       badges: {
         Row: {
           created_at: string

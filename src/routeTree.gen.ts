@@ -51,6 +51,7 @@ import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminSocialRouteImport } from './routes/_authenticated/admin.social'
 import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_authenticated/admin.moderation'
 import { Route as AuthenticatedAdminBankRouteImport } from './routes/_authenticated/admin.bank'
+import { Route as AuthenticatedAdminAppUpdateRouteImport } from './routes/_authenticated/admin.app-update'
 import { Route as AuthenticatedAdminAnnouncementsRouteImport } from './routes/_authenticated/admin.announcements'
 import { Route as AuthenticatedAdminAdminsRouteImport } from './routes/_authenticated/admin.admins'
 import { Route as ApiPublicHooksTelegramWithdrawalRouteImport } from './routes/api/public/hooks/telegram-withdrawal'
@@ -290,6 +291,12 @@ const AuthenticatedAdminBankRoute = AuthenticatedAdminBankRouteImport.update({
   path: '/bank',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminAppUpdateRoute =
+  AuthenticatedAdminAppUpdateRouteImport.update({
+    id: '/app-update',
+    path: '/app-update',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAnnouncementsRoute =
   AuthenticatedAdminAnnouncementsRouteImport.update({
     id: '/announcements',
@@ -378,6 +385,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
+  '/admin/app-update': typeof AuthenticatedAdminAppUpdateRoute
   '/admin/bank': typeof AuthenticatedAdminBankRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/admin/social': typeof AuthenticatedAdminSocialRoute
@@ -429,6 +437,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
+  '/admin/app-update': typeof AuthenticatedAdminAppUpdateRoute
   '/admin/bank': typeof AuthenticatedAdminBankRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/admin/social': typeof AuthenticatedAdminSocialRoute
@@ -485,6 +494,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/_authenticated/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/_authenticated/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
+  '/_authenticated/admin/app-update': typeof AuthenticatedAdminAppUpdateRoute
   '/_authenticated/admin/bank': typeof AuthenticatedAdminBankRoute
   '/_authenticated/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/_authenticated/admin/social': typeof AuthenticatedAdminSocialRoute
@@ -541,6 +551,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/admin/admins'
     | '/admin/announcements'
+    | '/admin/app-update'
     | '/admin/bank'
     | '/admin/moderation'
     | '/admin/social'
@@ -592,6 +603,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/admin/admins'
     | '/admin/announcements'
+    | '/admin/app-update'
     | '/admin/bank'
     | '/admin/moderation'
     | '/admin/social'
@@ -647,6 +659,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/_authenticated/admin/admins'
     | '/_authenticated/admin/announcements'
+    | '/_authenticated/admin/app-update'
     | '/_authenticated/admin/bank'
     | '/_authenticated/admin/moderation'
     | '/_authenticated/admin/social'
@@ -989,6 +1002,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminBankRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/app-update': {
+      id: '/_authenticated/admin/app-update'
+      path: '/app-update'
+      fullPath: '/admin/app-update'
+      preLoaderRoute: typeof AuthenticatedAdminAppUpdateRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/announcements': {
       id: '/_authenticated/admin/announcements'
       path: '/announcements'
@@ -1072,6 +1092,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminsRoute: typeof AuthenticatedAdminAdminsRoute
   AuthenticatedAdminAnnouncementsRoute: typeof AuthenticatedAdminAnnouncementsRoute
+  AuthenticatedAdminAppUpdateRoute: typeof AuthenticatedAdminAppUpdateRoute
   AuthenticatedAdminBankRoute: typeof AuthenticatedAdminBankRoute
   AuthenticatedAdminModerationRoute: typeof AuthenticatedAdminModerationRoute
   AuthenticatedAdminSocialRoute: typeof AuthenticatedAdminSocialRoute
@@ -1083,6 +1104,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminsRoute: AuthenticatedAdminAdminsRoute,
   AuthenticatedAdminAnnouncementsRoute: AuthenticatedAdminAnnouncementsRoute,
+  AuthenticatedAdminAppUpdateRoute: AuthenticatedAdminAppUpdateRoute,
   AuthenticatedAdminBankRoute: AuthenticatedAdminBankRoute,
   AuthenticatedAdminModerationRoute: AuthenticatedAdminModerationRoute,
   AuthenticatedAdminSocialRoute: AuthenticatedAdminSocialRoute,

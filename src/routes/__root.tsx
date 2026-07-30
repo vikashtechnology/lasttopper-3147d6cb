@@ -19,6 +19,7 @@ import { parseOAuthCallback, closeNativeBrowser, clearStoredOAuthState } from "@
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { AmbientBackground } from "@/components/AmbientBackground";
+import { AppUpdateDialog } from "@/components/AppUpdateDialog";
 
 function NotFoundComponent() {
   return (
@@ -221,6 +222,7 @@ function RootComponent() {
         <div className="app-surface relative z-[1]">
           <Outlet />
         </div>
+        <AppUpdateDialog />
         <Toaster richColors position="top-center" />
       </ThemeProvider>
     </QueryClientProvider>
