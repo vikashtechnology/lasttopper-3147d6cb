@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      # ─── APP VERSION ─── bump these two before每 release build.
+      # ─── APP VERSION ─── bump these two before each release build.
       # APP_VERSION_NAME: what users see (must match the "Version name" you
       # publish in Admin → App update).
       # APP_VERSION_CODE: integer, must increase every release (must match the
@@ -68,6 +68,21 @@ jobs:
               s = p.read_text()
               s = re.sub(r"minSdkVersion\s*=\s*\d+", "minSdkVersion = 26", s)
               p.write_text(s)
+          PY
+          npx cap sync android
+
+      - name: Set app version
+        run: |
+          python3 - <<'PY'
+          import re, pathlib, os
+          name = os.environ["APP_VERSION_NAME"]
+          code = os.environ["APP_VERSION_CODE"]
+          p = pathlib.Path("android/app/build.gradle")
+          s = p.read_text()
+          s = re.sub(r"versionCode\s+\d+", f"versionCode {code}", s)
+          s = re.sub(r'versionName\s+"[^"]*"', f'versionName "{name}"', s)
+          p.write_text(s)
+          print("versionCode", code, "versionName", name)
           PY
           npx cap sync android
 
