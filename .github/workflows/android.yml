@@ -21,6 +21,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      # ─── APP VERSION ─── bump these two before每 release build.
+      # APP_VERSION_NAME: what users see (must match the "Version name" you
+      # publish in Admin → App update).
+      # APP_VERSION_CODE: integer, must increase every release (must match the
+      # "Version code" in Admin → App update).
+      APP_VERSION_NAME: "1.0.0"
+      APP_VERSION_CODE: "1"
     steps:
       - uses: actions/checkout@v4
 
