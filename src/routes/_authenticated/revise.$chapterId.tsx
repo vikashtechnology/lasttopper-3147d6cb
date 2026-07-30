@@ -204,6 +204,17 @@ function TopicCard({
                 </div>
               )}
 
+              {detail.diagram && (
+                <div>
+                  <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <Network className="h-3.5 w-3.5" /> Diagram
+                  </div>
+                  <ReviseDiagram code={detail.diagram} caption={detail.diagram_caption} />
+                </div>
+              )}
+
+
+
 
               {detail.refs?.length > 0 && (
                 <div>
