@@ -10,6 +10,14 @@
  */
 export const NATIVE_CALLBACK_PATH = "/auth/callback";
 
+/** Custom URL scheme registered by the native app (lasttopper://…). */
+export const APP_SCHEME = "lasttopper";
+
+/** Deep link that always re-opens the installed app with the OAuth tokens. */
+export function appSchemeCallbackUrl(params: Record<string, string>) {
+  return `${APP_SCHEME}://auth/callback?${new URLSearchParams(params).toString()}`;
+}
+
 export async function isNativeApp(): Promise<boolean> {
   try {
     const { Capacitor } = await import("@capacitor/core");
@@ -57,7 +65,9 @@ export async function startNativeGoogleSignIn(
     ...extraParams,
     provider: "google",
     redirect_uri: `${window.location.origin}${NATIVE_CALLBACK_PATH}`,
-    state,
+    // The "native-" prefix tells the callback page to hand control back to the
+    // installed app (lasttopper:// deep link) if it opened in Chrome instead.
+    state: `native-${state}`,
   });
 
   const url = `${window.location.origin}/~oauth/initiate?${params.toString()}`;

@@ -5,6 +5,8 @@ import {
   parseOAuthCallback,
   closeNativeBrowser,
   clearStoredOAuthState,
+  isNativeApp,
+  appSchemeCallbackUrl,
 } from "@/lib/native-auth";
 import { storeReferralFromUrl } from "@/lib/referral-link";
 import { Loader2 } from "lucide-react";
@@ -28,11 +30,33 @@ export const Route = createFileRoute("/auth/callback")({
 function AuthCallback() {
   const navigate = useNavigate();
   const [message, setMessage] = useState("Finishing sign-in…");
+  const [appLink, setAppLink] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
       storeReferralFromUrl();
       const parsed = parseOAuthCallback(window.location.href);
+
+      // Sign-in was started from the installed app but this page is running in
+      // Chrome/Safari (App Link verification unavailable). Bounce the tokens
+      // back into the app through the lasttopper:// custom scheme.
+      if (
+        parsed &&
+        !parsed.error &&
+        parsed.state?.startsWith("native-") &&
+        !(await isNativeApp())
+      ) {
+        const deepLink = appSchemeCallbackUrl({
+          access_token: parsed.access_token,
+          refresh_token: parsed.refresh_token,
+          state: parsed.state,
+        });
+        setAppLink(deepLink);
+        setMessage("Returning you to the Last Topper app…");
+        window.location.href = deepLink;
+        return;
+      }
+
       if (parsed && !parsed.error) {
         const { error } = await supabase.auth.setSession({
           access_token: parsed.access_token,
@@ -63,6 +87,14 @@ function AuthCallback() {
       <div className="flex flex-col items-center gap-3 text-center">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
         <p className="text-sm text-muted-foreground">{message}</p>
+        {appLink && (
+          <a
+            href={appLink}
+            className="mt-2 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+          >
+            Open Last Topper app
+          </a>
+        )}
       </div>
     </main>
   );

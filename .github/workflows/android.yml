@@ -129,9 +129,17 @@ jobs:
                           <category android:name="android.intent.category.DEFAULT" />
                           <category android:name="android.intent.category.BROWSABLE" />
                           <data android:scheme="https" android:host="lasttopper.lovable.app" />
+                          <data android:scheme="https" android:host="lasttopper.github.io" />
+                      </intent-filter>
+                      <intent-filter>
+                          <action android:name="android.intent.action.VIEW" />
+                          <category android:name="android.intent.category.DEFAULT" />
+                          <category android:name="android.intent.category.BROWSABLE" />
+                          <data android:scheme="lasttopper" />
                       </intent-filter>
           '''
               s = s.replace('</activity>', filt + '        </activity>', 1)
+
           for perm in ("android.permission.POST_NOTIFICATIONS", "android.permission.SCHEDULE_EXACT_ALARM"):
               if perm not in s:
                   s = s.replace('</manifest>', f'    <uses-permission android:name="{perm}" />\n</manifest>')
