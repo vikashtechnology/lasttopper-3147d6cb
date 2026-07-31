@@ -64,7 +64,7 @@ export async function startNativeGoogleSignIn(
   const params = new URLSearchParams({
     ...extraParams,
     provider: "google",
-    redirect_uri: `${window.location.origin}${NATIVE_CALLBACK_PATH}`,
+    redirect_uri: `${window.location.origin}${NATIVE_CALLBACK_PATH}?native=1`,
     state,
   });
 
