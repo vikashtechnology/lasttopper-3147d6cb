@@ -7,6 +7,7 @@ import {
   clearStoredOAuthState,
   isNativeApp,
   appSchemeCallbackUrl,
+  NATIVE_CALLBACK_MARKER,
 } from "@/lib/native-auth";
 import { storeReferralFromUrl } from "@/lib/referral-link";
 import { Loader2 } from "lucide-react";
@@ -36,6 +37,10 @@ function AuthCallback() {
     void (async () => {
       storeReferralFromUrl();
       const parsed = parseOAuthCallback(window.location.href);
+      const callbackUrl = new URL(window.location.href);
+      const isNativeReturn =
+        callbackUrl.searchParams.get(NATIVE_CALLBACK_MARKER) === "1" ||
+        parsed?.state?.startsWith("native-") === true;
 
       // Sign-in was started from the installed app but this page is running in
       // Chrome/Safari (App Link verification unavailable). Bounce the tokens
@@ -43,7 +48,7 @@ function AuthCallback() {
       if (
         parsed &&
         !parsed.error &&
-        parsed.state?.startsWith("native-") &&
+        isNativeReturn &&
         !(await isNativeApp())
       ) {
         const deepLink = appSchemeCallbackUrl({
@@ -53,7 +58,7 @@ function AuthCallback() {
         });
         setAppLink(deepLink);
         setMessage("Returning you to the Last Topper app…");
-        window.location.href = deepLink;
+        window.location.replace(deepLink);
         return;
       }
 

@@ -13,6 +13,9 @@ export const NATIVE_CALLBACK_PATH = "/auth/callback";
 /** Custom URL scheme registered by the native app (lasttopper://…). */
 export const APP_SCHEME = "lasttopper";
 
+/** Public URL marker that survives the OAuth broker's own state handling. */
+export const NATIVE_CALLBACK_MARKER = "native_app";
+
 /** Deep link that always re-opens the installed app with the OAuth tokens. */
 export function appSchemeCallbackUrl(params: Record<string, string>) {
   return `${APP_SCHEME}://auth/callback?${new URLSearchParams(params).toString()}`;
@@ -64,7 +67,7 @@ export async function startNativeGoogleSignIn(
   const params = new URLSearchParams({
     ...extraParams,
     provider: "google",
-    redirect_uri: `${window.location.origin}${NATIVE_CALLBACK_PATH}`,
+    redirect_uri: `${window.location.origin}${NATIVE_CALLBACK_PATH}?${NATIVE_CALLBACK_MARKER}=1`,
     // The "native-" prefix tells the callback page to hand control back to the
     // installed app (lasttopper:// deep link) if it opened in Chrome instead.
     state: `native-${state}`,
@@ -92,6 +95,30 @@ export async function startNativeGoogleSignIn(
   }
 
   window.location.href = url;
+}
+
+/** Maps a native/custom/App Link URL to an in-app route. */
+export function nativeRouteFromUrl(href: string): string | null {
+  let url: URL;
+  try {
+    url = new URL(href);
+  } catch {
+    return null;
+  }
+
+  if (url.protocol === `${APP_SCHEME}:`) {
+    if (url.hostname === "app") return "/home";
+    if (url.hostname === "auth") return `${NATIVE_CALLBACK_PATH}${url.search}${url.hash}`;
+    const customPath = `/${url.hostname}${url.pathname}${url.search}`;
+    return customPath === "/" ? "/home" : customPath;
+  }
+
+  if (url.protocol === "https:") {
+    const path = `${url.pathname}${url.search}${url.hash}`;
+    return path === "/" ? "/home" : path;
+  }
+
+  return null;
 }
 
 export async function closeNativeBrowser() {

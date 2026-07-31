@@ -135,7 +135,13 @@ jobs:
                           <action android:name="android.intent.action.VIEW" />
                           <category android:name="android.intent.category.DEFAULT" />
                           <category android:name="android.intent.category.BROWSABLE" />
-                          <data android:scheme="lasttopper" />
+                          <data android:scheme="lasttopper" android:host="app" />
+                      </intent-filter>
+                      <intent-filter>
+                          <action android:name="android.intent.action.VIEW" />
+                          <category android:name="android.intent.category.DEFAULT" />
+                          <category android:name="android.intent.category.BROWSABLE" />
+                          <data android:scheme="lasttopper" android:host="auth" />
                       </intent-filter>
           '''
               s = s.replace('</activity>', filt + '        </activity>', 1)
