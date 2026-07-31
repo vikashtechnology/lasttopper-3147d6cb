@@ -32,6 +32,7 @@ const config: CapacitorConfig = {
     // is deliberately NOT listed — it must open in the external browser.
     allowNavigation: [
       "lasttopper.lovable.app",
+      "lasttopper.github.io",
       "*.lovable.app",
       "*.razorpay.com",
       "api.razorpay.com",
