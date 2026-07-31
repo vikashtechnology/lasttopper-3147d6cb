@@ -5,6 +5,8 @@ import {
   parseOAuthCallback,
   closeNativeBrowser,
   clearStoredOAuthState,
+  isNativeApp,
+  appSchemeCallbackUrl,
 } from "@/lib/native-auth";
 import { storeReferralFromUrl } from "@/lib/referral-link";
 import { Loader2 } from "lucide-react";
