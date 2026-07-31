@@ -64,8 +64,10 @@ export async function startNativeGoogleSignIn(
   const params = new URLSearchParams({
     ...extraParams,
     provider: "google",
-    redirect_uri: `${window.location.origin}${NATIVE_CALLBACK_PATH}?native=1`,
-    state,
+    redirect_uri: `${window.location.origin}${NATIVE_CALLBACK_PATH}`,
+    // The "native-" prefix tells the callback page to hand control back to the
+    // installed app (lasttopper:// deep link) if it opened in Chrome instead.
+    state: `native-${state}`,
   });
 
   const url = `${window.location.origin}/~oauth/initiate?${params.toString()}`;
