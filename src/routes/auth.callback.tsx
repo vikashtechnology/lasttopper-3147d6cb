@@ -54,7 +54,7 @@ function AuthCallback() {
         const deepLink = appSchemeCallbackUrl({
           access_token: parsed.access_token,
           refresh_token: parsed.refresh_token,
-          state: parsed.state,
+          state: parsed.state ?? "native-return",
         });
         setAppLink(deepLink);
         setMessage("Returning you to the Last Topper app…");
