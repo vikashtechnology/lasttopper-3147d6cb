@@ -14,7 +14,12 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { registerPWA } from "@/lib/pwa-register";
 import { storeReferralFromUrl } from "@/lib/referral-link";
-import { parseOAuthCallback, closeNativeBrowser, clearStoredOAuthState } from "@/lib/native-auth";
+import {
+  parseOAuthCallback,
+  closeNativeBrowser,
+  clearStoredOAuthState,
+  nativeRouteFromUrl,
+} from "@/lib/native-auth";
 
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
@@ -147,7 +152,7 @@ function RootComponent() {
         const { Capacitor } = await import("@capacitor/core");
         if (!Capacitor.isNativePlatform()) return;
         const { App } = await import("@capacitor/app");
-        const handle = await App.addListener("appUrlOpen", ({ url }) => {
+        const openNativeUrl = (url: string) => {
           storeReferralFromUrl(url);
           void (async () => {
             // Google sign-in finished in the system browser and handed the
@@ -165,16 +170,17 @@ function RootComponent() {
                 return;
               }
             }
-            try {
-              const parsed = new URL(url);
-              const path = `${parsed.pathname}${parsed.search}`;
-              if (path && path !== "/") void router.navigate({ href: path });
-            } catch {
-              /* ignore */
-            }
+            const path = nativeRouteFromUrl(url);
+            if (path) void router.navigate({ href: path });
           })();
-        });
+        };
+        const handle = await App.addListener("appUrlOpen", ({ url }) => openNativeUrl(url));
         remove = () => void handle.remove();
+
+        // Handles links that launched the app from a fully closed state before
+        // React and the appUrlOpen listener had mounted.
+        const launch = await App.getLaunchUrl();
+        if (launch?.url) openNativeUrl(launch.url);
       } catch {
         /* not running natively */
       }
