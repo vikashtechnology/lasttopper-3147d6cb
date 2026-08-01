@@ -5,13 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Atom, Dna, Timer, Brain, BookMarked } from "lucide-react";
 import { toast } from "sonner";
 import { saveSignupDetails, setProfession, completeOnboarding } from "@/lib/user.functions";
@@ -20,7 +13,7 @@ import { getPendingReferral, clearPendingReferral } from "@/lib/referral-link";
 import { useUserStore, type Profession } from "@/store/user";
 import { failMessage } from "@/lib/friendly-error";
 
-const COUNTRY_CODES = ["+91", "+1", "+44", "+61", "+971", "+65", "+81"];
+
 
 type Step = "details" | "profession" | "tutorial";
 
@@ -28,12 +21,12 @@ export function OnboardingFlow({ open }: { open: boolean }) {
   const patch = useUserStore((s) => s.patchProfile);
   const profile = useUserStore((s) => s.profile);
   const [step, setStep] = useState<Step>(
-    profile?.phone && profile?.full_name && profile?.date_of_birth ? "profession" : "details",
+    profile?.email && profile?.full_name && profile?.date_of_birth ? "profession" : "details",
   );
   const [fullName, setFullName] = useState(profile?.full_name ?? "");
   const [dob, setDob] = useState<string>("");
-  const [country, setCountry] = useState(profile?.country_code ?? "+91");
-  const [phone, setPhone] = useState(profile?.phone ?? "");
+  const [email, setEmail] = useState(profile?.email ?? "");
+
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [saving, setSaving] = useState(false);
   const [prof, setProf] = useState<Profession | null>(profile?.profession ?? null);
@@ -50,8 +43,8 @@ export function OnboardingFlow({ open }: { open: boolean }) {
       toast.error("Please enter your date of birth.");
       return;
     }
-    if (!/^\d{6,15}$/.test(phone)) {
-      toast.error("Enter a valid phone number.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
+      toast.error("Enter a valid email address.");
       return;
     }
     if (!acceptTerms) {
@@ -63,17 +56,16 @@ export function OnboardingFlow({ open }: { open: boolean }) {
       await saveSignupDetails({
         data: {
           full_name: fullName.trim(),
-          country_code: country,
-          phone,
+          email: email.trim().toLowerCase(),
           date_of_birth: dob,
           accept_terms: true,
         },
       });
       patch({
         full_name: fullName.trim(),
-        country_code: country,
-        phone,
+        email: email.trim().toLowerCase(),
       });
+
       const code = refCode.trim().toUpperCase();
       if (code.length >= 4) {
         try {
@@ -142,8 +134,9 @@ export function OnboardingFlow({ open }: { open: boolean }) {
             >
               <h2 className="text-xl font-semibold">Complete your profile</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                One-time verification. Your phone must be unique to your account.
+                One-time verification. Your email must be unique to your account.
               </p>
+
 
               <div className="mt-5 space-y-4">
                 <div>
@@ -168,33 +161,20 @@ export function OnboardingFlow({ open }: { open: boolean }) {
                   />
                 </div>
 
-                <div className="grid grid-cols-[110px_1fr] gap-3">
-                  <div>
-                    <Label className="text-xs">Code</Label>
-                    <Select value={country} onValueChange={setCountry}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {COUNTRY_CODES.map((c) => (
-                          <SelectItem key={c} value={c}>
-                            {c}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs">Phone number</Label>
-                    <Input
-                      className="mt-1"
-                      inputMode="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                      placeholder="9876543210"
-                    />
-                  </div>
+                <div>
+                  <Label className="text-xs">Email address</Label>
+                  <Input
+                    className="mt-1"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    maxLength={160}
+                  />
                 </div>
+
 
                 <div>
                   <Label className="text-xs">Referral code (optional)</Label>
