@@ -38,35 +38,35 @@ export const saveSignupDetails = createServerFn({ method: "POST" })
       throw new Error("Please enter a valid date of birth.");
     }
 
-    // Enforce uniqueness of phone across accounts
+    // Enforce uniqueness of email across accounts
     const { data: existing, error: qErr } = await context.supabase
       .from("users")
       .select("id")
-      .eq("phone", data.phone)
+      .eq("email", data.email)
       .neq("id", context.userId)
       .maybeSingle();
     if (qErr) throw qErr;
     if (existing) {
-      throw new Error("This phone number is already linked to another account.");
+      throw new Error("This email is already linked to another account.");
     }
 
     const { error } = await context.supabase
       .from("users")
       .update({
         full_name: data.full_name,
-        country_code: data.country_code,
-        phone: data.phone,
+        email: data.email,
         date_of_birth: data.date_of_birth,
         terms_accepted_at: new Date().toISOString(),
       })
       .eq("id", context.userId);
     if (error) {
       const msg = String((error as { message?: string }).message ?? "");
-      if (msg.includes("users_phone_unique") || msg.includes("duplicate key")) {
-        throw new Error("This phone number is already linked to another account.");
+      if (msg.includes("duplicate key")) {
+        throw new Error("This email is already linked to another account.");
       }
       throw error;
     }
+
     return { ok: true };
   });
 
