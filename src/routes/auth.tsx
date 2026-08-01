@@ -1,19 +1,21 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { requestPhoneOtp, verifyPhoneOtp } from "@/lib/phone-auth.functions";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { GraduationCap, Mail, KeyRound } from "lucide-react";
+import { GraduationCap, MessageCircle, KeyRound } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — Last Topper" },
-      { name: "description", content: "Sign in to Last Topper to start practicing for JEE & NEET." },
+      { name: "description", content: "Sign in to Last Topper with your WhatsApp number and start practicing for JEE & NEET." },
       { property: "og:title", content: "Sign in — Last Topper" },
-      { property: "og:description", content: "Sign in to Last Topper." },
+      { property: "og:description", content: "Sign in to Last Topper with WhatsApp." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -21,18 +23,12 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-/**
- * Magic-link return target: always the public website page, which just confirms
- * the sign-in. The user then reopens/refreshes the app or site, already logged in.
- */
-function magicLinkRedirectUrl() {
-  return "https://lasttopper.lovable.app/auth/verified";
-}
-
-
 function AuthPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const sendCode = useServerFn(requestPhoneOtp);
+  const checkCode = useServerFn(verifyPhoneOtp);
+
+  const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [code, setCode] = useState("");
@@ -47,25 +43,22 @@ function AuthPage() {
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
 
-  async function handleMagicLink(e: React.FormEvent) {
+  async function handleSend(e: React.FormEvent) {
     e.preventDefault();
-    const address = email.trim().toLowerCase();
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(address)) {
-      toast.error("Enter a valid email address.");
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length < 10) {
+      toast.error("Enter a valid WhatsApp number.");
       return;
     }
     setBusy(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: address,
-        options: { emailRedirectTo: magicLinkRedirectUrl() },
-      });
-      if (error) {
-        toast.error("Failed. Please try again.");
+      const res = await sendCode({ data: { phone } });
+      if (!res.ok) {
+        toast.error(res.message);
         return;
       }
       setSent(true);
-      toast.success("Sign-in email sent — check your inbox.");
+      toast.success("Code sent on WhatsApp.");
     } catch (err) {
       console.error(err);
       toast.error("Failed. Please try again.");
@@ -74,22 +67,27 @@ function AuthPage() {
     }
   }
 
-  async function handleVerifyCode(e: React.FormEvent) {
+  async function handleVerify(e: React.FormEvent) {
     e.preventDefault();
     const token = code.replace(/\D/g, "");
     if (token.length !== 6) {
-      toast.error("Enter the 6-digit code from your email.");
+      toast.error("Enter the 6-digit code from WhatsApp.");
       return;
     }
     setBusy(true);
     try {
+      const res = await checkCode({ data: { phone, code: token } });
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
       const { error } = await supabase.auth.verifyOtp({
-        email: email.trim().toLowerCase(),
-        token,
+        token_hash: res.tokenHash,
         type: "email",
       });
       if (error) {
-        toast.error("Code is invalid or expired.");
+        console.error(error);
+        toast.error("Failed. Please try again.");
         return;
       }
       toast.success("Signed in.");
@@ -112,14 +110,14 @@ function AuthPage() {
           <h1 className="text-2xl font-semibold">Welcome to Last Topper</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {sent
-              ? `We emailed ${email.trim().toLowerCase()}. Enter the 6-digit code below, or tap the link in the email.`
-              : "Enter your email and we'll send you a sign-in code."}
+              ? `We sent a 6-digit code on WhatsApp to +${phone.replace(/\D/g, "").length === 10 ? "91" : ""}${phone.replace(/\D/g, "")}.`
+              : "Enter your WhatsApp number and we'll send you a login code."}
           </p>
         </div>
 
         {sent ? (
           <div className="space-y-3">
-            <form onSubmit={handleVerifyCode} className="space-y-3">
+            <form onSubmit={handleVerify} className="space-y-3">
               <Input
                 inputMode="numeric"
                 autoComplete="one-time-code"
@@ -146,28 +144,32 @@ function AuthPage() {
                 setCode("");
               }}
             >
-              Use a different email
+              Use a different number
             </Button>
           </div>
         ) : (
-          <form onSubmit={handleMagicLink} className="space-y-3">
-            <Input
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={busy}
-              required
-            />
+          <form onSubmit={handleSend} className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-10 items-center rounded-md border border-input bg-muted px-3 text-sm text-muted-foreground">
+                +91
+              </span>
+              <Input
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel"
+                placeholder="98765 43210"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                disabled={busy}
+                required
+              />
+            </div>
             <Button type="submit" disabled={busy} className="w-full" size="lg">
-              <Mail className="h-4 w-4" />
-              <span className="ml-2">{busy ? "Sending…" : "Send sign-in code"}</span>
+              <MessageCircle className="h-4 w-4" />
+              <span className="ml-2">{busy ? "Sending…" : "Send code on WhatsApp"}</span>
             </Button>
           </form>
         )}
-
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
           By continuing, you agree to our{" "}
@@ -178,4 +180,5 @@ function AuthPage() {
     </main>
   );
 }
+
 
