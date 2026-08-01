@@ -28,12 +28,12 @@ export function OnboardingFlow({ open }: { open: boolean }) {
   const patch = useUserStore((s) => s.patchProfile);
   const profile = useUserStore((s) => s.profile);
   const [step, setStep] = useState<Step>(
-    profile?.phone && profile?.full_name && profile?.date_of_birth ? "profession" : "details",
+    profile?.email && profile?.full_name && profile?.date_of_birth ? "profession" : "details",
   );
   const [fullName, setFullName] = useState(profile?.full_name ?? "");
   const [dob, setDob] = useState<string>("");
-  const [country, setCountry] = useState(profile?.country_code ?? "+91");
-  const [phone, setPhone] = useState(profile?.phone ?? "");
+  const [email, setEmail] = useState(profile?.email ?? "");
+
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [saving, setSaving] = useState(false);
   const [prof, setProf] = useState<Profession | null>(profile?.profession ?? null);
