@@ -167,33 +167,20 @@ export function OnboardingFlow({ open }: { open: boolean }) {
                   />
                 </div>
 
-                <div className="grid grid-cols-[110px_1fr] gap-3">
-                  <div>
-                    <Label className="text-xs">Code</Label>
-                    <Select value={country} onValueChange={setCountry}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {COUNTRY_CODES.map((c) => (
-                          <SelectItem key={c} value={c}>
-                            {c}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs">Phone number</Label>
-                    <Input
-                      className="mt-1"
-                      inputMode="tel"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
-                      placeholder="9876543210"
-                    />
-                  </div>
+                <div>
+                  <Label className="text-xs">Email address</Label>
+                  <Input
+                    className="mt-1"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    maxLength={160}
+                  />
                 </div>
+
 
                 <div>
                   <Label className="text-xs">Referral code (optional)</Label>
