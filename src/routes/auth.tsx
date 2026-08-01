@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { isNativeApp } from "@/lib/native-auth";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,7 +57,7 @@ function AuthPage() {
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email: address,
-        options: { emailRedirectTo: await magicLinkRedirectUrl() },
+        options: { emailRedirectTo: magicLinkRedirectUrl() },
       });
       if (error) {
         toast.error("Failed. Please try again.");

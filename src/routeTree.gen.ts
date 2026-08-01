@@ -15,6 +15,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthVerifiedRouteImport } from './routes/auth.verified'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated/review'
 import { Route as AuthenticatedPyqRouteImport } from './routes/_authenticated/pyq'
@@ -92,6 +93,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthVerifiedRoute = AuthVerifiedRouteImport.update({
+  id: '/verified',
+  path: '/verified',
+  getParentRoute: () => AuthRoute,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/callback',
@@ -383,6 +389,7 @@ export interface FileRoutesByFullPath {
   '/pyq': typeof AuthenticatedPyqRoute
   '/review': typeof AuthenticatedReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/verified': typeof AuthVerifiedRoute
   '/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
   '/admin/app-update': typeof AuthenticatedAdminAppUpdateRoute
@@ -435,6 +442,7 @@ export interface FileRoutesByTo {
   '/pyq': typeof AuthenticatedPyqRoute
   '/review': typeof AuthenticatedReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/verified': typeof AuthVerifiedRoute
   '/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
   '/admin/app-update': typeof AuthenticatedAdminAppUpdateRoute
@@ -492,6 +500,7 @@ export interface FileRoutesById {
   '/_authenticated/pyq': typeof AuthenticatedPyqRoute
   '/_authenticated/review': typeof AuthenticatedReviewRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/auth/verified': typeof AuthVerifiedRoute
   '/_authenticated/admin/admins': typeof AuthenticatedAdminAdminsRoute
   '/_authenticated/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
   '/_authenticated/admin/app-update': typeof AuthenticatedAdminAppUpdateRoute
@@ -549,6 +558,7 @@ export interface FileRouteTypes {
     | '/pyq'
     | '/review'
     | '/auth/callback'
+    | '/auth/verified'
     | '/admin/admins'
     | '/admin/announcements'
     | '/admin/app-update'
@@ -601,6 +611,7 @@ export interface FileRouteTypes {
     | '/pyq'
     | '/review'
     | '/auth/callback'
+    | '/auth/verified'
     | '/admin/admins'
     | '/admin/announcements'
     | '/admin/app-update'
@@ -657,6 +668,7 @@ export interface FileRouteTypes {
     | '/_authenticated/pyq'
     | '/_authenticated/review'
     | '/auth/callback'
+    | '/auth/verified'
     | '/_authenticated/admin/admins'
     | '/_authenticated/admin/announcements'
     | '/_authenticated/admin/app-update'
@@ -749,6 +761,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/auth/verified': {
+      id: '/auth/verified'
+      path: '/verified'
+      fullPath: '/auth/verified'
+      preLoaderRoute: typeof AuthVerifiedRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/auth/callback': {
       id: '/auth/callback'
@@ -1220,10 +1239,12 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface AuthRouteChildren {
   AuthCallbackRoute: typeof AuthCallbackRoute
+  AuthVerifiedRoute: typeof AuthVerifiedRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthCallbackRoute: AuthCallbackRoute,
+  AuthVerifiedRoute: AuthVerifiedRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
