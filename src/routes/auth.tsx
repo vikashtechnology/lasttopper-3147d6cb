@@ -23,14 +23,13 @@ export const Route = createFileRoute("/auth")({
 });
 
 /**
- * Magic-link return target.
- * - Native shell  → lasttopper://app  (deep link re-opens the installed app)
- * - Website       → https://lasttopper.lovable.app/auth/callback
+ * Magic-link return target: always the public website page, which just confirms
+ * the sign-in. The user then reopens/refreshes the app or site, already logged in.
  */
-async function magicLinkRedirectUrl() {
-  if (await isNativeApp()) return "lasttopper://app";
-  return `${window.location.origin}/auth/callback`;
+function magicLinkRedirectUrl() {
+  return "https://lasttopper.lovable.app/auth/verified";
 }
+
 
 function AuthPage() {
   const navigate = useNavigate();
