@@ -141,8 +141,9 @@ export function OnboardingFlow({ open }: { open: boolean }) {
             >
               <h2 className="text-xl font-semibold">Complete your profile</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                One-time verification. Your phone must be unique to your account.
+                One-time verification. Your email must be unique to your account.
               </p>
+
 
               <div className="mt-5 space-y-4">
                 <div>
