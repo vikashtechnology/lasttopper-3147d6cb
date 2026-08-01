@@ -19,11 +19,11 @@ export const getMyProfile = createServerFn({ method: "GET" })
 
 const signupSchema = z.object({
   full_name: z.string().trim().min(2).max(80),
-  country_code: z.string().min(1).max(6),
-  phone: z.string().regex(/^\d{6,15}$/),
+  email: z.string().trim().toLowerCase().email().max(160),
   date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   accept_terms: z.literal(true),
 });
+
 
 export const saveSignupDetails = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
