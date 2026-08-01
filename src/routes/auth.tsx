@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { GraduationCap, Mail } from "lucide-react";
+import { GraduationCap, Mail, KeyRound } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -35,6 +35,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const [code, setCode] = useState("");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -64,7 +65,35 @@ function AuthPage() {
         return;
       }
       setSent(true);
-      toast.success("Magic link sent — check your inbox.");
+      toast.success("Sign-in email sent — check your inbox.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleVerifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    const token = code.replace(/\D/g, "");
+    if (token.length !== 6) {
+      toast.error("Enter the 6-digit code from your email.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email: email.trim().toLowerCase(),
+        token,
+        type: "email",
+      });
+      if (error) {
+        toast.error("Code is invalid or expired.");
+        return;
+      }
+      toast.success("Signed in.");
+      navigate({ to: "/home", replace: true });
     } catch (err) {
       console.error(err);
       toast.error("Failed. Please try again.");
@@ -83,15 +112,43 @@ function AuthPage() {
           <h1 className="text-2xl font-semibold">Welcome to Last Topper</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {sent
-              ? "We emailed you a sign-in link. Open it on this device to continue."
-              : "Enter your email and we'll send you a magic sign-in link."}
+              ? `We emailed ${email.trim().toLowerCase()}. Enter the 6-digit code below, or tap the link in the email.`
+              : "Enter your email and we'll send you a sign-in code."}
           </p>
         </div>
 
         {sent ? (
-          <Button variant="outline" className="w-full" size="lg" onClick={() => setSent(false)}>
-            Use a different email
-          </Button>
+          <div className="space-y-3">
+            <form onSubmit={handleVerifyCode} className="space-y-3">
+              <Input
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="123456"
+                maxLength={6}
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                disabled={busy}
+                className="text-center text-lg tracking-[0.4em]"
+                required
+              />
+              <Button type="submit" disabled={busy} className="w-full" size="lg">
+                <KeyRound className="h-4 w-4" />
+                <span className="ml-2">{busy ? "Verifying…" : "Verify code"}</span>
+              </Button>
+            </form>
+            <Button
+              variant="outline"
+              className="w-full"
+              size="lg"
+              disabled={busy}
+              onClick={() => {
+                setSent(false);
+                setCode("");
+              }}
+            >
+              Use a different email
+            </Button>
+          </div>
         ) : (
           <form onSubmit={handleMagicLink} className="space-y-3">
             <Input
@@ -106,10 +163,11 @@ function AuthPage() {
             />
             <Button type="submit" disabled={busy} className="w-full" size="lg">
               <Mail className="h-4 w-4" />
-              <span className="ml-2">{busy ? "Sending link…" : "Send magic link"}</span>
+              <span className="ml-2">{busy ? "Sending…" : "Send sign-in code"}</span>
             </Button>
           </form>
         )}
+
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
           By continuing, you agree to our{" "}
