@@ -25,6 +25,11 @@ function VerifiedPage() {
 
   useEffect(() => {
     void (async () => {
+      const url = new URL(window.location.href);
+      const hash = new URLSearchParams(url.hash.replace(/^#/, ""));
+      const get = (k: string) => url.searchParams.get(k) ?? hash.get(k);
+
+      // 1) Tokens delivered directly in the URL (implicit flow).
       const parsed = parseOAuthCallback(window.location.href);
       if (parsed && !parsed.error) {
         const { error } = await supabase.auth.setSession({
@@ -34,10 +39,32 @@ function VerifiedPage() {
         setStatus(error ? "fail" : "ok");
         return;
       }
+
+      // 2) One-time email token (works even when opened in another browser).
+      const tokenHash = get("token_hash") ?? get("token");
+      const type = get("type");
+      if (tokenHash && type) {
+        const { error } = await supabase.auth.verifyOtp({
+          type: type as "magiclink" | "signup" | "recovery" | "email" | "invite" | "email_change",
+          token_hash: tokenHash,
+        });
+        setStatus(error ? "fail" : "ok");
+        return;
+      }
+
+      // 3) PKCE code exchange.
+      const code = get("code");
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        setStatus(error ? "fail" : "ok");
+        return;
+      }
+
       const { data } = await supabase.auth.getSession();
       setStatus(data.session ? "ok" : "fail");
     })();
   }, []);
+
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-6">
