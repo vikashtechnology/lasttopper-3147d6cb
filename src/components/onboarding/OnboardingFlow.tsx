@@ -50,8 +50,8 @@ export function OnboardingFlow({ open }: { open: boolean }) {
       toast.error("Please enter your date of birth.");
       return;
     }
-    if (!/^\d{6,15}$/.test(phone)) {
-      toast.error("Enter a valid phone number.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
+      toast.error("Enter a valid email address.");
       return;
     }
     if (!acceptTerms) {
@@ -63,17 +63,16 @@ export function OnboardingFlow({ open }: { open: boolean }) {
       await saveSignupDetails({
         data: {
           full_name: fullName.trim(),
-          country_code: country,
-          phone,
+          email: email.trim().toLowerCase(),
           date_of_birth: dob,
           accept_terms: true,
         },
       });
       patch({
         full_name: fullName.trim(),
-        country_code: country,
-        phone,
+        email: email.trim().toLowerCase(),
       });
+
       const code = refCode.trim().toUpperCase();
       if (code.length >= 4) {
         try {
