@@ -1,12 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
-import { isNativeApp, startNativeGoogleSignIn } from "@/lib/native-auth";
+import { isNativeApp } from "@/lib/native-auth";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Mail } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -22,9 +22,21 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+/**
+ * Magic-link return target.
+ * - Native shell  → lasttopper://app  (deep link re-opens the installed app)
+ * - Website       → https://lasttopper.lovable.app/auth/callback
+ */
+async function magicLinkRedirectUrl() {
+  if (await isNativeApp()) return "lasttopper://app";
+  return `${window.location.origin}/auth/callback`;
+}
+
 function AuthPage() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -36,32 +48,32 @@ function AuthPage() {
     return () => sub.subscription.unsubscribe();
   }, [navigate]);
 
-  async function handleGoogle() {
+  async function handleMagicLink(e: React.FormEvent) {
+    e.preventDefault();
+    const address = email.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(address)) {
+      toast.error("Enter a valid email address.");
+      return;
+    }
     setBusy(true);
     try {
-      // Native app: Google blocks WebView sign-in, so open the system browser
-      // and come back via the /auth/callback app link.
-      if (await isNativeApp()) {
-        await startNativeGoogleSignIn();
-        return;
-      }
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+      const { error } = await supabase.auth.signInWithOtp({
+        email: address,
+        options: { emailRedirectTo: await magicLinkRedirectUrl() },
       });
-      if (result.error) {
-        toast.error("Sign-in failed. Please try again.");
+      if (error) {
+        toast.error("Failed. Please try again.");
         return;
       }
-      if (result.redirected) return;
-      navigate({ to: "/home", replace: true });
+      setSent(true);
+      toast.success("Magic link sent — check your inbox.");
     } catch (err) {
       console.error(err);
-      toast.error("Sign-in failed. Please try again.");
+      toast.error("Failed. Please try again.");
     } finally {
       setBusy(false);
     }
   }
-
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-6">
@@ -72,14 +84,34 @@ function AuthPage() {
           </div>
           <h1 className="text-2xl font-semibold">Welcome to Last Topper</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Sign in with Google to continue.
+            {sent
+              ? "We emailed you a sign-in link. Open it on this device to continue."
+              : "Enter your email and we'll send you a magic sign-in link."}
           </p>
         </div>
 
-        <Button onClick={handleGoogle} disabled={busy} className="w-full" size="lg">
-          <GoogleIcon />
-          <span className="ml-2">{busy ? "Signing in…" : "Continue with Google"}</span>
-        </Button>
+        {sent ? (
+          <Button variant="outline" className="w-full" size="lg" onClick={() => setSent(false)}>
+            Use a different email
+          </Button>
+        ) : (
+          <form onSubmit={handleMagicLink} className="space-y-3">
+            <Input
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={busy}
+              required
+            />
+            <Button type="submit" disabled={busy} className="w-full" size="lg">
+              <Mail className="h-4 w-4" />
+              <span className="ml-2">{busy ? "Sending link…" : "Send magic link"}</span>
+            </Button>
+          </form>
+        )}
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
           By continuing, you agree to our{" "}
@@ -91,13 +123,3 @@ function AuthPage() {
   );
 }
 
-function GoogleIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
-      <path
-        fill="#EA4335"
-        d="M12 10.2v3.9h5.5c-.24 1.4-1.68 4.1-5.5 4.1-3.3 0-6-2.75-6-6.15S8.7 5.9 12 5.9c1.9 0 3.15.8 3.88 1.5l2.65-2.55C16.9 3.35 14.7 2.4 12 2.4 6.75 2.4 2.5 6.65 2.5 12s4.25 9.6 9.5 9.6c5.5 0 9.15-3.85 9.15-9.3 0-.62-.07-1.1-.17-1.6H12z"
-      />
-    </svg>
-  );
-}
