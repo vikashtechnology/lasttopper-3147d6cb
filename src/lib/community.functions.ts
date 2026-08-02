@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { sendTelegramAlert, sendTelegramDocument, safeFileName } from "@/lib/telegram-alert";
+import { sendTelegramAlert, sendTelegramDocument, safeFileName, buildReport, fmtIST } from "@/lib/telegram-alert";
 
 // ==================== FORUMS ====================
 
