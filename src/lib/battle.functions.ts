@@ -461,37 +461,46 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
       .select("id, process_after, short_code").single();
     if (error) throw error;
     try {
-      const { safeFileName, sendTelegramDocument } = await import("@/lib/telegram-alert");
+      const { safeFileName, sendTelegramDocument, buildReport, fmtIST } = await import("@/lib/telegram-alert");
       const who = u?.full_name ?? u?.email ?? context.userId;
-      const details =
+      const details: [string, unknown][] =
         data.method === "upi"
-          ? [`UPI ID        : ${data.upi_id ?? "-"}`]
+          ? [["UPI ID", data.upi_id]]
           : [
-              `Bank          : ${data.bank_name ?? "-"}`,
-              `Account name  : ${data.account_name ?? "-"}`,
-              `Account number: ${data.account_number ?? "-"}`,
-              `IFSC          : ${data.ifsc ?? "-"}`,
+              ["Bank", data.bank_name],
+              ["Account name", data.account_name],
+              ["Account number", data.account_number],
+              ["IFSC", (data.ifsc ?? "").toUpperCase()],
             ];
-      const body = [
-        "WITHDRAWAL REQUEST",
-        "====================",
-        `Request ID    : ${row.short_code}`,
-        `User          : ${who}`,
-        `Email         : ${u?.email ?? "-"}`,
-        `Amount        : ${data.amount} TC (₹${data.amount})`,
-        `Method        : ${data.method.toUpperCase()}`,
-        ...details,
-        `Requested at  : ${new Date().toISOString()}`,
-        "",
-        "Reply with:",
-        `/approve id=${row.short_code}`,
-        `/reject id=${row.short_code}   (auto-refunds wallet)`,
-      ].join("\n");
+      const body = buildReport(
+        "Withdrawal request",
+        [
+          ["Request ID", `#${row.short_code}`],
+          ["User", who],
+          ["Email", u?.email],
+          ["Amount", `${data.amount} TC (₹${data.amount})`],
+          ["Method", data.method.toUpperCase()],
+          ...details,
+          ["Requested at", fmtIST(new Date())],
+        ],
+        [
+          "Reply with:",
+          `/approve id=${row.short_code}`,
+          `/reject id=${row.short_code}   (auto-refunds wallet)`,
+        ],
+      );
       const fileName = safeFileName([String(who), `withdrawal_${row.short_code}`], "txt");
       await sendTelegramDocument(
         fileName,
         body,
-        `💸 <b>Withdrawal #${row.short_code}</b> — ₹${data.amount}\n<code>/approve id=${row.short_code}</code>\n<code>/reject id=${row.short_code}</code>`,
+        [
+          `💸 <b>Withdrawal #${row.short_code}</b>`,
+          `👤 ${who}`,
+          `💰 ₹${data.amount} • ${data.method.toUpperCase()}`,
+          "",
+          `<code>/approve id=${row.short_code}</code>`,
+          `<code>/reject id=${row.short_code}</code>`,
+        ].join("\n"),
       );
     } catch { /* non-fatal */ }
 
