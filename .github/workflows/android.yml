@@ -27,7 +27,7 @@ jobs:
       # APP_VERSION_CODE: integer, must increase every release (must match the
       # "Version code" in Admin → App update).
       APP_VERSION_NAME: "1.0.1"
-      APP_VERSION_CODE: "1.0.1"
+      APP_VERSION_CODE: "2"
     steps:
       - uses: actions/checkout@v4
 
