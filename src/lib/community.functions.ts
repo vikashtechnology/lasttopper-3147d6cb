@@ -472,17 +472,15 @@ export const reportContent = createServerFn({ method: "POST" })
     if (error) throw error;
     await sendTelegramDocument(
       safeFileName([data.target_type, `report_${data.target_id}`], "txt"),
-      [
-        "CONTENT REPORT",
-        "====================",
-        `Type      : ${data.target_type}`,
-        `Target ID : ${data.target_id}`,
-        `Reason    : ${data.reason}`,
-        `Message   : ${data.message ?? "-"}`,
-        `Reporter  : ${context.userId}`,
-        `Time      : ${new Date().toISOString()}`,
-      ].join("\n"),
-      `🚩 <b>Content reported</b> — ${data.target_type}`,
+      buildReport("Content report", [
+        ["Type", data.target_type],
+        ["Target ID", data.target_id],
+        ["Reason", data.reason],
+        ["Message", data.message ?? "—"],
+        ["Reporter", context.userId],
+        ["Time", fmtIST(new Date())],
+      ]),
+      [`🚩 <b>Content reported</b>`, `📄 ${data.target_type}`, `❗ ${data.reason}`].join("\n"),
     );
     return { ok: true };
   });
