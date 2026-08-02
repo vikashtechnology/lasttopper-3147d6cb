@@ -527,15 +527,13 @@ export const notifyFirstLogin = createServerFn({ method: "POST" })
     if (u && u.last_active_date === null) {
       await sendTelegramDocument(
         safeFileName([String(u.full_name ?? "user"), "first_login"], "txt"),
-        [
-          "FIRST LOGIN",
-          "====================",
-          `Name  : ${u.full_name ?? "Unknown"}`,
-          `Email : ${u.email ?? "no email"}`,
-          `User ID: ${context.userId}`,
-          `Time  : ${new Date().toISOString()}`,
-        ].join("\n"),
-        `👤 <b>First login</b> — ${u.full_name ?? "Unknown"}`,
+        buildReport("First login", [
+          ["Name", u.full_name ?? "Unknown"],
+          ["Email", u.email ?? "—"],
+          ["User ID", context.userId],
+          ["Time", fmtIST(new Date())],
+        ]),
+        [`👤 <b>First login</b>`, `🙋 ${u.full_name ?? "Unknown"}`].join("\n"),
       );
     }
     return { ok: true };
