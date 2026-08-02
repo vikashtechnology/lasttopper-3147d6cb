@@ -133,21 +133,27 @@ export const completeOnboarding = createServerFn({ method: "POST" })
 
     // One-time signup verification alert to the dedicated bot
     if (!u.signup_alert_sent_at) {
-      const val = (s: unknown) => String(s ?? "—");
-      const lines = [
-        "NEW SIGNUP VERIFIED",
-        "====================",
-        `Name          : ${val(u.full_name)}`,
-        `Email         : ${val(u.email)}`,
-        `Phone         : ${val(u.country_code)} ${val(u.phone)}`,
-        `Date of birth : ${val(u.date_of_birth)}`,
-        `Track         : ${val((u.profession ?? "").toString().toUpperCase())}`,
-        `Terms accepted: ${val(u.terms_accepted_at)}`,
-        `Signed up at  : ${val(u.created_at)}`,
-        `User ID       : ${context.userId}`,
-      ].join("\n");
+      const lines = buildReport("New signup verified", [
+        ["Name", u.full_name],
+        ["Email", u.email],
+        ["Phone", `${u.country_code ?? "+91"} ${u.phone}`],
+        ["Date of birth", fmtDate(u.date_of_birth)],
+        ["Track", (u.profession ?? "").toString().toUpperCase()],
+        ["Terms accepted", fmtIST(u.terms_accepted_at)],
+        ["Signed up at", fmtIST(u.created_at)],
+        ["User ID", context.userId],
+      ]);
       const fileName = safeFileName([String(u.full_name ?? "user"), "new_user"], "txt");
-      await sendTelegramDocument(fileName, lines, `🆕 <b>New signup</b> — ${val(u.full_name)}`);
+      await sendTelegramDocument(
+        fileName,
+        lines,
+        [
+          "🆕 <b>New signup verified</b>",
+          `👤 ${u.full_name ?? "—"}`,
+          `📱 ${u.country_code ?? "+91"} ${u.phone}`,
+          `🎓 ${(u.profession ?? "—").toString().toUpperCase()}`,
+        ].join("\n"),
+      );
 
       await context.supabase
         .from("users")
