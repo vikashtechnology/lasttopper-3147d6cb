@@ -35,6 +35,17 @@ const PLANS = [
 
 type PlanKey = (typeof PLANS)[number]["key"];
 
+type PromoInput = {
+  id?: string;
+  code: string;
+  percent: number;
+  plans: PlanKey[];
+  valid_until: string | null;
+  max_uses: number | null;
+  is_active: boolean;
+  note?: string | null;
+};
+
 function AdminPromos() {
   const qc = useQueryClient();
   const list = useQuery({ queryKey: ["admin-promos"], queryFn: () => adminListPromoCodes() });
@@ -46,8 +57,7 @@ function AdminPromos() {
   const [plans, setPlans] = useState<PlanKey[]>(["pro_weekly", "pro", "pro_yearly"]);
 
   const save = useMutation({
-    mutationFn: (row: Parameters<typeof adminSavePromoCode>[0]["data"]) =>
-      adminSavePromoCode({ data: row }),
+    mutationFn: (row: PromoInput) => adminSavePromoCode({ data: row }),
     onSuccess: () => {
       toast.success("Saved");
       qc.invalidateQueries({ queryKey: ["admin-promos"] });
