@@ -40,9 +40,9 @@ function loadCheckout(): Promise<void> {
 }
 
 export type PayArgs =
-  | { purpose: "pro"; name?: string | null; email?: string | null; description?: string; voucher_code?: string }
-  | { purpose: "pro_yearly"; name?: string | null; email?: string | null; description?: string; voucher_code?: string }
-  | { purpose: "pro_weekly"; name?: string | null; email?: string | null; description?: string; voucher_code?: string }
+  | { purpose: "pro"; name?: string | null; email?: string | null; description?: string; voucher_code?: string; promo_code?: string }
+  | { purpose: "pro_yearly"; name?: string | null; email?: string | null; description?: string; voucher_code?: string; promo_code?: string }
+  | { purpose: "pro_weekly"; name?: string | null; email?: string | null; description?: string; voucher_code?: string; promo_code?: string }
   | { purpose: "wallet_topup"; amount_inr: number; name?: string | null; email?: string | null; description?: string };
 
 export async function payWithRazorpay(args: PayArgs): Promise<{
@@ -51,11 +51,12 @@ export async function payWithRazorpay(args: PayArgs): Promise<{
 }> {
   await loadCheckout();
   const voucherCode = args.purpose === "wallet_topup" ? undefined : args.voucher_code;
+  const promoCode = args.purpose === "wallet_topup" ? undefined : args.promo_code;
   const order = await createRazorpayOrder({
     data:
       args.purpose === "wallet_topup"
         ? { purpose: "wallet_topup", amount_inr: args.amount_inr }
-        : { purpose: args.purpose, voucher_code: voucherCode },
+        : { purpose: args.purpose, voucher_code: voucherCode, promo_code: promoCode },
   });
 
 
@@ -79,6 +80,7 @@ export async function payWithRazorpay(args: PayArgs): Promise<{
               purpose: args.purpose,
               amount_inr: args.purpose === "wallet_topup" ? args.amount_inr : undefined,
               voucher_code: voucherCode,
+              promo_code: promoCode,
             },
           });
           resolve(res);

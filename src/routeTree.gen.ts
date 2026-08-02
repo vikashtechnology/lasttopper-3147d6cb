@@ -50,6 +50,7 @@ import { Route as AuthenticatedBattle1v1RouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminSocialRouteImport } from './routes/_authenticated/admin.social'
+import { Route as AuthenticatedAdminPromosRouteImport } from './routes/_authenticated/admin.promos'
 import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_authenticated/admin.moderation'
 import { Route as AuthenticatedAdminBankRouteImport } from './routes/_authenticated/admin.bank'
 import { Route as AuthenticatedAdminAppUpdateRouteImport } from './routes/_authenticated/admin.app-update'
@@ -286,6 +287,12 @@ const AuthenticatedAdminSocialRoute =
     path: '/social',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminPromosRoute =
+  AuthenticatedAdminPromosRouteImport.update({
+    id: '/promos',
+    path: '/promos',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminModerationRoute =
   AuthenticatedAdminModerationRouteImport.update({
     id: '/moderation',
@@ -395,6 +402,7 @@ export interface FileRoutesByFullPath {
   '/admin/app-update': typeof AuthenticatedAdminAppUpdateRoute
   '/admin/bank': typeof AuthenticatedAdminBankRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
+  '/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/admin/social': typeof AuthenticatedAdminSocialRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
@@ -448,6 +456,7 @@ export interface FileRoutesByTo {
   '/admin/app-update': typeof AuthenticatedAdminAppUpdateRoute
   '/admin/bank': typeof AuthenticatedAdminBankRoute
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
+  '/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/admin/social': typeof AuthenticatedAdminSocialRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
@@ -506,6 +515,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/app-update': typeof AuthenticatedAdminAppUpdateRoute
   '/_authenticated/admin/bank': typeof AuthenticatedAdminBankRoute
   '/_authenticated/admin/moderation': typeof AuthenticatedAdminModerationRoute
+  '/_authenticated/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/_authenticated/admin/social': typeof AuthenticatedAdminSocialRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
@@ -564,6 +574,7 @@ export interface FileRouteTypes {
     | '/admin/app-update'
     | '/admin/bank'
     | '/admin/moderation'
+    | '/admin/promos'
     | '/admin/social'
     | '/admin/users'
     | '/admin/withdrawals'
@@ -617,6 +628,7 @@ export interface FileRouteTypes {
     | '/admin/app-update'
     | '/admin/bank'
     | '/admin/moderation'
+    | '/admin/promos'
     | '/admin/social'
     | '/admin/users'
     | '/admin/withdrawals'
@@ -674,6 +686,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/app-update'
     | '/_authenticated/admin/bank'
     | '/_authenticated/admin/moderation'
+    | '/_authenticated/admin/promos'
     | '/_authenticated/admin/social'
     | '/_authenticated/admin/users'
     | '/_authenticated/admin/withdrawals'
@@ -1007,6 +1020,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSocialRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/promos': {
+      id: '/_authenticated/admin/promos'
+      path: '/promos'
+      fullPath: '/admin/promos'
+      preLoaderRoute: typeof AuthenticatedAdminPromosRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/moderation': {
       id: '/_authenticated/admin/moderation'
       path: '/moderation'
@@ -1114,6 +1134,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAppUpdateRoute: typeof AuthenticatedAdminAppUpdateRoute
   AuthenticatedAdminBankRoute: typeof AuthenticatedAdminBankRoute
   AuthenticatedAdminModerationRoute: typeof AuthenticatedAdminModerationRoute
+  AuthenticatedAdminPromosRoute: typeof AuthenticatedAdminPromosRoute
   AuthenticatedAdminSocialRoute: typeof AuthenticatedAdminSocialRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedAdminWithdrawalsRoute: typeof AuthenticatedAdminWithdrawalsRoute
@@ -1126,6 +1147,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAppUpdateRoute: AuthenticatedAdminAppUpdateRoute,
   AuthenticatedAdminBankRoute: AuthenticatedAdminBankRoute,
   AuthenticatedAdminModerationRoute: AuthenticatedAdminModerationRoute,
+  AuthenticatedAdminPromosRoute: AuthenticatedAdminPromosRoute,
   AuthenticatedAdminSocialRoute: AuthenticatedAdminSocialRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedAdminWithdrawalsRoute: AuthenticatedAdminWithdrawalsRoute,

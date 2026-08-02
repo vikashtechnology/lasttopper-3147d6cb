@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQueryClient, useQuery } from "@tanstack/react-query";
-import { Check, Sparkles, ChevronLeft, Loader2, Gift } from "lucide-react";
+import { Check, Sparkles, ChevronLeft, Loader2, Gift, Ticket } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getMyProfile } from "@/lib/user.functions";
 import { getMyVouchers } from "@/lib/referral.functions";
+import { checkPromoCode } from "@/lib/promo.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { payWithRazorpay } from "@/lib/razorpay-client";
@@ -51,6 +52,10 @@ function PricingPage() {
   const [plan, setPlan] = useState<Plan>("yearly");
   const [loading, setLoading] = useState(false);
   const [code, setCode] = useState("");
+  const [promo, setPromo] = useState("");
+  const [promoPercent, setPromoPercent] = useState(0);
+  const [promoChecking, setPromoChecking] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
 
   const vouchers = useQuery({ queryKey: ["my-vouchers"], queryFn: () => getMyVouchers() });
   const best = vouchers.data?.best ?? null;
@@ -61,16 +66,46 @@ function PricingPage() {
   }, [best?.code]);
 
   const applied = best && code.trim().toUpperCase() === best.code.toUpperCase() ? best : null;
-  const percentOff = applied?.percent ?? 0;
+  const voucherPercent = applied?.percent ?? 0;
+  const percentOff = voucherPercent || promoPercent;
+
+  const planKey = plan === "yearly" ? "pro_yearly" : plan === "weekly" ? "pro_weekly" : "pro";
+
+  useEffect(() => {
+    setPromoPercent(0);
+    setPromoError(null);
+  }, [plan]);
+
+  const applyPromo = async () => {
+    if (!promo.trim()) return;
+    setPromoChecking(true);
+    setPromoError(null);
+    try {
+      const r = await checkPromoCode({ data: { code: promo.trim().toUpperCase(), plan: planKey } });
+      if (r.valid) {
+        setPromoPercent(r.percent);
+        toast.success(`Promo applied — ${r.percent}% off`);
+      } else {
+        setPromoPercent(0);
+        setPromoError("This promo code is not valid for this plan");
+      }
+    } catch (e) {
+      setPromoPercent(0);
+      setPromoError(failMessage(e, "Could not check promo code"));
+    } finally {
+      setPromoChecking(false);
+    }
+  };
 
   const subscribe = async () => {
     setLoading(true);
     try {
       await payWithRazorpay({
-        purpose: plan === "yearly" ? "pro_yearly" : plan === "weekly" ? "pro_weekly" : "pro",
+        purpose: planKey,
         name: p?.full_name,
         email: p?.email,
-        voucher_code: code.trim() ? code.trim().toUpperCase() : undefined,
+        voucher_code: voucherPercent && code.trim() ? code.trim().toUpperCase() : undefined,
+        promo_code: !voucherPercent && promoPercent && promo.trim() ? promo.trim().toUpperCase() : undefined,
       });
       toast.success("Welcome to Pro! 🎉");
       qc.invalidateQueries({ queryKey: ["my-profile"] });
@@ -177,6 +212,38 @@ function PricingPage() {
                 </span>
               )}
             </div>
+          </div>
+        )}
+
+        {!isPro && (
+          <div className="mx-auto mt-4 max-w-md rounded-2xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Ticket className="h-4 w-4 text-primary" /> Have a promo code?
+            </div>
+            <div className="mt-3 flex items-center gap-2">
+              <Input
+                value={promo}
+                onChange={(e) => {
+                  setPromo(e.target.value.toUpperCase());
+                  setPromoPercent(0);
+                  setPromoError(null);
+                }}
+                placeholder="Enter promo code"
+                className="h-9"
+              />
+              <Button size="sm" variant="outline" onClick={applyPromo} disabled={promoChecking || !promo.trim()}>
+                {promoChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
+              </Button>
+            </div>
+            {promoPercent > 0 && (
+              <p className="mt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                {promoPercent}% off applied to this plan.
+              </p>
+            )}
+            {promoError && <p className="mt-2 text-xs text-destructive">{promoError}</p>}
+            {voucherPercent > 0 && promoPercent > 0 && (
+              <p className="mt-1 text-xs text-muted-foreground">Your referral voucher gives a bigger or equal saving and will be used.</p>
+            )}
           </div>
         )}
 
