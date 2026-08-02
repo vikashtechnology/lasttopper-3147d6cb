@@ -42,6 +42,7 @@ const createOrderSchema = z.object({
   purpose: z.enum(["pro", "pro_yearly", "pro_weekly", "wallet_topup"]),
   amount_inr: z.number().positive().optional(),
   voucher_code: z.string().trim().min(4).max(24).optional(),
+  promo_code: z.string().trim().min(2).max(32).optional(),
 });
 
 export const createRazorpayOrder = createServerFn({ method: "POST" })
@@ -59,6 +60,13 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
       const v = await findRedeemableVoucher(context.userId, data.voucher_code);
       if (!v) throw new Error("This discount code is not valid or already used");
       discountPercent = v.percent;
+      amount = Math.max(100, Math.round((amount * (100 - discountPercent)) / 100));
+    }
+    if (data.promo_code && data.purpose !== "wallet_topup" && discountPercent === 0) {
+      const { findValidPromo } = await import("@/lib/promo.server");
+      const promo = await findValidPromo(data.promo_code, data.purpose, context.userId);
+      if (!promo) throw new Error("This promo code is not valid for this plan");
+      discountPercent = promo.percent;
       amount = Math.max(100, Math.round((amount * (100 - discountPercent)) / 100));
     }
     const auth = Buffer.from(`${key}:${secret}`).toString("base64");
@@ -94,6 +102,7 @@ const verifySchema = z.object({
   purpose: z.enum(["pro", "pro_yearly", "pro_weekly", "wallet_topup"]),
   amount_inr: z.number().positive().optional(),
   voucher_code: z.string().trim().min(4).max(24).optional(),
+  promo_code: z.string().trim().min(2).max(32).optional(),
 });
 
 function verifySignature(orderId: string, paymentId: string, signature: string): boolean {
@@ -125,6 +134,11 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
         const { findRedeemableVoucher, consumeVoucher } = await import("@/lib/voucher.server");
         const v = await findRedeemableVoucher(context.userId, data.voucher_code);
         if (v) await consumeVoucher(v.id);
+      }
+      if (data.promo_code) {
+        const { findValidPromo, redeemPromo } = await import("@/lib/promo.server");
+        const promo = await findValidPromo(data.promo_code, data.purpose, context.userId);
+        if (promo) await redeemPromo(promo, context.userId, data.purpose);
       }
       return { ok: true as const, purpose: data.purpose };
     }
