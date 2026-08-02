@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { safeFileName, sendTelegramDocument } from "@/lib/telegram-alert";
+import { safeFileName, sendTelegramDocument, buildReport, fmtIST, fmtDate } from "@/lib/telegram-alert";
 
 export const getMyProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
