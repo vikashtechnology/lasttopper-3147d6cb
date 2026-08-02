@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { sendTelegramAlert, sendTelegramDocument, safeFileName } from "@/lib/telegram-alert";
+import { sendTelegramAlert, sendTelegramDocument, safeFileName, buildReport, fmtIST } from "@/lib/telegram-alert";
 
 // ==================== FORUMS ====================
 
@@ -472,17 +472,15 @@ export const reportContent = createServerFn({ method: "POST" })
     if (error) throw error;
     await sendTelegramDocument(
       safeFileName([data.target_type, `report_${data.target_id}`], "txt"),
-      [
-        "CONTENT REPORT",
-        "====================",
-        `Type      : ${data.target_type}`,
-        `Target ID : ${data.target_id}`,
-        `Reason    : ${data.reason}`,
-        `Message   : ${data.message ?? "-"}`,
-        `Reporter  : ${context.userId}`,
-        `Time      : ${new Date().toISOString()}`,
-      ].join("\n"),
-      `🚩 <b>Content reported</b> — ${data.target_type}`,
+      buildReport("Content report", [
+        ["Type", data.target_type],
+        ["Target ID", data.target_id],
+        ["Reason", data.reason],
+        ["Message", data.message ?? "—"],
+        ["Reporter", context.userId],
+        ["Time", fmtIST(new Date())],
+      ]),
+      [`🚩 <b>Content reported</b>`, `📄 ${data.target_type}`, `❗ ${data.reason}`].join("\n"),
     );
     return { ok: true };
   });
@@ -529,15 +527,13 @@ export const notifyFirstLogin = createServerFn({ method: "POST" })
     if (u && u.last_active_date === null) {
       await sendTelegramDocument(
         safeFileName([String(u.full_name ?? "user"), "first_login"], "txt"),
-        [
-          "FIRST LOGIN",
-          "====================",
-          `Name  : ${u.full_name ?? "Unknown"}`,
-          `Email : ${u.email ?? "no email"}`,
-          `User ID: ${context.userId}`,
-          `Time  : ${new Date().toISOString()}`,
-        ].join("\n"),
-        `👤 <b>First login</b> — ${u.full_name ?? "Unknown"}`,
+        buildReport("First login", [
+          ["Name", u.full_name ?? "Unknown"],
+          ["Email", u.email ?? "—"],
+          ["User ID", context.userId],
+          ["Time", fmtIST(new Date())],
+        ]),
+        [`👤 <b>First login</b>`, `🙋 ${u.full_name ?? "Unknown"}`].join("\n"),
       );
     }
     return { ok: true };

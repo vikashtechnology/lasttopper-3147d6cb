@@ -27,6 +27,59 @@ export async function sendTelegramAlert(text: string): Promise<void> {
   }
 }
 
+/** Human readable IST timestamp, e.g. "01 Aug 2026, 05:24 PM IST". */
+export function fmtIST(value?: string | number | Date | null): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  const s = new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(d);
+  return `${s} IST`;
+}
+
+/** Date only, e.g. "12 Mar 2005". */
+export function fmtDate(value?: string | null): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(d);
+}
+
+export type ReportRow = [label: string, value: unknown];
+
+/**
+ * Builds a clean, aligned report body:
+ *
+ *   ── NEW SIGNUP ─────────────────
+ *   Name   : Vikash Rao
+ *   Email  : a@b.com
+ */
+export function buildReport(
+  title: string,
+  rows: ReportRow[],
+  footer?: string[],
+): string {
+  const clean = rows.filter(([, v]) => v !== undefined && v !== null && String(v).trim() !== "");
+  const width = clean.reduce((w, [l]) => Math.max(w, l.length), 0);
+  const head = `── ${title.toUpperCase()} ${"─".repeat(Math.max(4, 34 - title.length))}`;
+  const body = clean.map(([l, v]) => `${l.padEnd(width)} : ${String(v)}`);
+  const out = [head, "", ...body];
+  if (footer?.length) out.push("", "─".repeat(38), ...footer);
+  return out.join("\n") + "\n";
+}
+
 /** Slugify a name so it is safe inside a Telegram filename. */
 export function safeFileName(parts: string[], ext: "txt" | "json"): string {
   const base = parts
