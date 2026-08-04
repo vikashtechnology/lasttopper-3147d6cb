@@ -126,6 +126,9 @@ function shouldRotate(status: number): boolean {
   return status === 401 || status === 402 || status === 403 || status === 429 || status >= 500;
 }
 
+/** Per-provider request budget; on timeout we rotate to the next key. */
+const REQUEST_TIMEOUT_MS = 22_000;
+
 export class AiUnavailableError extends Error {
   status: number;
   constructor(message: string, status = 503) {
@@ -154,6 +157,9 @@ export async function aiChat(body: ChatBody): Promise<any> {
           method: "POST",
           headers: p.headers,
           body: JSON.stringify({ ...body, stream: false, model: p.model(requested) }),
+          // Never let one stalled provider hold the whole request hostage —
+          // time out and rotate to the next key instead.
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         });
 
         if (resp.ok) return await resp.json();
@@ -163,7 +169,7 @@ export async function aiChat(body: ChatBody): Promise<any> {
         console.error(`[ai-router] ${p.label} -> ${resp.status} ${lastText.slice(0, 300)}`);
 
         if (resp.status === 429 && attempt === 0) {
-          await new Promise((r) => setTimeout(r, 600));
+          await new Promise((r) => setTimeout(r, 250));
           continue; // one quick retry before rotating
         }
         if (shouldRotate(resp.status)) break; // next key
