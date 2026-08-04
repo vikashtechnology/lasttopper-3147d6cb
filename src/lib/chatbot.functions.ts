@@ -68,7 +68,7 @@ export const chatWithTopperAi = createServerFn({ method: "POST" })
     let reply = "";
     try {
       reply = await aiChatText({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-flash-lite",
         messages: [{ role: "system", content: SYSTEM_PROMPT }, ...data.messages],
       });
     } catch {
@@ -102,7 +102,7 @@ export const explainStepByStep = createServerFn({ method: "POST" })
       : "";
     try {
       const reply = await aiChatText({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-flash-lite",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           {

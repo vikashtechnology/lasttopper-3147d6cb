@@ -302,7 +302,7 @@ export const getUpcomingMegaTest = createServerFn({ method: "GET" })
     if (!profession) return null;
     const { start, end } = nextSundayIST();
     const { data: existing } = await context.supabase
-      .from("mega_tests").select("*")
+      .from("mega_tests").select("id, profession, scheduled_start, scheduled_end, status, entry_fee, min_participants, question_count, created_at")
       .eq("profession", profession).eq("scheduled_start", start.toISOString()).maybeSingle();
     let test = existing;
     if (!test) {
@@ -313,7 +313,7 @@ export const getUpcomingMegaTest = createServerFn({ method: "GET" })
           scheduled_end: end.toISOString(),
           status: "scheduled", entry_fee: 10, min_participants: 50, question_count: 180,
         })
-        .select("*").single();
+        .select("id, profession, scheduled_start, scheduled_end, status, entry_fee, min_participants, question_count, created_at").single();
       if (error) throw error;
       test = inserted;
     }
@@ -380,7 +380,7 @@ export const startMegaSession = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ mega_test_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: test } = await context.supabase
-      .from("mega_tests").select("*").eq("id", data.mega_test_id).maybeSingle();
+      .from("mega_tests").select("id, profession, scheduled_start, scheduled_end, status, entry_fee, min_participants, question_count, created_at").eq("id", data.mega_test_id).maybeSingle();
     if (!test) throw new Error("Test not found");
     const now = Date.now();
     const start = new Date(test.scheduled_start as string).getTime();
@@ -392,7 +392,12 @@ export const startMegaSession = createServerFn({ method: "POST" })
       .eq("mega_test_id", data.mega_test_id).eq("user_id", context.userId).maybeSingle();
     if (!entry?.paid) throw new Error("Join first to play");
     if (entry.session_id) return { id: entry.session_id as string };
-    let questions = (test.questions as QuizQuestion[] | null) ?? null;
+    // Question papers are never exposed to the client role — read them with
+    // the admin client only after the start-time gate above has passed.
+    const { supabaseAdmin: adminForQuestions } = await import("@/integrations/supabase/client.server");
+    const { data: paper } = await adminForQuestions
+      .from("mega_tests").select("questions").eq("id", data.mega_test_id).maybeSingle();
+    let questions = (paper?.questions as QuizQuestion[] | null) ?? null;
     // If not yet generated for this test, look for a shared set generated for the same time slot
     // (one set is shared across all professions for fairness).
     if (!questions || questions.length === 0) {

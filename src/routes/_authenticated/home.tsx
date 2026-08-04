@@ -14,6 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { AppTour } from "@/components/onboarding/AppTour";
 import { AppShell, defaultNavGroups } from "@/components/shell/AppShell";
+import { FeaturePosters } from "@/components/FeaturePosters";
 import { AiChatBubble } from "@/components/chat/AiChatBubble";
 import { Sparkles, Zap } from "lucide-react";
 import { RankBadge } from "@/components/RankBadge";
@@ -192,6 +193,10 @@ function HomePage() {
         <StatCard icon={<Target className="h-4 w-4" />} label="Accuracy" value={`${Math.round(Number(p?.total_accuracy ?? 0))}%`} />
         <StatCard icon={<Trophy className="h-4 w-4" />} label="Profession" value={(p?.profession ?? "—").toUpperCase()} />
       </section>
+
+      {/* Feature posters */}
+      <SectionHeading title="What you can do" hint="Swipe to explore" />
+      <FeaturePosters />
 
       {/* Practice */}
       <SectionHeading title="Practice" hint="Pick a mode to start" />

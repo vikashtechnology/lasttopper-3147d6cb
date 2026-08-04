@@ -23,7 +23,6 @@ import {
 
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
-import { AmbientBackground } from "@/components/AmbientBackground";
 import { AppUpdateDialog } from "@/components/AppUpdateDialog";
 
 function NotFoundComponent() {
@@ -224,7 +223,6 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <AmbientBackground />
         <div className="app-surface relative z-[1]">
           <Outlet />
         </div>
