@@ -97,7 +97,7 @@ export function AppShell({
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 text-foreground">
       {/* Top header */}
       <header className="sticky top-0 z-30 border-b border-border/70 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 pb-3 pt-6 sm:px-6 lg:px-8">
           <button
             type="button"
             className="rounded-md p-2 text-muted-foreground hover:bg-accent lg:hidden"

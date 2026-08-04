@@ -94,7 +94,7 @@ Rules:
   let data: any;
   try {
     data = await aiChat({
-      model: "google/gemini-2.5-flash",
+      model: "google/gemini-2.5-flash-lite",
       messages: [
         { role: "system", content: "You are an NCERT-only exam question generator. You must only use content that appears in official NCERT textbooks. Output STRICT JSON only." },
         { role: "user", content: prompt },

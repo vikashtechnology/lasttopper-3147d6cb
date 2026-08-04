@@ -32,7 +32,7 @@ Rules:
 {"questions":[{"question":"...","options":{"A":"...","B":"...","C":"...","D":"..."},"correct":"A|B|C|D","hint":"...","explanation":"..."}]}`;
 
   const data = await aiChat({
-    model: "google/gemini-2.5-flash",
+    model: "google/gemini-2.5-flash-lite",
     messages: [
       { role: "system", content: "You are an NCERT-only exam question generator. Output STRICT JSON only." },
       { role: "user", content: prompt },
