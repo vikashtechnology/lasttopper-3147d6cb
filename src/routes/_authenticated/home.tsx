@@ -14,6 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { AppTour } from "@/components/onboarding/AppTour";
 import { AppShell, defaultNavGroups } from "@/components/shell/AppShell";
+import { FeaturePosters } from "@/components/FeaturePosters";
 import { AiChatBubble } from "@/components/chat/AiChatBubble";
 import { Sparkles, Zap } from "lucide-react";
 import { RankBadge } from "@/components/RankBadge";
