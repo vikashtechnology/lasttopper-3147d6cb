@@ -194,6 +194,10 @@ function HomePage() {
         <StatCard icon={<Trophy className="h-4 w-4" />} label="Profession" value={(p?.profession ?? "—").toUpperCase()} />
       </section>
 
+      {/* Feature posters */}
+      <SectionHeading title="What you can do" hint="Swipe to explore" />
+      <FeaturePosters />
+
       {/* Practice */}
       <SectionHeading title="Practice" hint="Pick a mode to start" />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-tour="practice">
