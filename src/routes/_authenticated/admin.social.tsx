@@ -70,9 +70,25 @@ function AdminSocial() {
       <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
         <h2 className="text-base font-semibold text-primary">WhatsApp Automation</h2>
         <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
-          Configure WhatsApp automation as when anyone send message then ai chat with him like a friend and use emoji in chat.
+          For the code present, I get the error below.
           {"\n\n"}
-          And this automation can be enable or disable from telegram like this type of command <code>/wp enable</code> and <code>/wp disable</code>
+          Please think step-by-step in order to resolve it.
+          {"\n"}
+          <code>
+            Production build error: build failed with exit status 1: Build failed with 1 error:
+            {"\n\n"}
+            [plugin tanstack-start:route-tree-client-plugin]
+            {"\n"}
+            Error: Conflicting configuration paths were found for the following routes: "/admin/social", "/admin/social".
+            {"\n"}
+            Please ensure each Route has a unique full path.
+            {"\n"}
+            Conflicting files: 
+            {"\n"}
+            {" /dev-server/src/routes/_authenticated/admin.social.tsx"}
+            {"\n"}
+            {" /dev-server/src/routes/_authenticated/admin.social.js"}
+          </code>
         </p>
       </div>
 
