@@ -98,7 +98,7 @@ function AdminSocial() {
         <h2 className="text-base font-semibold text-primary">WhatsApp Automation</h2>
         <div className="mt-1 space-y-1">
           <p className="text-sm text-muted-foreground">
-            Automation not working configure this as anyone message the reply like telegram bot
+            Implement bot-like behavior so that when anyone sends a message, my WhatsApp automation replies automatically like a Telegram bot.
           </p>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm">
