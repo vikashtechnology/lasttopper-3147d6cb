@@ -100,16 +100,23 @@ function AdminSocial() {
           <p className="text-sm text-muted-foreground">
             Add admin can also enable or disable wp automation from admin panel
           </p>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="font-medium">Status:</span>
-            <span className={waStatus?.value === 'true' ? "text-green-600 dark:text-green-400" : "text-destructive"}>
-              {waStatus?.value === 'true' ? 'Enabled' : 'Disabled'}
-            </span>
-            {waStatus?.updated_at && (
-              <span className="text-xs text-muted-foreground italic">
-                (Last updated: {new Date(waStatus.updated_at).toLocaleString()})
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="font-medium">Status:</span>
+              <span className={waStatus?.value === 'true' ? "text-green-600 dark:text-green-400" : "text-destructive"}>
+                {waStatus?.value === 'true' ? 'Enabled' : 'Disabled'}
               </span>
-            )}
+              {waStatus?.updated_at && (
+                <span className="text-xs text-muted-foreground italic">
+                  (Last updated: {new Date(waStatus.updated_at).toLocaleString()})
+                </span>
+              )}
+            </div>
+            <Switch
+              checked={waStatus?.value === 'true'}
+              onCheckedChange={(v) => toggleWA.mutate(v)}
+              disabled={toggleWA.isPending}
+            />
           </div>
         </div>
       </div>
