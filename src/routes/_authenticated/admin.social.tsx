@@ -46,6 +46,22 @@ function AdminSocial() {
 
   const waStatus = settings.data?.find(s => s.key === "whatsapp_ai_enabled");
 
+  const toggleWA = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error } = await supabase
+        .from("admin_settings")
+        .upsert({ key: "whatsapp_ai_enabled", value: String(enabled), updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("WhatsApp Automation updated");
+      qc.invalidateQueries({ queryKey: ["admin-settings"] });
+    },
+    onError: (e: Error) => toast.error(failMessage(e)),
+  });
+
+
 
   const save = useMutation({
     mutationFn: (row: {
