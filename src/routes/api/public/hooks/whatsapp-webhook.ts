@@ -30,7 +30,7 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-webhook")({
         if (setting?.value !== "true") return Response.json({ ok: true });
 
         // Get AI response
-        const { getAiResponse } = await import("@/lib/ai-router");
+        const { aiChatText } = await import("@/lib/ai-router");
         const systemPrompt = `You are a helpful, friendly school-friend-like assistant for a student using the 'Last Topper' app. 
 Respond in a friendly, supportive way. Use emojis frequently. 
 Keep replies concise but warm. 
@@ -38,10 +38,12 @@ The user is likely an IIT-JEE or NEET aspirant.
 Current date: ${new Date().toLocaleDateString('en-IN')}`;
 
         try {
-          const aiResponse = await getAiResponse([
-            { role: "system", content: systemPrompt },
-            { role: "user", content: text }
-          ]);
+          const aiResponse = await aiChatText({
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: text }
+            ]
+          });
 
           if (aiResponse) {
             const { sendWhatsappText } = await import("@/lib/phone-auth.server");
