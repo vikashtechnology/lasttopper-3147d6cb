@@ -70,7 +70,7 @@ function AdminSocial() {
       <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
         <h2 className="text-base font-semibold text-primary">WhatsApp Automation</h2>
         <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
-          Send hii on telegram bot
+          Now tell me how can I enable or disable automation
         </p>
       </div>
 
