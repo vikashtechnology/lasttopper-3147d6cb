@@ -70,47 +70,7 @@ function AdminSocial() {
       <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
         <h2 className="text-base font-semibold text-primary">WhatsApp Automation</h2>
         <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
-          For the code present, I get the error below.
-          {"\n\n"}
-          Please think step-by-step in order to resolve it.
-          {"\n"}
-          <code>
-            build failed with exit status 1: stderr:
-            {"\n"}
-            e_modules/vite-plugin-pwa/dist/index.js:234:5)
-            {"\n"}
-            {"    at async PluginContextImpl.handler (file:///dev-server/node_modules/vite-plugin-pwa/dist/index.js:427:13)"}
-            {"\n"}
-            {"    at async plugin (file:///dev-server/node_modules/vite/node_modules/rolldown/dist/shared/bindingify-input-options-ClrST5Xx.mjs:1403:4)"}
-            {"\n"}
-            {"    at async plugin.<computed> (file:///dev-server/node_modules/vite/node_modules/rolldown/dist/shared/bindingify-input-options-ClrST5Xx.mjs:1625:12) {"}
-            {"\n"}
-            {"  code: 'PLUGIN_ERROR',"}
-            {"\n"}
-            {"  plugin: 'vite-plugin-pwa:build',"}
-            {"\n"}
-            {"  hook: 'closeBundle'"}
-            {"\n"}
-            {"}"}
-            {"\n"}
-            {"error: script \"build:dev\" exited with code 1"}
-            {"\n\n"}
-            {"stdout:"}
-            {"\n"}
-            {"dist/client/assets/chunk-WYO6CB5R-BTzYn6MU.js                  207.64 kB │ gzip:  27.18 kB"}
-            {"\n"}
-            {"dist/client/assets/katex-Vhh-h91d.js                           258.88 kB │ gzip:  77.46 kB"}
-            {"\n"}
-            {"dist/client/assets/handwriting-pdf-BBtxxozr.js                 400.75 kB │ gzip: 130.28 kB"}
-            {"\n"}
-            {"dist/client/assets/cytoscape.esm-h6BdjjI9.js                   435.41 kB │ gzip: 137.93 kB"}
-            {"\n"}
-            {"dist/client/assets/chunk-KEIR6QF5-DNzq6p3w.js                  662.65 kB │ gzip: 143.23 kB"}
-            {"\n"}
-            {"dist/client/assets/index-DcnelsbV.js                         2,226.89 kB │ gzip: 623.60 kB"}
-            {"\n\n"}
-            {"✓ built in 5.43s"}
-          </code>
+          Tell me telegram bot name
         </p>
       </div>
 
