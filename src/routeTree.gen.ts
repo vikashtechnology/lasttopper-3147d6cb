@@ -56,7 +56,9 @@ import { Route as AuthenticatedAdminBankRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminAppUpdateRouteImport } from './routes/_authenticated/admin.app-update'
 import { Route as AuthenticatedAdminAnnouncementsRouteImport } from './routes/_authenticated/admin.announcements'
 import { Route as AuthenticatedAdminAdminsRouteImport } from './routes/_authenticated/admin.admins'
+import { Route as ApiPublicHooksWhatsappWebhookRouteImport } from './routes/api/public/hooks/whatsapp-webhook'
 import { Route as ApiPublicHooksTelegramWithdrawalRouteImport } from './routes/api/public/hooks/telegram-withdrawal'
+import { Route as ApiPublicHooksTelegramWebhookRouteImport } from './routes/api/public/hooks/telegram-webhook'
 import { Route as ApiPublicHooksRazorpayRouteImport } from './routes/api/public/hooks/razorpay'
 import { Route as ApiPublicHooksProcessWithdrawalsRouteImport } from './routes/api/public/hooks/process-withdrawals'
 import { Route as ApiPublicHooksMegaTestLifecycleRouteImport } from './routes/api/public/hooks/mega-test-lifecycle'
@@ -322,10 +324,22 @@ const AuthenticatedAdminAdminsRoute =
     path: '/admins',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const ApiPublicHooksWhatsappWebhookRoute =
+  ApiPublicHooksWhatsappWebhookRouteImport.update({
+    id: '/api/public/hooks/whatsapp-webhook',
+    path: '/api/public/hooks/whatsapp-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksTelegramWithdrawalRoute =
   ApiPublicHooksTelegramWithdrawalRouteImport.update({
     id: '/api/public/hooks/telegram-withdrawal',
     path: '/api/public/hooks/telegram-withdrawal',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksTelegramWebhookRoute =
+  ApiPublicHooksTelegramWebhookRouteImport.update({
+    id: '/api/public/hooks/telegram-webhook',
+    path: '/api/public/hooks/telegram-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksRazorpayRoute = ApiPublicHooksRazorpayRouteImport.update({
@@ -431,7 +445,9 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
   '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
   '/api/public/hooks/razorpay': typeof ApiPublicHooksRazorpayRoute
+  '/api/public/hooks/telegram-webhook': typeof ApiPublicHooksTelegramWebhookRoute
   '/api/public/hooks/telegram-withdrawal': typeof ApiPublicHooksTelegramWithdrawalRoute
+  '/api/public/hooks/whatsapp-webhook': typeof ApiPublicHooksWhatsappWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -485,7 +501,9 @@ export interface FileRoutesByTo {
   '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
   '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
   '/api/public/hooks/razorpay': typeof ApiPublicHooksRazorpayRoute
+  '/api/public/hooks/telegram-webhook': typeof ApiPublicHooksTelegramWebhookRoute
   '/api/public/hooks/telegram-withdrawal': typeof ApiPublicHooksTelegramWithdrawalRoute
+  '/api/public/hooks/whatsapp-webhook': typeof ApiPublicHooksWhatsappWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -544,7 +562,9 @@ export interface FileRoutesById {
   '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
   '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
   '/api/public/hooks/razorpay': typeof ApiPublicHooksRazorpayRoute
+  '/api/public/hooks/telegram-webhook': typeof ApiPublicHooksTelegramWebhookRoute
   '/api/public/hooks/telegram-withdrawal': typeof ApiPublicHooksTelegramWithdrawalRoute
+  '/api/public/hooks/whatsapp-webhook': typeof ApiPublicHooksWhatsappWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -603,7 +623,9 @@ export interface FileRouteTypes {
     | '/api/public/hooks/mega-test-lifecycle'
     | '/api/public/hooks/process-withdrawals'
     | '/api/public/hooks/razorpay'
+    | '/api/public/hooks/telegram-webhook'
     | '/api/public/hooks/telegram-withdrawal'
+    | '/api/public/hooks/whatsapp-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -657,7 +679,9 @@ export interface FileRouteTypes {
     | '/api/public/hooks/mega-test-lifecycle'
     | '/api/public/hooks/process-withdrawals'
     | '/api/public/hooks/razorpay'
+    | '/api/public/hooks/telegram-webhook'
     | '/api/public/hooks/telegram-withdrawal'
+    | '/api/public/hooks/whatsapp-webhook'
   id:
     | '__root__'
     | '/'
@@ -715,7 +739,9 @@ export interface FileRouteTypes {
     | '/api/public/hooks/mega-test-lifecycle'
     | '/api/public/hooks/process-withdrawals'
     | '/api/public/hooks/razorpay'
+    | '/api/public/hooks/telegram-webhook'
     | '/api/public/hooks/telegram-withdrawal'
+    | '/api/public/hooks/whatsapp-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -728,7 +754,9 @@ export interface RootRouteChildren {
   ApiPublicHooksMegaTestLifecycleRoute: typeof ApiPublicHooksMegaTestLifecycleRoute
   ApiPublicHooksProcessWithdrawalsRoute: typeof ApiPublicHooksProcessWithdrawalsRoute
   ApiPublicHooksRazorpayRoute: typeof ApiPublicHooksRazorpayRoute
+  ApiPublicHooksTelegramWebhookRoute: typeof ApiPublicHooksTelegramWebhookRoute
   ApiPublicHooksTelegramWithdrawalRoute: typeof ApiPublicHooksTelegramWithdrawalRoute
+  ApiPublicHooksWhatsappWebhookRoute: typeof ApiPublicHooksWhatsappWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1062,11 +1090,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/api/public/hooks/whatsapp-webhook': {
+      id: '/api/public/hooks/whatsapp-webhook'
+      path: '/api/public/hooks/whatsapp-webhook'
+      fullPath: '/api/public/hooks/whatsapp-webhook'
+      preLoaderRoute: typeof ApiPublicHooksWhatsappWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/telegram-withdrawal': {
       id: '/api/public/hooks/telegram-withdrawal'
       path: '/api/public/hooks/telegram-withdrawal'
       fullPath: '/api/public/hooks/telegram-withdrawal'
       preLoaderRoute: typeof ApiPublicHooksTelegramWithdrawalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/telegram-webhook': {
+      id: '/api/public/hooks/telegram-webhook'
+      path: '/api/public/hooks/telegram-webhook'
+      fullPath: '/api/public/hooks/telegram-webhook'
+      preLoaderRoute: typeof ApiPublicHooksTelegramWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/razorpay': {
@@ -1281,7 +1323,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksMegaTestLifecycleRoute: ApiPublicHooksMegaTestLifecycleRoute,
   ApiPublicHooksProcessWithdrawalsRoute: ApiPublicHooksProcessWithdrawalsRoute,
   ApiPublicHooksRazorpayRoute: ApiPublicHooksRazorpayRoute,
+  ApiPublicHooksTelegramWebhookRoute: ApiPublicHooksTelegramWebhookRoute,
   ApiPublicHooksTelegramWithdrawalRoute: ApiPublicHooksTelegramWithdrawalRoute,
+  ApiPublicHooksWhatsappWebhookRoute: ApiPublicHooksWhatsappWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
