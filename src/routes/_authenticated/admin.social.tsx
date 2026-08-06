@@ -66,12 +66,23 @@ function AdminSocial() {
   const rows = list.data ?? [];
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-6">
-      <h2 className="text-lg font-semibold">Social links</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Add your channel links and turn them on. Enabled links show in the sidebar “Follow us” menu and at the bottom of
-        user profiles.
-      </p>
+    <section className="mx-auto max-w-3xl space-y-8 px-4 py-6">
+      <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+        <h2 className="text-base font-semibold text-primary">WhatsApp Automation</h2>
+        <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
+          Configure WhatsApp automation as when anyone send message then ai chat with him like a friend and use emoji in chat.
+          {"\n\n"}
+          And this automation can be enable or disable from telegram like this type of command <code>/wp enable</code> and <code>/wp disable</code>
+        </p>
+      </div>
+
+      <div>
+        <h2 className="text-lg font-semibold">Social links</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Add your channel links and turn them on. Enabled links show in the sidebar “Follow us” menu and at the bottom of
+          user profiles.
+        </p>
+      </div>
 
       <div className="mt-4 space-y-3">
         {list.isLoading ? <div className="text-sm">Loading…</div> : null}
