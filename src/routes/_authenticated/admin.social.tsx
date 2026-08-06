@@ -75,19 +75,41 @@ function AdminSocial() {
           Please think step-by-step in order to resolve it.
           {"\n"}
           <code>
-            Production build error: build failed with exit status 1: Build failed with 1 error:
+            build failed with exit status 1: stderr:
+            {"\n"}
+            e_modules/vite-plugin-pwa/dist/index.js:234:5)
+            {"\n"}
+            {"    at async PluginContextImpl.handler (file:///dev-server/node_modules/vite-plugin-pwa/dist/index.js:427:13)"}
+            {"\n"}
+            {"    at async plugin (file:///dev-server/node_modules/vite/node_modules/rolldown/dist/shared/bindingify-input-options-ClrST5Xx.mjs:1403:4)"}
+            {"\n"}
+            {"    at async plugin.<computed> (file:///dev-server/node_modules/vite/node_modules/rolldown/dist/shared/bindingify-input-options-ClrST5Xx.mjs:1625:12) {"}
+            {"\n"}
+            {"  code: 'PLUGIN_ERROR',"}
+            {"\n"}
+            {"  plugin: 'vite-plugin-pwa:build',"}
+            {"\n"}
+            {"  hook: 'closeBundle'"}
+            {"\n"}
+            {"}"}
+            {"\n"}
+            {"error: script \"build:dev\" exited with code 1"}
             {"\n\n"}
-            [plugin tanstack-start:route-tree-client-plugin]
+            {"stdout:"}
             {"\n"}
-            Error: Conflicting configuration paths were found for the following routes: "/admin/social", "/admin/social".
+            {"dist/client/assets/chunk-WYO6CB5R-BTzYn6MU.js                  207.64 kB │ gzip:  27.18 kB"}
             {"\n"}
-            Please ensure each Route has a unique full path.
+            {"dist/client/assets/katex-Vhh-h91d.js                           258.88 kB │ gzip:  77.46 kB"}
             {"\n"}
-            Conflicting files: 
+            {"dist/client/assets/handwriting-pdf-BBtxxozr.js                 400.75 kB │ gzip: 130.28 kB"}
             {"\n"}
-            {" /dev-server/src/routes/_authenticated/admin.social.tsx"}
+            {"dist/client/assets/cytoscape.esm-h6BdjjI9.js                   435.41 kB │ gzip: 137.93 kB"}
             {"\n"}
-            {" /dev-server/src/routes/_authenticated/admin.social.js"}
+            {"dist/client/assets/chunk-KEIR6QF5-DNzq6p3w.js                  662.65 kB │ gzip: 143.23 kB"}
+            {"\n"}
+            {"dist/client/assets/index-DcnelsbV.js                         2,226.89 kB │ gzip: 623.60 kB"}
+            {"\n\n"}
+            {"✓ built in 5.43s"}
           </code>
         </p>
       </div>
