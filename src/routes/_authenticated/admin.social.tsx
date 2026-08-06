@@ -32,9 +32,20 @@ export const Route = createFileRoute("/_authenticated/admin/social")({
 function AdminSocial() {
   const qc = useQueryClient();
   const list = useQuery({ queryKey: ["admin-social-links"], queryFn: () => adminListSocialLinks() });
+  const settings = useQuery({
+    queryKey: ["admin-settings"],
+    queryFn: async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data } = await supabase.from("admin_settings").select("*");
+      return data || [];
+    }
+  });
   const [newPlatform, setNewPlatform] = useState("");
   const [newLabel, setNewLabel] = useState("");
   const [newUrl, setNewUrl] = useState("");
+
+  const waStatus = settings.data?.find(s => s.key === "whatsapp_ai_enabled");
+
 
   const save = useMutation({
     mutationFn: (row: {
@@ -69,9 +80,22 @@ function AdminSocial() {
     <section className="mx-auto max-w-3xl space-y-8 px-4 py-6">
       <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
         <h2 className="text-base font-semibold text-primary">WhatsApp Automation</h2>
-        <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
-          Now tell me how can I enable or disable automation
-        </p>
+        <div className="mt-1 space-y-1">
+          <p className="text-sm text-muted-foreground">
+            Display the current automation status in the admin panel with the last updated time.
+          </p>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-medium">Status:</span>
+            <span className={waStatus?.value === 'true' ? "text-green-600 dark:text-green-400" : "text-destructive"}>
+              {waStatus?.value === 'true' ? 'Enabled' : 'Disabled'}
+            </span>
+            {waStatus?.updated_at && (
+              <span className="text-xs text-muted-foreground italic">
+                (Last updated: {new Date(waStatus.updated_at).toLocaleString()})
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
       <div>
