@@ -12,10 +12,10 @@ import { GraduationCap, MessageCircle, KeyRound } from "lucide-react";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — Last Topper" },
-      { name: "description", content: "Sign in to Last Topper with your WhatsApp number and start practicing for JEE & NEET." },
-      { property: "og:title", content: "Sign in — Last Topper" },
-      { property: "og:description", content: "Sign in to Last Topper with WhatsApp." },
+      { title: "Sign in — ARENA" },
+      { name: "description", content: "Sign in to ARENA to join BGMI & Free Fire tournaments and win big." },
+      { property: "og:title", content: "Sign in — ARENA" },
+      { property: "og:description", content: "Sign in to ARENA tournaments." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
