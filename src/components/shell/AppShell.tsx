@@ -107,7 +107,7 @@ export function AppShell({
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
           <div className="flex min-w-0 items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-xl shadow-lg shadow-primary/20 ring-1 ring-border">
+            <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-xl shadow-lg shadow-primary/20 ring-1 ring-border bg-primary">
               <Trophy className="h-5 w-5 text-primary-foreground" />
               {/* <img src={logoAsset.url} alt="Arena" className="h-full w-full object-cover" /> */}
             </div>
