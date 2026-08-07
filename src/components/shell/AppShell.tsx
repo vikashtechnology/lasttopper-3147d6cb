@@ -57,7 +57,7 @@ export const defaultNavGroups = (opts: { profileUserId?: string; admin?: boolean
           ? [{
               to: "/profile/$userId",
               params: { userId: opts.profileUserId },
-              label: "My profile",
+              label: "Player Profile",
               icon: <UserIcon className="h-4 w-4" />,
             }]
           : []),
