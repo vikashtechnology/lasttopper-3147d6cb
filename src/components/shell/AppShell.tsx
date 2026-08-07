@@ -231,9 +231,9 @@ export function AppShell({
       {/* Mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur lg:hidden">
         <div className="mx-auto grid max-w-lg grid-cols-5 gap-1 px-2 py-1.5">
-          <BottomLink to="/home" label="Home" icon={<HomeIcon className="h-5 w-5" />} active={isActive("/home")} />
-          <BottomLink to="/learning" label="Learn" icon={<BookOpen className="h-5 w-5" />} active={isActive("/learning")} />
-          <BottomLink to="/battle" label="Battle" icon={<Swords className="h-5 w-5" />} active={isActive("/battle")} />
+          <BottomLink to="/home" label="Arena" icon={<HomeIcon className="h-5 w-5" />} active={isActive("/home")} />
+          <BottomLink to="/home" label="Matches" icon={<Swords className="h-5 w-5" />} active={isActive("/home")} />
+          <BottomLink to="/battle/wallet" label="Wallet" icon={<Wallet className="h-5 w-5" />} active={isActive("/battle/wallet")} />
           <BottomLink to="/community" label="Social" icon={<Users className="h-5 w-5" />} active={isActive("/community")} />
           <BottomLink to="/notifications" label="Alerts" icon={<Bell className="h-5 w-5" />} active={isActive("/notifications")} />
         </div>
