@@ -36,9 +36,9 @@ function TournamentHomePage() {
 
   return (
     <AppShell
-      header="ARENA"
+      header="Last Topper"
       groups={groups}
-      footerNote={<>© {new Date().getFullYear()} ARENA ESports — Play. Win. Repeat.</>}
+      footerNote={<>© {new Date().getFullYear()} Last Topper — Master Your Future.</>}
       headerActions={
         <div className="flex items-center gap-2">
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">

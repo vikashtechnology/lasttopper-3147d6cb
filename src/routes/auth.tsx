@@ -12,10 +12,10 @@ import { GraduationCap, MessageCircle, KeyRound } from "lucide-react";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — ARENA" },
-      { name: "description", content: "Sign in to ARENA to join BGMI & Free Fire tournaments and win big." },
-      { property: "og:title", content: "Sign in — ARENA" },
-      { property: "og:description", content: "Sign in to ARENA tournaments." },
+      { title: "Sign in — Last Topper" },
+      { name: "description", content: "Sign in to Last Topper to continue your learning journey." },
+      { property: "og:title", content: "Sign in — Last Topper" },
+      { property: "og:description", content: "Sign in to Last Topper." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -107,7 +107,7 @@ function AuthPage() {
           <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
             <GraduationCap className="h-7 w-7" />
           </div>
-          <h1 className="text-2xl font-semibold uppercase italic tracking-tighter">Welcome to ARENA</h1>
+          <h1 className="text-2xl font-semibold tracking-tighter">Welcome back</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {sent
               ? `We sent a 6-digit code on WhatsApp to +${phone.replace(/\D/g, "").length === 10 ? "91" : ""}${phone.replace(/\D/g, "")}.`
