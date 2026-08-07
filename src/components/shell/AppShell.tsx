@@ -67,7 +67,7 @@ export const defaultNavGroups = (opts: { profileUserId?: string; admin?: boolean
   if (opts.admin) {
     groups.push({
       title: "Admin",
-      items: [{ to: "/admin", label: "Admin console", icon: <ShieldCheck className="h-4 w-4" /> }],
+      items: [{ to: "/admin", label: "Arena Console", icon: <ShieldCheck className="h-4 w-4" /> }],
     });
   }
   return groups;
