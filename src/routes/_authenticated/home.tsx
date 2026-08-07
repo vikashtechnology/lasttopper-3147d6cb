@@ -15,7 +15,7 @@ const profileQuery = {
 
 const tournamentsQuery = {
   queryKey: ["upcoming-tournaments", "upcoming"],
-  queryFn: () => getTournaments({ status: "upcoming" }),
+  queryFn: () => getTournaments({ data: { status: "upcoming" } }),
 } as const;
 
 export const Route = createFileRoute("/_authenticated/home")({
