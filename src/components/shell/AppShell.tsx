@@ -108,7 +108,8 @@ export function AppShell({
           </button>
           <div className="flex min-w-0 items-center gap-2">
             <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-xl shadow-lg shadow-primary/20 ring-1 ring-border">
-              <img src={logoAsset.url} alt="Last Topper" className="h-full w-full object-cover" />
+              <Trophy className="h-5 w-5 text-primary-foreground" />
+              {/* <img src={logoAsset.url} alt="Arena" className="h-full w-full object-cover" /> */}
             </div>
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold leading-tight">Last Topper</div>
