@@ -34,6 +34,7 @@ import { Route as AuthenticatedReviseIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
 import { Route as AuthenticatedBattleIndexRouteImport } from './routes/_authenticated/battle.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedTournamentTournamentIdRouteImport } from './routes/_authenticated/tournament.$tournamentId'
 import { Route as AuthenticatedReviseChapterIdRouteImport } from './routes/_authenticated/revise.$chapterId'
 import { Route as AuthenticatedResultsSessionIdRouteImport } from './routes/_authenticated/results.$sessionId'
 import { Route as AuthenticatedQuizSessionIdRouteImport } from './routes/_authenticated/quiz.$sessionId'
@@ -196,6 +197,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedTournamentTournamentIdRoute =
+  AuthenticatedTournamentTournamentIdRouteImport.update({
+    id: '/tournament/$tournamentId',
+    path: '/tournament/$tournamentId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedReviseChapterIdRoute =
   AuthenticatedReviseChapterIdRouteImport.update({
     id: '/revise/$chapterId',
@@ -433,6 +440,7 @@ export interface FileRoutesByFullPath {
   '/quiz/$sessionId': typeof AuthenticatedQuizSessionIdRoute
   '/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
   '/revise/$chapterId': typeof AuthenticatedReviseChapterIdRoute
+  '/tournament/$tournamentId': typeof AuthenticatedTournamentTournamentIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/battle/': typeof AuthenticatedBattleIndexRoute
   '/community/': typeof AuthenticatedCommunityIndexRoute
@@ -489,6 +497,7 @@ export interface FileRoutesByTo {
   '/quiz/$sessionId': typeof AuthenticatedQuizSessionIdRoute
   '/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
   '/revise/$chapterId': typeof AuthenticatedReviseChapterIdRoute
+  '/tournament/$tournamentId': typeof AuthenticatedTournamentTournamentIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/battle': typeof AuthenticatedBattleIndexRoute
   '/community': typeof AuthenticatedCommunityIndexRoute
@@ -550,6 +559,7 @@ export interface FileRoutesById {
   '/_authenticated/quiz/$sessionId': typeof AuthenticatedQuizSessionIdRoute
   '/_authenticated/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
   '/_authenticated/revise/$chapterId': typeof AuthenticatedReviseChapterIdRoute
+  '/_authenticated/tournament/$tournamentId': typeof AuthenticatedTournamentTournamentIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/battle/': typeof AuthenticatedBattleIndexRoute
   '/_authenticated/community/': typeof AuthenticatedCommunityIndexRoute
@@ -611,6 +621,7 @@ export interface FileRouteTypes {
     | '/quiz/$sessionId'
     | '/results/$sessionId'
     | '/revise/$chapterId'
+    | '/tournament/$tournamentId'
     | '/admin/'
     | '/battle/'
     | '/community/'
@@ -667,6 +678,7 @@ export interface FileRouteTypes {
     | '/quiz/$sessionId'
     | '/results/$sessionId'
     | '/revise/$chapterId'
+    | '/tournament/$tournamentId'
     | '/admin'
     | '/battle'
     | '/community'
@@ -727,6 +739,7 @@ export interface FileRouteTypes {
     | '/_authenticated/quiz/$sessionId'
     | '/_authenticated/results/$sessionId'
     | '/_authenticated/revise/$chapterId'
+    | '/_authenticated/tournament/$tournamentId'
     | '/_authenticated/admin/'
     | '/_authenticated/battle/'
     | '/_authenticated/community/'
@@ -935,6 +948,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/tournament/$tournamentId': {
+      id: '/_authenticated/tournament/$tournamentId'
+      path: '/tournament/$tournamentId'
+      fullPath: '/tournament/$tournamentId'
+      preLoaderRoute: typeof AuthenticatedTournamentTournamentIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/revise/$chapterId': {
       id: '/_authenticated/revise/$chapterId'
@@ -1273,6 +1293,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedQuizSessionIdRoute: typeof AuthenticatedQuizSessionIdRoute
   AuthenticatedResultsSessionIdRoute: typeof AuthenticatedResultsSessionIdRoute
   AuthenticatedReviseChapterIdRoute: typeof AuthenticatedReviseChapterIdRoute
+  AuthenticatedTournamentTournamentIdRoute: typeof AuthenticatedTournamentTournamentIdRoute
   AuthenticatedReviseIndexRoute: typeof AuthenticatedReviseIndexRoute
 }
 
@@ -1295,6 +1316,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedQuizSessionIdRoute: AuthenticatedQuizSessionIdRoute,
   AuthenticatedResultsSessionIdRoute: AuthenticatedResultsSessionIdRoute,
   AuthenticatedReviseChapterIdRoute: AuthenticatedReviseChapterIdRoute,
+  AuthenticatedTournamentTournamentIdRoute:
+    AuthenticatedTournamentTournamentIdRoute,
   AuthenticatedReviseIndexRoute: AuthenticatedReviseIndexRoute,
 }
 

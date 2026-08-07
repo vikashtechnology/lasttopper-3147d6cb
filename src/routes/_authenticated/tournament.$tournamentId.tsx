@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
-export const Route = createFileRoute("/home")({
+export const Route = createFileRoute("/_authenticated/tournament/$tournamentId")({
   loader: () => {}, // Handled in component for better error handling in MVP
   component: TournamentDetailPage,
 });

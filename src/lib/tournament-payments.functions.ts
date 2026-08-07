@@ -93,7 +93,7 @@ export const processTournamentPayout = createServerFn({ method: "POST" })
         tournament_id: reg.tournament_id,
         team_id: reg.team_id,
         amount,
-        tds_deducted,
+        tds_deducted: tdsDeducted,
         net_amount: netAmount,
         status: 'completed',
         upi_transaction_id: `mock_tx_${Math.random().toString(36).slice(2)}`
