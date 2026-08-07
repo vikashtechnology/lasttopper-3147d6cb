@@ -7,16 +7,16 @@ import { GraduationCap, Brain, Trophy } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Arena — Professional BGMI & Free Fire Tournaments" },
+      { title: "Last Topper — IIT-JEE & NEET Preparation" },
       {
         name: "description",
         content:
-          "Compete in high-stakes esports tournaments. Daily matches for BGMI and Free Fire with automated scoring and instant payouts.",
+          "Master your exams with AI-powered coaching, daily battles, and comprehensive practice for IIT-JEE and NEET.",
       },
-      { property: "og:title", content: "Arena Esports Tournaments" },
+      { property: "og:title", content: "Last Topper" },
       {
         property: "og:description",
-        content: "Join professional BGMI and Free Fire tournaments with daily prize pools.",
+        content: "IIT-JEE & NEET practice, battles, and AI coaching.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -52,15 +52,15 @@ function Landing() {
     <main className="min-h-screen bg-background text-foreground">
       <section className="mx-auto flex max-w-2xl flex-col items-center px-6 pt-16 pb-12 text-center">
         <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)]">
-          <Trophy className="h-8 w-8" />
+          <GraduationCap className="h-8 w-8" />
         </div>
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl uppercase italic">The Arena Awaits.</h1>
+        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Your path to top ranks.</h1>
         <p className="mt-4 max-w-md text-base text-muted-foreground uppercase tracking-widest text-xs font-semibold">
-          Professional BGMI & Free Fire Tournaments
+          IIT-JEE & NEET • AI Coaching • Daily Battles
         </p>
         <div className="mt-8 flex w-full max-w-xs flex-col gap-3">
           <Button asChild size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
-            <Link to="/auth">Enter Arena</Link>
+            <Link to="/auth">Get Started</Link>
           </Button>
         </div>
       </section>
@@ -68,18 +68,18 @@ function Landing() {
       <section className="mx-auto grid max-w-3xl grid-cols-1 gap-4 px-6 pb-24 sm:grid-cols-3">
         <FeatureCard
           icon={<Trophy className="h-5 w-5" />}
-          title="Daily Tournaments"
-          body="Compete in daily BGMI and Free Fire matches for huge prize pools."
+          title="AI Tutor"
+          body="Get instant explanations and step-by-step solutions for any question."
         />
         <FeatureCard
           icon={<Brain className="h-5 w-5" />}
-          title="Real-time Stats"
-          body="Track your K/D ratio, winnings, and placement points in real-time."
+          title="Daily Battles"
+          body="Compete with thousands of students in real-time quiz challenges."
         />
         <FeatureCard
-          icon={<GraduationCap className="h-5 w-5" />}
-          title="Instant Payouts"
-          body="Automated winnings distribution directly to your UPI/Bank account."
+          icon={<Trophy className="h-5 w-5" />}
+          title="Top Ranks"
+          body="Master NCERT and previous year questions to secure your future."
         />
       </section>
     </main>
