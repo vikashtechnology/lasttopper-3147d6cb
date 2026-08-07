@@ -107,7 +107,7 @@ function AuthPage() {
           <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
             <GraduationCap className="h-7 w-7" />
           </div>
-          <h1 className="text-2xl font-semibold">Welcome to Last Topper</h1>
+          <h1 className="text-2xl font-semibold uppercase italic tracking-tighter">Welcome to ARENA</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {sent
               ? `We sent a 6-digit code on WhatsApp to +${phone.replace(/\D/g, "").length === 10 ? "91" : ""}${phone.replace(/\D/g, "")}.`
