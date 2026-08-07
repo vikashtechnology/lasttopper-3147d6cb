@@ -46,7 +46,7 @@ export const getTournaments = createServerFn({ method: "GET" })
 export const getTournamentDetails = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ id: z.string() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { data: tournament, error } = await context.supabase
+    const { data: tournament, error } = await (context as any).supabase
       .from("tournaments")
       .select("*")
       .eq("id", data.id)
