@@ -34,7 +34,7 @@ export const updateProfile = createServerFn({ method: "POST" })
 export const getTournaments = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ status: z.string().optional() }).optional().parse(data))
   .handler(async ({ data, context }) => {
-    let query = context.supabase.from("tournaments").select("*");
+    let query = (context as any).supabase.from("tournaments").select("*");
     if (data?.status) {
       query = query.eq("status", data.status);
     }
