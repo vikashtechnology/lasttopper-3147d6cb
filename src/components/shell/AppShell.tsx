@@ -29,17 +29,17 @@ export type NavGroup = { title: string; items: NavItem[] };
 export const defaultNavGroups = (opts: { profileUserId?: string; admin?: boolean }): NavGroup[] => {
   const groups: NavGroup[] = [
     {
-      title: "Overview",
-      items: [{ to: "/home", label: "Dashboard", icon: <HomeIcon className="h-4 w-4" /> }],
+      title: "Play",
+      items: [
+        { to: "/home", label: "Arena Home", icon: <HomeIcon className="h-4 w-4" /> },
+        { to: "/home", label: "Active Matches", icon: <Swords className="h-4 w-4" /> },
+        { to: "/home", label: "My Teams", icon: <Users className="h-4 w-4" /> },
+      ],
     },
     {
-      title: "Practice",
+      title: "Finances",
       items: [
-        { to: "/learning", label: "Learning", icon: <BookOpen className="h-4 w-4" /> },
-        { to: "/revise", label: "Revise", icon: <BookMarked className="h-4 w-4" /> },
-        { to: "/mistakes", label: "Mistake bank", icon: <AlertOctagon className="h-4 w-4" /> },
-        { to: "/analytics", label: "Mastery", icon: <BarChart3 className="h-4 w-4" /> },
-        { to: "/history", label: "History", icon: <History className="h-4 w-4" /> },
+        { to: "/battle/wallet", label: "Wallet", icon: <Wallet className="h-4 w-4" /> },
       ],
     },
     {
