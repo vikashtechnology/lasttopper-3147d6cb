@@ -29,25 +29,23 @@ export type NavGroup = { title: string; items: NavItem[] };
 export const defaultNavGroups = (opts: { profileUserId?: string; admin?: boolean }): NavGroup[] => {
   const groups: NavGroup[] = [
     {
-      title: "Overview",
-      items: [{ to: "/home", label: "Dashboard", icon: <HomeIcon className="h-4 w-4" /> }],
-    },
-    {
-      title: "Practice",
+      title: "Play",
       items: [
-        { to: "/learning", label: "Learning", icon: <BookOpen className="h-4 w-4" /> },
-        { to: "/revise", label: "Revise", icon: <BookMarked className="h-4 w-4" /> },
-        { to: "/mistakes", label: "Mistake bank", icon: <AlertOctagon className="h-4 w-4" /> },
-        { to: "/analytics", label: "Mastery", icon: <BarChart3 className="h-4 w-4" /> },
-        { to: "/history", label: "History", icon: <History className="h-4 w-4" /> },
+        { to: "/home", label: "Arena Home", icon: <HomeIcon className="h-4 w-4" /> },
+        { to: "/home", label: "Active Matches", icon: <Swords className="h-4 w-4" /> },
+        { to: "/home", label: "My Teams", icon: <Users className="h-4 w-4" /> },
       ],
     },
     {
-      title: "Compete",
+      title: "Finances",
       items: [
-        { to: "/battle", label: "Battle arena", icon: <Swords className="h-4 w-4" /> },
-        { to: "/battle/mega", label: "Sunday Mega", icon: <Trophy className="h-4 w-4" /> },
         { to: "/battle/wallet", label: "Wallet", icon: <Wallet className="h-4 w-4" /> },
+      ],
+    },
+    {
+      title: "History",
+      items: [
+        { to: "/history", label: "Match History", icon: <History className="h-4 w-4" /> },
       ],
     },
     {
@@ -59,7 +57,7 @@ export const defaultNavGroups = (opts: { profileUserId?: string; admin?: boolean
           ? [{
               to: "/profile/$userId",
               params: { userId: opts.profileUserId },
-              label: "My profile",
+              label: "Player Profile",
               icon: <UserIcon className="h-4 w-4" />,
             }]
           : []),
@@ -69,7 +67,7 @@ export const defaultNavGroups = (opts: { profileUserId?: string; admin?: boolean
   if (opts.admin) {
     groups.push({
       title: "Admin",
-      items: [{ to: "/admin", label: "Admin console", icon: <ShieldCheck className="h-4 w-4" /> }],
+      items: [{ to: "/admin", label: "Arena Console", icon: <ShieldCheck className="h-4 w-4" /> }],
     });
   }
   return groups;
@@ -107,11 +105,12 @@ export function AppShell({
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
           <div className="flex min-w-0 items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-xl shadow-lg shadow-primary/20 ring-1 ring-border">
-              <img src={logoAsset.url} alt="Last Topper" className="h-full w-full object-cover" />
+            <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-xl shadow-lg shadow-primary/20 ring-1 ring-border bg-primary">
+              <Trophy className="h-5 w-5 text-primary-foreground" />
+              {/* <img src={logoAsset.url} alt="Arena" className="h-full w-full object-cover" /> */}
             </div>
             <div className="min-w-0">
-              <div className="truncate text-sm font-semibold leading-tight">Last Topper</div>
+              <div className="truncate text-sm font-black leading-tight uppercase italic tracking-tighter">ARENA</div>
               <div className="truncate text-xs text-muted-foreground">{header}</div>
             </div>
           </div>
@@ -232,9 +231,9 @@ export function AppShell({
       {/* Mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur lg:hidden">
         <div className="mx-auto grid max-w-lg grid-cols-5 gap-1 px-2 py-1.5">
-          <BottomLink to="/home" label="Home" icon={<HomeIcon className="h-5 w-5" />} active={isActive("/home")} />
-          <BottomLink to="/learning" label="Learn" icon={<BookOpen className="h-5 w-5" />} active={isActive("/learning")} />
-          <BottomLink to="/battle" label="Battle" icon={<Swords className="h-5 w-5" />} active={isActive("/battle")} />
+          <BottomLink to="/home" label="Arena" icon={<HomeIcon className="h-5 w-5" />} active={isActive("/home")} />
+          <BottomLink to="/home" label="Matches" icon={<Swords className="h-5 w-5" />} active={isActive("/home")} />
+          <BottomLink to="/battle/wallet" label="Wallet" icon={<Wallet className="h-5 w-5" />} active={isActive("/battle/wallet")} />
           <BottomLink to="/community" label="Social" icon={<Users className="h-5 w-5" />} active={isActive("/community")} />
           <BottomLink to="/notifications" label="Alerts" icon={<Bell className="h-5 w-5" />} active={isActive("/notifications")} />
         </div>

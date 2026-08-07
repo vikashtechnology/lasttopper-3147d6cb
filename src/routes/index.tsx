@@ -7,16 +7,16 @@ import { GraduationCap, Brain, Trophy } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Last Topper — JEE & NEET Practice, Battles, and AI Coach" },
+      { title: "Arena — Professional BGMI & Free Fire Tournaments" },
       {
         name: "description",
         content:
-          "Practice IIT-JEE (PCM) and NEET (PCB) with timed questions, an AI assistant, and a personal mistake bank. Beat your last self.",
+          "Compete in high-stakes esports tournaments. Daily matches for BGMI and Free Fire with automated scoring and instant payouts.",
       },
-      { property: "og:title", content: "Last Topper — JEE & NEET Practice" },
+      { property: "og:title", content: "Arena Esports Tournaments" },
       {
         property: "og:description",
-        content: "Timed practice, AI coach, and a mistake bank for JEE & NEET.",
+        content: "Join professional BGMI and Free Fire tournaments with daily prize pools.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -51,36 +51,35 @@ function Landing() {
   return (
     <main className="min-h-screen bg-background text-foreground">
       <section className="mx-auto flex max-w-2xl flex-col items-center px-6 pt-16 pb-12 text-center">
-        <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
-          <GraduationCap className="h-8 w-8" />
+        <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)]">
+          <Trophy className="h-8 w-8" />
         </div>
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Beat your last self.</h1>
-        <p className="mt-4 max-w-md text-base text-muted-foreground">
-          Timed practice, an AI coach, and a personal mistake bank — built for IIT-JEE and NEET
-          aspirants.
+        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl uppercase italic">The Arena Awaits.</h1>
+        <p className="mt-4 max-w-md text-base text-muted-foreground uppercase tracking-widest text-xs font-semibold">
+          Professional BGMI & Free Fire Tournaments
         </p>
         <div className="mt-8 flex w-full max-w-xs flex-col gap-3">
-          <Button asChild size="lg" className="w-full">
-            <Link to="/auth">Get started</Link>
+          <Button asChild size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
+            <Link to="/auth">Enter Arena</Link>
           </Button>
         </div>
       </section>
 
       <section className="mx-auto grid max-w-3xl grid-cols-1 gap-4 px-6 pb-24 sm:grid-cols-3">
         <FeatureCard
-          icon={<Brain className="h-5 w-5" />}
-          title="AI assistant"
-          body="Get concept help and instant feedback on your mistakes."
+          icon={<Trophy className="h-5 w-5" />}
+          title="Daily Tournaments"
+          body="Compete in daily BGMI and Free Fire matches for huge prize pools."
         />
         <FeatureCard
-          icon={<Trophy className="h-5 w-5" />}
-          title="Battle mode"
-          body="Compete with peers and climb the daily leaderboard."
+          icon={<Brain className="h-5 w-5" />}
+          title="Real-time Stats"
+          body="Track your K/D ratio, winnings, and placement points in real-time."
         />
         <FeatureCard
           icon={<GraduationCap className="h-5 w-5" />}
-          title="Mistake bank"
-          body="Revisit and master the questions you got wrong."
+          title="Instant Payouts"
+          body="Automated winnings distribution directly to your UPI/Bank account."
         />
       </section>
     </main>
