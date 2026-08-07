@@ -15,7 +15,7 @@ const profileQuery = {
   queryFn: () => getProfile(),
 } as const;
 
-export const Route = createFileRoute("/profile/$userId")({
+export const Route = createFileRoute("/_authenticated/profile/$userId")({
   loader: ({ context }) => context.queryClient.ensureQueryData(profileQuery),
   component: ProfilePage,
 });
