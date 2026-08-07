@@ -112,7 +112,7 @@ export function AppShell({
               {/* <img src={logoAsset.url} alt="Arena" className="h-full w-full object-cover" /> */}
             </div>
             <div className="min-w-0">
-              <div className="truncate text-sm font-semibold leading-tight">Last Topper</div>
+              <div className="truncate text-sm font-black leading-tight uppercase italic tracking-tighter">ARENA</div>
               <div className="truncate text-xs text-muted-foreground">{header}</div>
             </div>
           </div>
