@@ -7,16 +7,16 @@ import { GraduationCap, Brain, Trophy } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Last Topper — JEE & NEET Practice, Battles, and AI Coach" },
+      { title: "Arena — Professional BGMI & Free Fire Tournaments" },
       {
         name: "description",
         content:
-          "Practice IIT-JEE (PCM) and NEET (PCB) with timed questions, an AI assistant, and a personal mistake bank. Beat your last self.",
+          "Compete in high-stakes esports tournaments. Daily matches for BGMI and Free Fire with automated scoring and instant payouts.",
       },
-      { property: "og:title", content: "Last Topper — JEE & NEET Practice" },
+      { property: "og:title", content: "Arena Esports Tournaments" },
       {
         property: "og:description",
-        content: "Timed practice, AI coach, and a mistake bank for JEE & NEET.",
+        content: "Join professional BGMI and Free Fire tournaments with daily prize pools.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
