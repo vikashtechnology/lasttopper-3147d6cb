@@ -1,10 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { checkAuthConfiguration } from "@/lib/auth-check.functions";
 
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
