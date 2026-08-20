@@ -19,7 +19,7 @@ export const getProfile = createServerFn({ method: "GET" })
 
 export const updateProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({
+  .validator((data: any) => z.object({
     username: z.string().min(3).max(20).optional(),
     bgmi_uid: z.string().optional(),
     in_game_name: z.string().optional(),
@@ -51,7 +51,7 @@ export const getTournaments = createServerFn({ method: "GET" })
   });
 
 export const getTournamentDetails = createServerFn({ method: "GET" })
-  .inputValidator((data) => z.object({ id: z.string() }).parse(data))
+  .validator((data: any) => z.object({ id: z.string() }).parse(data))
   .handler(async ({ data }) => {
     const { supabase } = await import("@/integrations/supabase/client");
     const { data: tournament, error } = await supabase
@@ -65,7 +65,7 @@ export const getTournamentDetails = createServerFn({ method: "GET" })
 
 export const createTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({
+  .validator((data: any) => z.object({
     team_name: z.string().min(3).max(30),
     members: z.array(z.object({
       uid: z.string(),
