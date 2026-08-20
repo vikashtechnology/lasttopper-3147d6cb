@@ -74,12 +74,16 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
       throw new Error('Unauthorized: Invalid session');
     }
 
-    return next({
+    // Explicitly returning next() to ensure TanStack Start continues to the handler
+    const result = await next({
       context: {
         supabase,
         userId: data.user.id,
         claims: {} as any,
       },
     });
+
+    if (result instanceof Response) return result;
+    return result;
   },
 );
