@@ -82,8 +82,13 @@ function AuthCallback() {
         navigate({ to: "/home", replace: true });
         return;
       }
-      setMessage("Sign-in didn't complete. Please try again.");
-      setTimeout(() => navigate({ to: "/auth", replace: true }), 1500);
+      if (parsed?.error) {
+        console.error("OAuth error:", parsed.error);
+        setMessage(`Sign-in error: ${parsed.error}`);
+      } else {
+        setMessage("Sign-in didn't complete. Please try again.");
+      }
+      setTimeout(() => navigate({ to: "/auth", replace: true }), 3000);
     })();
   }, [navigate]);
 
