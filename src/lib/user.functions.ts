@@ -19,7 +19,8 @@ export const getMyProfile = createServerFn({ method: "GET" })
 
 const signupSchema = z.object({
   full_name: z.string().trim().min(2).max(80),
-  email: z.string().trim().toLowerCase().email().max(160),
+  country_code: z.string().min(1).max(6),
+  phone: z.string().trim().min(4).max(20),
   date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   accept_terms: z.literal(true),
 });
@@ -38,23 +39,24 @@ export const saveSignupDetails = createServerFn({ method: "POST" })
       throw new Error("Please enter a valid date of birth.");
     }
 
-    // Enforce uniqueness of email across accounts
+    // Enforce uniqueness of phone across accounts
     const { data: existing, error: qErr } = await context.supabase
       .from("users")
       .select("id")
-      .eq("email", data.email)
+      .eq("phone", data.phone)
       .neq("id", context.userId)
       .maybeSingle();
     if (qErr) throw qErr;
     if (existing) {
-      throw new Error("This email is already linked to another account.");
+      throw new Error("This phone number is already linked to another account.");
     }
 
     const { error } = await context.supabase
       .from("users")
       .update({
         full_name: data.full_name,
-        email: data.email,
+        country_code: data.country_code,
+        phone: data.phone,
         date_of_birth: data.date_of_birth,
         terms_accepted_at: new Date().toISOString(),
       })
@@ -62,7 +64,7 @@ export const saveSignupDetails = createServerFn({ method: "POST" })
     if (error) {
       const msg = String((error as { message?: string }).message ?? "");
       if (msg.includes("duplicate key")) {
-        throw new Error("This email is already linked to another account.");
+        throw new Error("This phone number is already linked to another account.");
       }
       throw error;
     }
@@ -121,8 +123,8 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       .eq("id", context.userId)
       .maybeSingle();
 
-    if (!u?.phone || !u?.date_of_birth || !u?.full_name) {
-      throw new Error("Please complete your profile (name, DOB, phone) before continuing.");
+    if (!u?.phone || !u?.date_of_birth || !u?.full_name || !u?.email) {
+      throw new Error("Please complete your profile (name, DOB, email) before continuing.");
     }
 
     const { error } = await context.supabase
