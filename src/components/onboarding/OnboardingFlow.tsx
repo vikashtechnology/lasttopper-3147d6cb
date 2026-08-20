@@ -21,11 +21,12 @@ export function OnboardingFlow({ open }: { open: boolean }) {
   const patch = useUserStore((s) => s.patchProfile);
   const profile = useUserStore((s) => s.profile);
   const [step, setStep] = useState<Step>(
-    profile?.email && profile?.full_name && profile?.date_of_birth ? "profession" : "details",
+    profile?.phone && profile?.full_name && profile?.date_of_birth ? "profession" : "details",
   );
   const [fullName, setFullName] = useState(profile?.full_name ?? "");
   const [dob, setDob] = useState<string>("");
-  const [email, setEmail] = useState(profile?.email ?? "");
+  const [phone, setPhone] = useState(profile?.phone ?? "");
+  const [countryCode, setCountryCode] = useState(profile?.country_code ?? "+91");
 
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -43,8 +44,8 @@ export function OnboardingFlow({ open }: { open: boolean }) {
       toast.error("Please enter your date of birth.");
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
-      toast.error("Enter a valid email address.");
+    if (phone.trim().length < 4) {
+      toast.error("Please enter a valid phone number.");
       return;
     }
     if (!acceptTerms) {
@@ -56,14 +57,16 @@ export function OnboardingFlow({ open }: { open: boolean }) {
       await saveSignupDetails({
         data: {
           full_name: fullName.trim(),
-          email: email.trim().toLowerCase(),
+          country_code: countryCode,
+          phone: phone.trim(),
           date_of_birth: dob,
           accept_terms: true,
         },
       });
       patch({
         full_name: fullName.trim(),
-        email: email.trim().toLowerCase(),
+        country_code: countryCode,
+        phone: phone.trim(),
       });
 
       const code = refCode.trim().toUpperCase();
@@ -134,7 +137,7 @@ export function OnboardingFlow({ open }: { open: boolean }) {
             >
               <h2 className="text-xl font-semibold">Complete your profile</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                One-time verification. Your email must be unique to your account.
+                One-time verification. Your phone number must be unique to your account.
               </p>
 
 
@@ -161,18 +164,29 @@ export function OnboardingFlow({ open }: { open: boolean }) {
                   />
                 </div>
 
-                <div>
-                  <Label className="text-xs">Email address</Label>
-                  <Input
-                    className="mt-1"
-                    type="email"
-                    inputMode="email"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    maxLength={160}
-                  />
+                <div className="flex gap-2">
+                  <div className="w-20 shrink-0">
+                    <Label className="text-xs">Code</Label>
+                    <Input
+                      className="mt-1"
+                      value={countryCode}
+                      onChange={(e) => setCountryCode(e.target.value)}
+                      placeholder="+91"
+                      maxLength={6}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Label className="text-xs">Phone number</Label>
+                    <Input
+                      className="mt-1"
+                      type="tel"
+                      inputMode="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="9876543210"
+                      maxLength={20}
+                    />
+                  </div>
                 </div>
 
 
