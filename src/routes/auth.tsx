@@ -1,13 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { requestPhoneOtp, verifyPhoneOtp } from "@/lib/phone-auth.functions";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { GraduationCap, MessageCircle, KeyRound } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
