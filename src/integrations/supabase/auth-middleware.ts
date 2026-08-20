@@ -74,6 +74,7 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
       throw new Error('Unauthorized: Invalid session');
     }
 
+    // Pass the user context to the next middleware or handler.
     return next({
       context: {
         supabase,
