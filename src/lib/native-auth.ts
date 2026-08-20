@@ -13,6 +13,9 @@ export const NATIVE_CALLBACK_PATH = "/auth/callback";
 /** Custom URL scheme registered by the native app (lasttopper://…). */
 export const APP_SCHEME = "lasttopper";
 
+/** Deep link domains for the app. */
+export const APP_DOMAINS = ["lasttopper.lovable.app", "lasttopper.github.io"];
+
 /** Public URL marker that survives the OAuth broker's own state handling. */
 export const NATIVE_CALLBACK_MARKER = "native_app";
 
@@ -121,8 +124,7 @@ export function nativeRouteFromUrl(href: string): string | null {
 
   if (url.protocol === "https:") {
     // Check if it's one of our deep link domains
-    const validDomains = ["lasttopper.lovable.app", "lasttopper.github.io"];
-    if (validDomains.includes(url.hostname)) {
+    if (APP_DOMAINS.includes(url.hostname)) {
       const path = `${url.pathname}${url.search}${url.hash}`;
       return path === "/" ? "/home" : path;
     }
