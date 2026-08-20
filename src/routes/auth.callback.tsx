@@ -40,7 +40,7 @@ function AuthCallback() {
       const callbackUrl = new URL(window.location.href);
       const isNativeReturn =
         callbackUrl.searchParams.get(NATIVE_CALLBACK_MARKER) === "1" ||
-        parsed?.state?.startsWith("native-") === true;
+        parsed?.state?.includes("native-") === true;
 
       // Sign-in was started from the installed app but this page is running in
       // Chrome/Safari (App Link verification unavailable). Bounce the tokens
