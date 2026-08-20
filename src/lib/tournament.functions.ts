@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabase } from "@/integrations/supabase/client";
 
 export const getProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -36,12 +37,7 @@ export const updateProfile = createServerFn({ method: "POST" })
 
 export const getTournaments = createServerFn({ method: "GET" })
   .validator((data: any) => z.object({ status: z.string().optional() }).optional().parse(data))
-  .handler(async ({ data, context }) => {
-    const supabase = (context as any).supabase;
-    if (!supabase) {
-      console.error("getTournaments: supabase client not found in context");
-      throw new Error("Internal Server Error: Database client missing");
-    }
+  .handler(async ({ data }) => {
     let query = supabase.from("tournaments").select("*");
     if (data?.status) {
       query = query.eq("status", data.status);
@@ -56,8 +52,8 @@ export const getTournaments = createServerFn({ method: "GET" })
 
 export const getTournamentDetails = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ id: z.string() }).parse(data))
-  .handler(async ({ data, context }) => {
-    const { data: tournament, error } = await (context as any).supabase
+  .handler(async ({ data }) => {
+    const { data: tournament, error } = await supabase
       .from("tournaments")
       .select("*")
       .eq("id", data.id)
