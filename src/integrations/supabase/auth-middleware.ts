@@ -28,58 +28,67 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 
 export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+    try {
+      const SUPABASE_URL = process.env.SUPABASE_URL;
+      const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
 
-    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-      throw new Error(`Missing Supabase environment variable(s). Connect Supabase in Lovable Cloud.`);
-    }
-    
-    const request = getRequest();
-    if (!request?.headers) {
-      throw new Error('Unauthorized: No request headers available');
-    }
-
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new Error('Unauthorized: Missing or invalid authorization header');
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    if (!token || token.split('.').length !== 3) {
-      throw new Error('Unauthorized: Invalid token format');
-    }
-
-    const supabase = createClient<Database>(
-      SUPABASE_URL!,
-      SUPABASE_PUBLISHABLE_KEY!,
-      {
-        global: {
-          fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY!),
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-        auth: {
-          storage: undefined,
-          persistSession: false,
-          autoRefreshToken: false,
-        },
+      if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+        throw new Error(`Missing Supabase environment variable(s). Connect Supabase in Lovable Cloud.`);
       }
-    );
+      
+      const request = getRequest();
+      if (!request?.headers) {
+        throw new Error('Unauthorized: No request headers available');
+      }
 
-    const { data, error } = await supabase.auth.getUser(token);
-    if (error || !data?.user) {
-      console.error("Supabase auth error in middleware:", error);
-      throw new Error('Unauthorized: Invalid session');
+      const authHeader = request.headers.get('authorization');
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        throw new Error('Unauthorized: Missing or invalid authorization header');
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+      if (!token || token.split('.').length !== 3) {
+        throw new Error('Unauthorized: Invalid token format');
+      }
+
+      const supabase = createClient<Database>(
+        SUPABASE_URL!,
+        SUPABASE_PUBLISHABLE_KEY!,
+        {
+          global: {
+            fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY!),
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+          auth: {
+            storage: undefined,
+            persistSession: false,
+            autoRefreshToken: false,
+          },
+        }
+      );
+
+      const { data, error } = await supabase.auth.getUser(token);
+      if (error || !data?.user) {
+        console.error("Supabase auth error in middleware:", error);
+        throw new Error('Unauthorized: Invalid session');
+      }
+
+      return next({
+        context: {
+          supabase,
+          userId: data.user.id,
+          claims: {},
+        },
+      });
+    } catch (e: any) {
+      console.error("requireSupabaseAuth middleware error:", e);
+      // Ensure we return a structured error that TanStack Start can handle
+      return new Response(JSON.stringify({ error: e.message || 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
-
-    return next({
-      context: {
-        supabase,
-        userId: data.user.id,
-        claims: {},
-      },
-    });
   },
 );
