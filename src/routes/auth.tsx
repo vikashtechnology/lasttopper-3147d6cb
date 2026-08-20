@@ -1,10 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { checkAuthConfiguration } from "@/lib/auth-check.functions";
 
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -23,6 +25,11 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
+  const [configStatus, setConfigStatus] = useState<{ isConfigured: boolean; missing: string[] } | null>(null);
+
+  useEffect(() => {
+    checkAuthConfiguration().then(setConfigStatus).catch(console.error);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -71,6 +78,17 @@ function AuthPage() {
           </p>
         </div>
 
+        {configStatus && !configStatus.isConfigured && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Auth Configuration Missing</AlertTitle>
+            <AlertDescription>
+              Google OAuth is not fully configured. Missing: {configStatus.missing.join(", ")}. 
+              Please add these secrets in Lovable Cloud.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <div className="space-y-3">
           <Button
             variant="default"
@@ -82,7 +100,7 @@ function AuthPage() {
             <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
               <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
             </svg>
-            {busy ? "Connecting..." : "'''Do not make any visual modifications. The phrases I write are commands to understand what I want, not to be written down. Understand their content well, then execute what is required.'''\n                                        \n                                            \n                                            {\"code\":400,\"error_code\":\"validation_failed\",\"msg\":\"Unsupported provider: missing OAuth secret\"}\n\nStill"}
+            {busy ? "Connecting..." : "'''Do not make any visual modifications. The phrases I write are commands to understand what I want, not to be written down. Understand their content well, then execute what is required.'''\n                                        \n                                            \n                                            Verify my Supabase Google OAuth client ID and OAuth secret are correctly set and connected for the app authentication flow.\n\nAdd a startup/runtime check that confirms the required Supabase OAuth secrets exist and show a clear message if they are missing."}
           </Button>
         </div>
 
