@@ -107,15 +107,25 @@ export function nativeRouteFromUrl(href: string): string | null {
   }
 
   if (url.protocol === `${APP_SCHEME}:`) {
-    if (url.hostname === "app") return "/home";
-    if (url.hostname === "auth") return `${NATIVE_CALLBACK_PATH}${url.search}${url.hash}`;
-    const customPath = `/${url.hostname}${url.pathname}${url.search}`;
-    return customPath === "/" ? "/home" : customPath;
+    // Handle lasttopper://app/* and lasttopper://auth/*
+    if (url.hostname === "app" || url.host === "app") {
+      const path = url.pathname === "/" ? "/home" : url.pathname;
+      return `${path}${url.search}${url.hash}`;
+    }
+    if (url.hostname === "auth" || url.host === "auth") {
+      return `${NATIVE_CALLBACK_PATH}${url.search}${url.hash}`;
+    }
+    const customPath = `/${url.hostname}${url.pathname}${url.search}${url.hash}`;
+    return customPath.startsWith("//") ? customPath.slice(1) : customPath;
   }
 
   if (url.protocol === "https:") {
-    const path = `${url.pathname}${url.search}${url.hash}`;
-    return path === "/" ? "/home" : path;
+    // Check if it's one of our deep link domains
+    const validDomains = ["lasttopper.lovable.app", "lasttopper.github.io"];
+    if (validDomains.includes(url.hostname)) {
+      const path = `${url.pathname}${url.search}${url.hash}`;
+      return path === "/" ? "/home" : path;
+    }
   }
 
   return null;
