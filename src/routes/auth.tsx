@@ -37,6 +37,13 @@ function AuthPage() {
   async function handleGoogleLogin() {
     setBusy(true);
     try {
+      const { startNativeGoogleSignIn, isNativeApp } = await import("@/lib/native-auth");
+      
+      if (await isNativeApp()) {
+        await startNativeGoogleSignIn();
+        return;
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
