@@ -10,13 +10,16 @@ export const getProfile = createServerFn({ method: "GET" })
       .select("*")
       .eq("id", context.userId)
       .maybeSingle();
-    if (error) throw error;
-    return data;
+    if (error) {
+      console.error("getProfile error:", error);
+      throw new Error(error.message);
+    }
+    return data || null;
   });
 
 export const updateProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({
+  .validator((data: any) => z.object({
     username: z.string().min(3).max(20).optional(),
     bgmi_uid: z.string().optional(),
     in_game_name: z.string().optional(),
@@ -32,21 +35,26 @@ export const updateProfile = createServerFn({ method: "POST" })
   });
 
 export const getTournaments = createServerFn({ method: "GET" })
-  .inputValidator((data: any) => z.object({ status: z.string().optional() }).optional().parse(data))
-  .handler(async ({ data, context }) => {
-    let query = (context as any).supabase.from("tournaments").select("*");
+  .validator((data: any) => z.object({ status: z.string().optional() }).optional().parse(data))
+  .handler(async ({ data }) => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    let query = supabase.from("tournaments").select("*");
     if (data?.status) {
       query = query.eq("status", data.status);
     }
     const { data: tournaments, error } = await query.order("start_date", { ascending: true });
-    if (error) throw error;
-    return tournaments;
+    if (error) {
+      console.error("getTournaments error:", error);
+      throw new Error(error.message);
+    }
+    return tournaments || [];
   });
 
 export const getTournamentDetails = createServerFn({ method: "GET" })
-  .inputValidator((data) => z.object({ id: z.string() }).parse(data))
-  .handler(async ({ data, context }) => {
-    const { data: tournament, error } = await (context as any).supabase
+  .validator((data: any) => z.object({ id: z.string() }).parse(data))
+  .handler(async ({ data }) => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data: tournament, error } = await supabase
       .from("tournaments")
       .select("*")
       .eq("id", data.id)
@@ -57,7 +65,7 @@ export const getTournamentDetails = createServerFn({ method: "GET" })
 
 export const createTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({
+  .validator((data: any) => z.object({
     team_name: z.string().min(3).max(30),
     members: z.array(z.object({
       uid: z.string(),
