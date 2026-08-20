@@ -25,6 +25,11 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
+  const [configStatus, setConfigStatus] = useState<{ isConfigured: boolean; missing: string[] } | null>(null);
+
+  useEffect(() => {
+    checkAuthConfiguration().then(setConfigStatus).catch(console.error);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -72,6 +77,17 @@ function AuthPage() {
             Sign in to continue your learning journey
           </p>
         </div>
+
+        {configStatus && !configStatus.isConfigured && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Auth Configuration Missing</AlertTitle>
+            <AlertDescription>
+              Google OAuth is not fully configured. Missing: {configStatus.missing.join(", ")}. 
+              Please add these secrets in Lovable Cloud.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="space-y-3">
           <Button
