@@ -10,8 +10,11 @@ export const getProfile = createServerFn({ method: "GET" })
       .select("*")
       .eq("id", context.userId)
       .maybeSingle();
-    if (error) throw error;
-    return data;
+    if (error) {
+      console.error("getProfile error:", error);
+      throw new Error(error.message);
+    }
+    return data || null;
   });
 
 export const updateProfile = createServerFn({ method: "POST" })
@@ -32,15 +35,23 @@ export const updateProfile = createServerFn({ method: "POST" })
   });
 
 export const getTournaments = createServerFn({ method: "GET" })
-  .inputValidator((data: any) => z.object({ status: z.string().optional() }).optional().parse(data))
+  .validator((data: any) => z.object({ status: z.string().optional() }).optional().parse(data))
   .handler(async ({ data, context }) => {
-    let query = (context as any).supabase.from("tournaments").select("*");
+    const supabase = (context as any).supabase;
+    if (!supabase) {
+      console.error("getTournaments: supabase client not found in context");
+      throw new Error("Internal Server Error: Database client missing");
+    }
+    let query = supabase.from("tournaments").select("*");
     if (data?.status) {
       query = query.eq("status", data.status);
     }
     const { data: tournaments, error } = await query.order("start_date", { ascending: true });
-    if (error) throw error;
-    return tournaments;
+    if (error) {
+      console.error("getTournaments error:", error);
+      throw new Error(error.message);
+    }
+    return tournaments || [];
   });
 
 export const getTournamentDetails = createServerFn({ method: "GET" })
