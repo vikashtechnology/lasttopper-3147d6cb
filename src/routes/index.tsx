@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, Brain, Trophy } from "lucide-react";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/")({ 
   head: () => ({
     meta: [
       { title: "Last Topper — IIT-JEE & NEET Preparation" },

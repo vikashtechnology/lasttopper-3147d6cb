@@ -157,7 +157,7 @@ function NavTile({
       onClick={onClick}
       className="mantis-tile group flex flex-col items-start gap-3 p-5 text-left w-full"
     >
-      <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-transform group-hover:scale-105 group-hover:bg-primary/10 group-hover:text-primary">
+      <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-transform group-hover:scale-105 group-hover:bg-primary/10 group-hover[...]"
         {icon}
       </span>
       <div>
