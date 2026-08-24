@@ -19,6 +19,7 @@ export type UserProfile = {
   is_pro?: boolean;
   pro_since?: string | null;
   date_of_birth?: string | null;
+  terms_accepted_at?: string | null;
 };
 
 type UserState = {

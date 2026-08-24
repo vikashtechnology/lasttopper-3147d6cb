@@ -43,7 +43,9 @@ function TermsPage() {
           <li>
             Sign in with Google. Keep your account secure — you're responsible for activity on it.
           </li>
-          <li>Provide accurate onboarding info (phone, profession).</li>
+          <li>
+            Provide accurate onboarding information, including your profile details and study track.
+          </li>
           <li>One account per person. Multi-accounting to farm rewards is prohibited.</li>
         </ul>
 

@@ -118,16 +118,19 @@ export const setProfession = createServerFn({ method: "POST" })
 export const completeOnboarding = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: u } = await context.supabase
+    const { data: u, error: profileError } = await context.supabase
       .from("users")
       .select(
-        "email, full_name, country_code, phone, profession, date_of_birth, terms_accepted_at, signup_alert_sent_at, created_at",
+        "email, full_name, profession, date_of_birth, terms_accepted_at, signup_alert_sent_at, created_at",
       )
       .eq("id", context.userId)
       .maybeSingle();
+    if (profileError) throw profileError;
 
-    if (!u?.phone || !u?.date_of_birth || !u?.full_name) {
-      throw new Error("Please complete your profile (name, DOB, phone) before continuing.");
+    // Google is the only sign-in method, so a phone number is not part of
+    // onboarding. Require only the fields collected by this flow.
+    if (!u?.email || !u.full_name || !u.date_of_birth || !u.profession || !u.terms_accepted_at) {
+      throw new Error("Please complete your profile, accept the terms, and choose a track.");
     }
 
     const { error } = await context.supabase
@@ -141,22 +144,20 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       const lines = buildReport("New signup verified", [
         ["Name", u.full_name],
         ["Email", u.email],
-        ["Phone", `${u.country_code ?? "+91"} ${u.phone}`],
         ["Date of birth", fmtDate(u.date_of_birth)],
-        ["Track", (u.profession ?? "").toString().toUpperCase()],
+        ["Track", u.profession.toUpperCase()],
         ["Terms accepted", fmtIST(u.terms_accepted_at)],
         ["Signed up at", fmtIST(u.created_at)],
         ["User ID", context.userId],
       ]);
-      const fileName = safeFileName([String(u.full_name ?? "user"), "new_user"], "txt");
+      const fileName = safeFileName([u.full_name, "new_user"], "txt");
       await sendTelegramDocument(
         fileName,
         lines,
         [
           "🆕 <b>New signup verified</b>",
-          `👤 ${u.full_name ?? "—"}`,
-          `📱 ${u.country_code ?? "+91"} ${u.phone}`,
-          `🎓 ${(u.profession ?? "—").toString().toUpperCase()}`,
+          `👤 ${u.full_name}`,
+          `🎓 ${u.profession.toUpperCase()}`,
         ].join("\n"),
       );
 

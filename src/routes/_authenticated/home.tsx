@@ -94,7 +94,14 @@ function HomePage() {
   const usedToday = todayUsage.data?.used ?? 0;
   const limit = p?.daily_question_limit ?? 20;
   const percent = Math.min(100, Math.round((usedToday / limit) * 100));
-  const needsOnboarding = !!p && (!p.phone || !p.profession || !p.onboarded);
+  const needsOnboarding =
+    !!p &&
+    (!p.email ||
+      !p.full_name ||
+      !p.date_of_birth ||
+      !p.terms_accepted_at ||
+      !p.profession ||
+      !p.onboarded);
 
   // Nudge the user about any quests they haven't finished today.
   useQuery({
@@ -284,7 +291,7 @@ function HomePage() {
         onOpenChange={setStreakOpen}
         fallbackStreak={p?.streak ?? 0}
       />
-      <OnboardingFlow open={needsOnboarding} />
+      <OnboardingFlow open={needsOnboarding} profile={p} />
       <AppTour enabled={!!p && !needsOnboarding} />
       <AiChatBubble />
     </AppShell>

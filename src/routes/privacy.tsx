@@ -36,8 +36,8 @@ function PrivacyPage() {
         <h2 className="text-lg font-semibold">1. Information we collect</h2>
         <ul className="list-disc pl-5">
           <li>
-            <strong>Account info:</strong> name, email, avatar, and phone number you provide during
-            Google sign-in and onboarding.
+            <strong>Account info:</strong> name, email, avatar, date of birth, and study track you
+            provide during Google sign-in and onboarding.
           </li>
           <li>
             <strong>Profile info:</strong> profession (PCM/PCB), bio, and preferences.

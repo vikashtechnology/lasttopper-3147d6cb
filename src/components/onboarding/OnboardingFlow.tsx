@@ -10,22 +10,26 @@ import { toast } from "sonner";
 import { saveSignupDetails, setProfession, completeOnboarding } from "@/lib/user.functions";
 import { applyReferralCode } from "@/lib/referral.functions";
 import { getPendingReferral, clearPendingReferral } from "@/lib/referral-link";
-import { useUserStore, type Profession } from "@/store/user";
+import { useUserStore, type Profession, type UserProfile } from "@/store/user";
 import { failMessage } from "@/lib/friendly-error";
 
 type Step = "details" | "profession" | "tutorial";
 
-export function OnboardingFlow({ open }: { open: boolean }) {
+export function OnboardingFlow({ open, profile }: { open: boolean; profile: UserProfile | null }) {
   const patch = useUserStore((s) => s.patchProfile);
-  const profile = useUserStore((s) => s.profile);
+  const detailsComplete =
+    !!profile?.email &&
+    !!profile.full_name &&
+    !!profile.date_of_birth &&
+    !!profile.terms_accepted_at;
   const [step, setStep] = useState<Step>(
-    profile?.email && profile?.full_name && profile?.date_of_birth ? "profession" : "details",
+    !detailsComplete ? "details" : profile?.profession ? "tutorial" : "profession",
   );
   const [fullName, setFullName] = useState(profile?.full_name ?? "");
-  const [dob, setDob] = useState<string>("");
+  const [dob, setDob] = useState(profile?.date_of_birth ?? "");
   const [email, setEmail] = useState(profile?.email ?? "");
 
-  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(!!profile?.terms_accepted_at);
   const [saving, setSaving] = useState(false);
   const [prof, setProf] = useState<Profession | null>(profile?.profession ?? null);
   const [tutorialStep, setTutorialStep] = useState(0);
@@ -62,6 +66,8 @@ export function OnboardingFlow({ open }: { open: boolean }) {
       patch({
         full_name: fullName.trim(),
         email: email.trim().toLowerCase(),
+        date_of_birth: dob,
+        terms_accepted_at: new Date().toISOString(),
       });
 
       const code = refCode.trim().toUpperCase();
@@ -107,7 +113,7 @@ export function OnboardingFlow({ open }: { open: boolean }) {
       patch({ onboarded: true });
     } catch (e) {
       console.error(e);
-      toast.error("Could not finish onboarding.");
+      toast.error(failMessage(e, "Could not finish onboarding. Please try again."));
     } finally {
       setSaving(false);
     }
