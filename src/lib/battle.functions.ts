@@ -339,7 +339,10 @@ export const getQuickLeaderboard = createServerFn({ method: "GET" })
         avatar_url: (d.avatar_url as string | null) ?? null,
         email: null,
       },
-      score: Number(d.score ?? 0),
+      // Quick battles award 10 points per correct answer. Historical showcase
+      // rows stored a larger XP-like value in `score`, which made the demo
+      // players impossible for real users (maximum 100) to outrank.
+      score: Number(d.correct_count ?? 0) * 10,
       correct_count: Number(d.correct_count ?? 0),
       time_taken_seconds: Number(d.time_taken_seconds ?? 0),
       xp: Number(d.xp ?? 0),
