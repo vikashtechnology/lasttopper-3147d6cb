@@ -381,16 +381,20 @@ export const getUpcomingMegaTest = createServerFn({ method: "GET" })
       .maybeSingle();
     const profession = profile?.profession;
     if (!profession) return null;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { start, end } = nextSundayIST();
-    const { data: existing } = await context.supabase
+    const { data: existing, error: existingError } = await supabaseAdmin
       .from("mega_tests")
       .select("*")
       .eq("profession", profession)
       .eq("scheduled_start", start.toISOString())
       .maybeSingle();
+    if (existingError) throw existingError;
     let test = existing;
     if (!test) {
-      const { data: inserted, error } = await context.supabase
+      // Provisioning is a trusted server operation. Authenticated users only
+      // have read access to mega_tests, so inserts must use the service client.
+      const { data: inserted, error } = await supabaseAdmin
         .from("mega_tests")
         .insert({
           profession,
@@ -426,11 +430,13 @@ export const joinMegaTest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ mega_test_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: test } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: test, error: testError } = await supabaseAdmin
       .from("mega_tests")
       .select("id, entry_fee, status")
       .eq("id", data.mega_test_id)
       .maybeSingle();
+    if (testError) throw testError;
     if (!test) throw new Error("Test not found");
     if (test.status === "completed" || test.status === "cancelled")
       throw new Error("Registration closed");
@@ -495,11 +501,13 @@ export const startMegaSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ mega_test_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: test } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: test, error: testError } = await supabaseAdmin
       .from("mega_tests")
       .select("*")
       .eq("id", data.mega_test_id)
       .maybeSingle();
+    if (testError) throw testError;
     if (!test) throw new Error("Test not found");
     const now = Date.now();
     const start = new Date(test.scheduled_start as string).getTime();

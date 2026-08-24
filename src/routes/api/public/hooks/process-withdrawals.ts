@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { authorizeInternalHook, internalHookAuthError } from "@/lib/internal-hook-auth.server";
 
 /**
  * Auto-process pending withdrawal requests once process_after has elapsed.
@@ -7,11 +8,11 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/public/hooks/process-withdrawals")({
   server: {
     handlers: {
+      GET: () => new Response("Method Not Allowed", { status: 405, headers: { Allow: "POST" } }),
       POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey");
-        if (!apikey || apikey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
-          return new Response("Unauthorized", { status: 401 });
-        }
+        const auth = authorizeInternalHook(request);
+        if (auth !== "ok") return internalHookAuthError(auth);
+
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const now = new Date().toISOString();
         const { data: rows } = await supabaseAdmin

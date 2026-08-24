@@ -26,6 +26,7 @@ async function tgReply(chatId: number | string, text: string) {
 export const Route = createFileRoute("/api/public/hooks/telegram-withdrawal")({
   server: {
     handlers: {
+      GET: () => new Response("Method Not Allowed", { status: 405, headers: { Allow: "POST" } }),
       POST: async ({ request }) => {
         const TG = process.env.TELEGRAM_API_KEY_1 ?? process.env.TELEGRAM_API_KEY;
         if (!TG) return new Response("Not configured", { status: 500 });

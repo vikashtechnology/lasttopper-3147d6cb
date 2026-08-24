@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { aiChat } from "@/lib/ai-router";
+import { authorizeInternalHook, internalHookAuthError } from "@/lib/internal-hook-auth.server";
 
 type MegaQuestion = {
   id: string;
@@ -83,16 +84,16 @@ async function generateMegaQuestionSet(): Promise<MegaQuestion[]> {
  *  - refund entry fees when a mega test ended with < min_participants
  *  - rank paid entries and credit prizes
  *  - mark tests as completed/refunded
- * Auth: apikey header (Supabase publishable key).
+ * Auth: private INTERNAL_HOOK_SECRET via Bearer or X-Internal-Hook-Secret.
  */
 export const Route = createFileRoute("/api/public/hooks/mega-test-lifecycle")({
   server: {
     handlers: {
+      GET: () => new Response("Method Not Allowed", { status: 405, headers: { Allow: "POST" } }),
       POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey");
-        if (!apikey || apikey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
-          return new Response("Unauthorized", { status: 401 });
-        }
+        const auth = authorizeInternalHook(request);
+        if (auth !== "ok") return internalHookAuthError(auth);
+
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const now = new Date().toISOString();
         const { data: tests } = await supabaseAdmin

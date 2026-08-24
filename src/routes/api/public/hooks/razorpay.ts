@@ -14,6 +14,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 export const Route = createFileRoute("/api/public/hooks/razorpay")({
   server: {
     handlers: {
+      GET: () => new Response("Method Not Allowed", { status: 405, headers: { Allow: "POST" } }),
       POST: async ({ request }) => {
         const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
         if (!secret) return new Response("Not configured", { status: 500 });
