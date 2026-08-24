@@ -28,7 +28,6 @@ const ID = {
   motivation: (i: number) => 1100 + i,
   megaSaturday: 1201,
   megaSunday: 1202,
-  megaNextSunday: 1203,
 };
 
 /** Times of day for motivational nudges (~every 2.5–3 hrs, daytime only). */
@@ -91,7 +90,7 @@ export async function notifyNow(title: string, body: string, extraId?: number) {
  * Schedules the repeating reminders on device:
  *  - 6:30 PM daily streak reminder
  *  - motivational nudges every ~2.5 hrs through the day
- *  - Sunday Mega Test reminders (day before, 30 min before 2 PM, and next Sunday 10 AM)
+ *  - Sunday Mega Test reminders (day before and 30 minutes before the 10 AM start)
  */
 export async function scheduleRecurringReminders() {
   if (!isNative()) return; // web can't schedule while closed
@@ -127,17 +126,10 @@ export async function scheduleRecurringReminders() {
         schedule: { on: { weekday: 7, hour: 20, minute: 0 }, allowWhileIdle: true, repeats: true },
       },
       {
-        // 30 min before the 2 PM Sunday start
+        // 30 minutes before the Sunday 10 AM IST start
         id: ID.megaSunday,
         title: "Mega Test starts in 30 minutes ⚔️",
-        body: "Join the Sunday Mega Test before it goes live at 2:00 PM.",
-        schedule: { on: { weekday: 1, hour: 13, minute: 30 }, allowWhileIdle: true, repeats: true },
-      },
-      {
-        // Next-Sunday 10 AM window reminder
-        id: ID.megaNextSunday,
-        title: "Mega Test window is open 🎯",
-        body: "Prove your skill — the Sunday arena is accepting entries now.",
+        body: "Join the Sunday Mega Test before it goes live at 10:00 AM.",
         schedule: { on: { weekday: 1, hour: 9, minute: 30 }, allowWhileIdle: true, repeats: true },
       },
     ];

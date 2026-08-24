@@ -325,11 +325,14 @@ export const adminBankStats = createServerFn({ method: "GET" })
 
 /* ---------------- Owner-only: manage admins ---------------- */
 
-const OWNER_EMAIL = "vikashraoa2343@gmail.com";
+const OWNER_EMAILS = new Set(["vikashraoa2343@gmail.com", "rajkatrina90@gmail.com"]);
+
+function isOwnerEmail(email: string | null | undefined) {
+  return OWNER_EMAILS.has(email?.trim().toLowerCase() ?? "");
+}
 
 function isOwnerCtx(context: { claims: Record<string, unknown> }) {
-  const email = (context.claims?.email as string | undefined)?.toLowerCase();
-  return email === OWNER_EMAIL;
+  return isOwnerEmail(context.claims?.email as string | undefined);
 }
 
 function assertOwner(context: { claims: Record<string, unknown> }) {
@@ -364,7 +367,7 @@ export const ownerListAdmins = createServerFn({ method: "GET" })
         email: (u?.email as string) ?? null,
         full_name: (u?.full_name as string) ?? null,
         avatar_url: (u?.avatar_url as string) ?? null,
-        is_owner: (u?.email as string)?.toLowerCase() === OWNER_EMAIL,
+        is_owner: isOwnerEmail(u?.email as string | undefined),
       };
     });
   });
@@ -404,8 +407,7 @@ export const ownerSetAdmin = createServerFn({ method: "POST" })
       email = (u?.email as string | undefined)?.toLowerCase();
     }
 
-    if (!data.make && email === OWNER_EMAIL)
-      throw new Error("The owner account cannot be removed.");
+    if (!data.make && isOwnerEmail(email)) throw new Error("Owner accounts cannot be removed.");
 
     if (data.make) {
       const { error } = await supabaseAdmin
