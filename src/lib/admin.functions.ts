@@ -3,10 +3,70 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sendTelegramAlert } from "@/lib/telegram-alert";
 
-async function assertAdmin(ctx: {
+const OWNER_EMAILS = new Set(["vikashraoa2343@gmail.com", "rajkatrina90@gmail.com"]);
+
+type AuthContext = {
   supabase: import("@supabase/supabase-js").SupabaseClient;
   userId: string;
-}) {
+  claims: Record<string, unknown>;
+};
+
+function isOwnerEmail(email: string | null | undefined) {
+  return OWNER_EMAILS.has(email?.trim().toLowerCase() ?? "");
+}
+
+function isOwnerCtx(context: { claims: Record<string, unknown> }) {
+  return isOwnerEmail(context.claims?.email as string | undefined);
+}
+
+function assertOwner(context: { claims: Record<string, unknown> }) {
+  if (!isOwnerCtx(context)) throw new Error("Forbidden: owner only");
+}
+
+async function getAuthUserById(
+  supabaseAdmin: import("@supabase/supabase-js").SupabaseClient,
+  userId: string,
+) {
+  const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+  if (error) throw error;
+  if (!data.user) throw new Error("No authenticated user found for that ID.");
+  return data.user;
+}
+
+async function findAuthUserByEmail(
+  supabaseAdmin: import("@supabase/supabase-js").SupabaseClient,
+  email: string,
+) {
+  const wanted = email.trim().toLowerCase();
+  let page = 1;
+
+  while (true) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) throw error;
+    const found = data.users.find((user) => user.email?.trim().toLowerCase() === wanted);
+    if (found) return found;
+    if (!data.nextPage) return null;
+    page = data.nextPage;
+  }
+}
+
+/**
+ * The database trigger in the owner migration is the primary bootstrap path.
+ * This server-side fallback safely covers an owner who signs in before that
+ * migration is applied. It never creates an Auth identity; it only grants the
+ * role after Supabase has verified the exact Google account email.
+ */
+async function ensureOwnerAdmin(ctx: AuthContext) {
+  if (!isOwnerCtx(ctx)) return;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin
+    .from("user_roles")
+    .upsert({ user_id: ctx.userId, role: "admin" }, { onConflict: "user_id,role" });
+  if (error) throw error;
+}
+
+async function assertAdmin(ctx: AuthContext) {
+  await ensureOwnerAdmin(ctx);
   const { data, error } = await ctx.supabase.rpc("has_role", {
     _user_id: ctx.userId,
     _role: "admin",
@@ -18,10 +78,12 @@ async function assertAdmin(ctx: {
 export const amIAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase.rpc("has_role", {
+    await ensureOwnerAdmin(context);
+    const { data, error } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
       _role: "admin",
     });
+    if (error) throw error;
     return { admin: !!data };
   });
 
@@ -126,6 +188,10 @@ export const adminSetBan = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (data.banned) {
+      const authUser = await getAuthUserById(supabaseAdmin, data.user_id);
+      if (isOwnerEmail(authUser.email)) throw new Error("Owner accounts cannot be banned.");
+    }
     const { error } = await supabaseAdmin
       .from("users")
       .update({ is_banned: data.banned })
@@ -325,20 +391,6 @@ export const adminBankStats = createServerFn({ method: "GET" })
 
 /* ---------------- Owner-only: manage admins ---------------- */
 
-const OWNER_EMAILS = new Set(["vikashraoa2343@gmail.com", "rajkatrina90@gmail.com"]);
-
-function isOwnerEmail(email: string | null | undefined) {
-  return OWNER_EMAILS.has(email?.trim().toLowerCase() ?? "");
-}
-
-function isOwnerCtx(context: { claims: Record<string, unknown> }) {
-  return isOwnerEmail(context.claims?.email as string | undefined);
-}
-
-function assertOwner(context: { claims: Record<string, unknown> }) {
-  if (!isOwnerCtx(context)) throw new Error("Forbidden: owner only");
-}
-
 export const amIOwner = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => ({ owner: isOwnerCtx(context) }));
@@ -355,19 +407,21 @@ export const ownerListAdmins = createServerFn({ method: "GET" })
     if (error) throw error;
     const ids = (roles ?? []).map((r) => r.user_id as string);
     if (!ids.length) return [];
-    const { data: users } = await supabaseAdmin
-      .from("users")
-      .select("id, email, full_name, avatar_url")
-      .in("id", ids);
+    const [{ data: profiles }, authUsers] = await Promise.all([
+      supabaseAdmin.from("users").select("id, full_name, avatar_url").in("id", ids),
+      Promise.all(ids.map((id) => getAuthUserById(supabaseAdmin, id))),
+    ]);
     return (roles ?? []).map((r) => {
-      const u = users?.find((x) => x.id === r.user_id);
+      const profile = profiles?.find((row) => row.id === r.user_id);
+      const authUser = authUsers.find((user) => user.id === r.user_id);
+      const email = authUser?.email?.trim().toLowerCase() ?? null;
       return {
         user_id: r.user_id as string,
         created_at: r.created_at as string,
-        email: (u?.email as string) ?? null,
-        full_name: (u?.full_name as string) ?? null,
-        avatar_url: (u?.avatar_url as string) ?? null,
-        is_owner: isOwnerEmail(u?.email as string | undefined),
+        email,
+        full_name: (profile?.full_name as string) ?? null,
+        avatar_url: (profile?.avatar_url as string) ?? null,
+        is_owner: isOwnerEmail(email),
       };
     });
   });
@@ -389,24 +443,18 @@ export const ownerSetAdmin = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     let userId = data.user_id;
-    let email = data.email?.toLowerCase();
+    let email = data.email?.trim().toLowerCase();
     if (!userId && email) {
-      const { data: u } = await supabaseAdmin
-        .from("users")
-        .select("id, email")
-        .ilike("email", email)
-        .maybeSingle();
-      if (!u) throw new Error("No user found with that email. They must sign up first.");
-      userId = u.id as string;
-    } else if (userId && !email) {
-      const { data: u } = await supabaseAdmin
-        .from("users")
-        .select("email")
-        .eq("id", userId)
-        .maybeSingle();
-      email = (u?.email as string | undefined)?.toLowerCase();
+      const authUser = await findAuthUserByEmail(supabaseAdmin, email);
+      if (!authUser) throw new Error("No user found with that email. They must sign up first.");
+      userId = authUser.id;
+      email = authUser.email?.trim().toLowerCase();
+    } else if (userId) {
+      const authUser = await getAuthUserById(supabaseAdmin, userId);
+      email = authUser.email?.trim().toLowerCase();
     }
 
+    if (!email) throw new Error("Cannot verify that account's authenticated email.");
     if (!data.make && isOwnerEmail(email)) throw new Error("Owner accounts cannot be removed.");
 
     if (data.make) {
