@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQueryClient, useQuery } from "@tanstack/react-query";
-import { Check, Sparkles, ChevronLeft, Loader2, Gift, Ticket } from "lucide-react";
+import { Check, Sparkles, ChevronLeft, Loader2, Gift } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getMyProfile } from "@/lib/user.functions";
@@ -53,7 +53,6 @@ function PricingPage() {
   const isPro = !!p?.is_pro;
   const [plan, setPlan] = useState<Plan>("yearly");
   const [loading, setLoading] = useState(false);
-  const [code, setCode] = useState("");
   const [promo, setPromo] = useState("");
   const [promoPercent, setPromoPercent] = useState(0);
   const [promoChecking, setPromoChecking] = useState(false);
@@ -62,14 +61,9 @@ function PricingPage() {
   const vouchers = useQuery({ queryKey: ["my-vouchers"], queryFn: () => getMyVouchers() });
   const best = vouchers.data?.best ?? null;
 
-  useEffect(() => {
-    if (best?.code && !code) setCode(best.code);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [best?.code]);
-
-  const applied = best && code.trim().toUpperCase() === best.code.toUpperCase() ? best : null;
-  const voucherPercent = applied?.percent ?? 0;
-  const percentOff = voucherPercent || promoPercent;
+  const voucherPercent = best?.percent ?? 0;
+  const percentOff = Math.max(voucherPercent, promoPercent);
+  const useVoucher = voucherPercent > 0 && voucherPercent >= promoPercent;
 
   const planKey = plan === "yearly" ? "pro_yearly" : plan === "weekly" ? "pro_weekly" : "pro";
 
@@ -106,9 +100,9 @@ function PricingPage() {
         purpose: planKey,
         name: p?.full_name,
         email: p?.email,
-        voucher_code: voucherPercent && code.trim() ? code.trim().toUpperCase() : undefined,
+        voucher_code: useVoucher && best?.code ? best.code.toUpperCase() : undefined,
         promo_code:
-          !voucherPercent && promoPercent && promo.trim() ? promo.trim().toUpperCase() : undefined,
+          !useVoucher && promoPercent && promo.trim() ? promo.trim().toUpperCase() : undefined,
       });
       toast.success("Welcome to Pro! 🎉");
       qc.invalidateQueries({ queryKey: ["my-profile"] });
@@ -190,40 +184,26 @@ function PricingPage() {
 
         {!isPro && (
           <div className="mx-auto mt-6 max-w-md rounded-2xl border border-border bg-card p-4">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <Gift className="h-4 w-4 text-primary" /> Discount voucher
-            </div>
-            {best ? (
-              <p className="mt-1 text-xs text-muted-foreground">
-                You have a <b className="text-primary">{best.percent}% off</b> referral voucher —
-                expires {new Date(best.expires_at as string).toLocaleDateString()}.
-              </p>
-            ) : (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Invite friends to earn 15–25% off vouchers for any Pro plan.
-              </p>
-            )}
-            <div className="mt-3 flex items-center gap-2">
-              <Input
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="Enter voucher code"
-                className="h-9"
-              />
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Gift className="h-4 w-4 text-primary" /> Discounts
+              </div>
               {percentOff > 0 && (
                 <span className="whitespace-nowrap rounded-full bg-emerald-500/15 px-2 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                  −{percentOff}%
+                  Best price · {percentOff}% off
                 </span>
               )}
             </div>
-          </div>
-        )}
-
-        {!isPro && (
-          <div className="mx-auto mt-4 max-w-md rounded-2xl border border-border bg-card p-4">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <Ticket className="h-4 w-4 text-primary" /> Have a promo code?
-            </div>
+            {best ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Your {best.percent}% referral voucher is ready and expires{" "}
+                {new Date(best.expires_at as string).toLocaleDateString()}.
+              </p>
+            ) : (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Invite friends to earn referral vouchers, or apply a promotional code below.
+              </p>
+            )}
             <div className="mt-3 flex items-center gap-2">
               <Input
                 value={promo}
@@ -232,7 +212,8 @@ function PricingPage() {
                   setPromoPercent(0);
                   setPromoError(null);
                 }}
-                placeholder="Enter promo code"
+                placeholder="Promo code"
+                aria-label="Promo code"
                 className="h-9"
               />
               <Button
@@ -246,13 +227,15 @@ function PricingPage() {
             </div>
             {promoPercent > 0 && (
               <p className="mt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                {promoPercent}% off applied to this plan.
+                Promo verified: {promoPercent}% off. The larger available discount will be used.
               </p>
             )}
             {promoError && <p className="mt-2 text-xs text-destructive">{promoError}</p>}
             {voucherPercent > 0 && promoPercent > 0 && (
               <p className="mt-1 text-xs text-muted-foreground">
-                Your referral voucher gives a bigger or equal saving and will be used.
+                {useVoucher
+                  ? "Your referral voucher gives the best price."
+                  : "Your promo code gives the best price."}
               </p>
             )}
           </div>

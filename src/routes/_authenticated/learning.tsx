@@ -88,6 +88,12 @@ function LearningPage() {
   }, [isPro, usage.isLoading, remaining, usedToday, dailyLimit]);
 
   const chapterIds = useMemo(() => Array.from(selected), [selected]);
+  const allChapterIds = useMemo(
+    () => subjects.flatMap((subject) => subject.chapters.map((chapter) => chapter.id)),
+    [subjects],
+  );
+  const allChaptersSelected =
+    allChapterIds.length > 0 && allChapterIds.every((chapterId) => selected.has(chapterId));
 
   function toggle(id: string) {
     setSelected((s) => {
@@ -164,9 +170,40 @@ function LearningPage() {
       </header>
 
       <section className="mx-auto max-w-3xl px-5 pt-4">
+        {subjects.length > 0 && (
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              {selected.size === 0
+                ? `${allChapterIds.length} chapters available`
+                : `${selected.size} chapter${selected.size === 1 ? "" : "s"} selected`}
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => setSelected(allChaptersSelected ? new Set() : new Set(allChapterIds))}
+            >
+              {allChaptersSelected ? "Clear all" : "Select all"}
+            </Button>
+          </div>
+        )}
         {subjects.length === 0 ? (
-          <div className="rounded-xl border p-6 text-center text-sm text-muted-foreground">
-            Complete onboarding to see chapters.
+          <div className="mantis-card p-6 text-center">
+            <h2 className="text-base font-semibold">No chapters are available</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Your course catalog may still be loading or your study track needs to be selected.
+            </p>
+            <Button
+              className="mt-4"
+              variant="outline"
+              onClick={() =>
+                profile?.id
+                  ? nav({ to: "/profile/$userId", params: { userId: profile.id } })
+                  : nav({ to: "/home" })
+              }
+            >
+              {profile?.id ? "Check profile" : "Return to dashboard"}
+            </Button>
           </div>
         ) : (
           <Accordion type="multiple" className="w-full">
@@ -197,9 +234,11 @@ function LearningPage() {
                             htmlFor={`c-${c.id}`}
                             className="flex-1 cursor-pointer text-sm font-normal"
                           >
-                            <span className="mr-2 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                              Class {c.class_level}
-                            </span>
+                            {c.class_level && (
+                              <span className="mr-2 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                                Class {c.class_level}
+                              </span>
+                            )}
                             {c.name}
                           </Label>
                         </li>

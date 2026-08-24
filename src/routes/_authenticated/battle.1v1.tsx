@@ -189,7 +189,6 @@ function OneVOne() {
     if (typeof window === "undefined") return;
     const c = new URLSearchParams(window.location.search).get("room");
     if (c) setJoinCode(c.toUpperCase());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

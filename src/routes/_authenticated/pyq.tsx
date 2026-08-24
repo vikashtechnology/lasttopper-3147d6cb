@@ -4,8 +4,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { failMessage } from "@/lib/friendly-error";
 import { toast } from "sonner";
 import { getPyqOptions, startPyqQuiz } from "@/lib/pyq.functions";
+import { getMyProfile } from "@/lib/user.functions";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Loader2, ScrollText } from "lucide-react";
+import { ChevronLeft, Loader2, Lock, ScrollText } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/pyq")({
   head: () => ({
@@ -28,6 +29,8 @@ function PyqPage() {
   const nav = useNavigate();
   const [count, setCount] = useState(20);
   const options = useQuery({ queryKey: ["pyq-options"], queryFn: () => getPyqOptions() });
+  const profile = useQuery({ queryKey: ["my-profile"], queryFn: () => getMyProfile() });
+  const isPro = !!profile.data?.is_pro;
 
   const start = useMutation({
     mutationFn: (o: { exam: string; year: number | null }) =>
@@ -64,15 +67,39 @@ function PyqPage() {
         <div className="mantis-card p-4">
           <div className="text-xs font-medium text-muted-foreground">Questions per set</div>
           <div className="mt-2 flex gap-2">
-            {[10, 20, 50].map((n) => (
-              <button
-                key={n}
-                onClick={() => setCount(n)}
-                className={`rounded-lg border px-3 py-1.5 text-sm ${count === n ? "border-primary bg-primary/10 text-primary" : ""}`}
-              >
-                {n}
-              </button>
-            ))}
+            {[10, 20, 50].map((n) => {
+              const locked = n > 20 && !isPro;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => {
+                    if (locked) {
+                      toast.info("50-question PYQ sets are available with Pro.", {
+                        action: { label: "View plans", onClick: () => nav({ to: "/pricing" }) },
+                      });
+                      return;
+                    }
+                    setCount(n);
+                  }}
+                  aria-pressed={count === n}
+                  aria-label={`${n} questions${locked ? " — Pro" : ""}`}
+                  className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+                    count === n
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "hover:border-primary/40 hover:bg-accent"
+                  } ${locked ? "text-muted-foreground" : ""}`}
+                >
+                  {n}
+                  {locked && (
+                    <>
+                      <Lock className="h-3 w-3" />
+                      <span className="text-[10px] font-semibold uppercase tracking-wide">Pro</span>
+                    </>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -82,11 +109,30 @@ function PyqPage() {
           </div>
         )}
 
-        {options.data && options.data.length === 0 && (
-          <div className="mantis-card p-6 text-center text-sm text-muted-foreground">
-            No past-year questions uploaded yet. An admin can add them from Admin → Bank with
-            <code className="mx-1 rounded bg-muted px-1">exam</code> and
-            <code className="mx-1 rounded bg-muted px-1">exam_year</code> fields.
+        {options.isError && (
+          <div className="mantis-card p-6 text-center">
+            <h2 className="text-sm font-semibold">The exam archive did not load</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{failMessage(options.error)}</p>
+            <Button className="mt-4" variant="outline" onClick={() => options.refetch()}>
+              Try again
+            </Button>
+          </div>
+        )}
+
+        {options.isSuccess && options.data.length === 0 && (
+          <div className="mantis-card p-6 text-center">
+            <ScrollText className="mx-auto h-8 w-8 text-muted-foreground" />
+            <h2 className="mt-3 text-base font-semibold">Past-year sets are being prepared</h2>
+            <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+              No PYQ collection is available yet. You can continue with chapter practice or revision
+              notes in the meantime.
+            </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Button variant="outline" onClick={() => nav({ to: "/revise" })}>
+                Revise
+              </Button>
+              <Button onClick={() => nav({ to: "/learning" })}>Start chapter practice</Button>
+            </div>
           </div>
         )}
 

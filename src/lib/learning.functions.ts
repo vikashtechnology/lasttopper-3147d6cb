@@ -8,7 +8,7 @@ export type Chapter = {
   id: string;
   subject_id: string;
   name: string;
-  class_level: number;
+  class_level: number | null;
   display_order: number;
 };
 
@@ -60,10 +60,31 @@ export const getSubjectsWithChapters = createServerFn({ method: "GET" })
       .order("display_order");
     if (cErr) throw cErr;
 
-    return (subjects ?? []).map((s) => ({
-      ...s,
-      chapters: (chapters ?? []).filter((c) => c.subject_id === s.id),
-    })) as SubjectWithChapters[];
+    const catalog = new Map<string, SubjectWithChapters>();
+    for (const subject of subjects ?? []) {
+      const ownChapters = (chapters ?? []).filter((chapter) => chapter.subject_id === subject.id);
+      const item = { ...subject, chapters: ownChapters } as SubjectWithChapters;
+      const key = `${subject.profession}:${subject.name.trim().toLowerCase()}`;
+      const existing = catalog.get(key);
+
+      // Prefer the populated canonical row over a legacy empty placeholder.
+      // If two populated rows ever exist, merge chapter IDs without showing a
+      // duplicate user-facing subject section.
+      if (!existing || (existing.chapters.length === 0 && ownChapters.length > 0)) {
+        catalog.set(key, item);
+      } else if (ownChapters.length > 0) {
+        const chapterIds = new Set(existing.chapters.map((chapter) => chapter.id));
+        catalog.set(key, {
+          ...existing,
+          chapters: [
+            ...existing.chapters,
+            ...ownChapters.filter((chapter) => !chapterIds.has(chapter.id)),
+          ],
+        });
+      }
+    }
+
+    return Array.from(catalog.values()).filter((subject) => subject.chapters.length > 0);
   });
 
 const generateSchema = z.object({

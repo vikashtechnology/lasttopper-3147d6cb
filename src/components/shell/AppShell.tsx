@@ -15,13 +15,23 @@ import {
   ShieldCheck,
   Menu,
   X,
+  CalendarCheck,
+  Repeat2,
+  ScrollText,
+  Sparkles,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { SocialLinksDropdown } from "@/components/SocialLinks";
 
-type NavItem = { to: string; label: string; icon: ReactNode; params?: Record<string, string> };
+type NavItem = {
+  to: string;
+  label: string;
+  icon: ReactNode;
+  params?: Record<string, string>;
+  exact?: boolean;
+};
 
 export type NavGroup = { title: string; items: NavItem[] };
 
@@ -29,31 +39,55 @@ export const defaultNavGroups = (opts: { profileUserId?: string; admin?: boolean
   const groups: NavGroup[] = [
     {
       title: "Overview",
-      items: [{ to: "/home", label: "Dashboard", icon: <HomeIcon className="h-4 w-4" /> }],
+      items: [
+        {
+          to: "/home",
+          label: "Dashboard",
+          icon: <HomeIcon className="h-4 w-4" />,
+          exact: true,
+        },
+      ],
     },
     {
       title: "Practice",
       items: [
-        { to: "/learning", label: "Learning", icon: <BookOpen className="h-4 w-4" /> },
-        { to: "/revise", label: "Revise", icon: <BookMarked className="h-4 w-4" /> },
+        { to: "/learning", label: "Chapter practice", icon: <BookOpen className="h-4 w-4" /> },
+        {
+          to: "/daily",
+          label: "Daily challenge",
+          icon: <CalendarCheck className="h-4 w-4" />,
+        },
+        { to: "/review", label: "Smart review", icon: <Repeat2 className="h-4 w-4" /> },
+        { to: "/pyq", label: "Previous years", icon: <ScrollText className="h-4 w-4" /> },
+        { to: "/revise", label: "Revision notes", icon: <BookMarked className="h-4 w-4" /> },
         { to: "/mistakes", label: "Mistake bank", icon: <AlertOctagon className="h-4 w-4" /> },
-        { to: "/analytics", label: "Mastery", icon: <BarChart3 className="h-4 w-4" /> },
-        { to: "/history", label: "History", icon: <History className="h-4 w-4" /> },
+        { to: "/analytics", label: "Analytics", icon: <BarChart3 className="h-4 w-4" /> },
+        { to: "/history", label: "Quiz history", icon: <History className="h-4 w-4" /> },
       ],
     },
     {
       title: "Compete",
       items: [
-        { to: "/battle", label: "Battle arena", icon: <Swords className="h-4 w-4" /> },
+        {
+          to: "/battle",
+          label: "Battle arena",
+          icon: <Swords className="h-4 w-4" />,
+          exact: true,
+        },
         { to: "/battle/mega", label: "Sunday Mega", icon: <Trophy className="h-4 w-4" /> },
         { to: "/battle/wallet", label: "Wallet", icon: <Wallet className="h-4 w-4" /> },
       ],
     },
     {
-      title: "Social",
+      title: "Community",
       items: [
         { to: "/community", label: "Community", icon: <Users className="h-4 w-4" /> },
         { to: "/notifications", label: "Notifications", icon: <Bell className="h-4 w-4" /> },
+      ],
+    },
+    {
+      title: "Account",
+      items: [
         ...(opts.profileUserId
           ? [
               {
@@ -64,6 +98,7 @@ export const defaultNavGroups = (opts: { profileUserId?: string; admin?: boolean
               },
             ]
           : []),
+        { to: "/pricing", label: "Plans & Pro", icon: <Sparkles className="h-4 w-4" /> },
       ],
     },
   ];
@@ -92,7 +127,23 @@ export function AppShell({
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  const isActive = (to: string) => pathname === to || pathname.startsWith(to + "/");
+  useEffect(() => setMobileOpen(false), [pathname]);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [mobileOpen]);
+
+  const isActive = (to: string, exact = false) =>
+    pathname === to || (!exact && pathname.startsWith(to + "/"));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 text-foreground">
@@ -104,22 +155,24 @@ export function AppShell({
             className="rounded-md p-2 text-muted-foreground hover:bg-accent lg:hidden"
             onClick={() => setMobileOpen((v) => !v)}
             aria-label="Toggle menu"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-navigation"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
-          <div className="flex min-w-0 items-center gap-2">
+          <Link
+            to="/home"
+            className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label="Last Topper dashboard"
+          >
             <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-xl shadow-lg shadow-primary/20 ring-1 ring-border">
-              <img
-                src="/app-icon-192.png"
-                alt="Last Topper"
-                className="h-full w-full object-cover"
-              />
+              <img src="/app-icon-192.png" alt="" className="h-full w-full object-cover" />
             </div>
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold leading-tight">Last Topper</div>
               <div className="truncate text-xs text-muted-foreground">{header}</div>
             </div>
-          </div>
+          </Link>
           <div className="ml-auto flex items-center gap-1">
             <ThemeToggle />
             {headerActions}
@@ -143,7 +196,7 @@ export function AppShell({
                         to={it.to as never}
                         params={it.params as never}
                         className={`flex items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors ${
-                          isActive(it.to)
+                          isActive(it.to, it.exact)
                             ? "bg-primary/10 font-medium text-primary"
                             : "text-foreground/80 hover:bg-accent"
                         }`}
@@ -165,12 +218,24 @@ export function AppShell({
           <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setMobileOpen(false)}>
             <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
             <div
+              id="mobile-navigation"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="mobile-menu-title"
               className="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-border bg-background p-4 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-3 flex items-center justify-between">
-                <span className="text-sm font-semibold">Menu</span>
-                <Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)}>
+                <span id="mobile-menu-title" className="text-sm font-semibold">
+                  Menu
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setMobileOpen(false)}
+                  aria-label="Close menu"
+                  autoFocus
+                >
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -187,7 +252,7 @@ export function AppShell({
                           params={it.params as never}
                           onClick={() => setMobileOpen(false)}
                           className={`flex items-center gap-2 rounded-lg px-2 py-2 text-sm ${
-                            isActive(it.to)
+                            isActive(it.to, it.exact)
                               ? "bg-primary/10 font-medium text-primary"
                               : "text-foreground/80 hover:bg-accent"
                           }`}
@@ -209,35 +274,22 @@ export function AppShell({
         <main className="min-w-0 flex-1 pb-24 lg:pb-6">{children}</main>
       </div>
 
-      {/* Footer — categorized nav (desktop) */}
-      <footer className="hidden border-t border-border bg-muted/40 lg:block">
-        <div className="mx-auto grid max-w-7xl grid-cols-4 gap-6 px-8 py-8 text-xs text-muted-foreground">
-          {groups.slice(0, 4).map((g) => (
-            <div key={g.title}>
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-foreground/80">
-                {g.title}
-              </div>
-              <ul className="space-y-1.5">
-                {g.items.map((it) => (
-                  <li key={it.to + JSON.stringify(it.params ?? {})}>
-                    <Link
-                      to={it.to as never}
-                      params={it.params as never}
-                      className="hover:text-foreground"
-                    >
-                      {it.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+      {/* Compact footer — primary navigation already lives in the sidebar. */}
+      <footer className="hidden border-t border-border/70 bg-background/60 lg:block">
+        <div className="mx-auto flex max-w-7xl items-center gap-4 px-8 py-4 text-[11px] text-muted-foreground">
+          <span>{footerNote}</span>
+          <nav className="ml-auto flex items-center gap-4" aria-label="Legal">
+            <Link to="/privacy" className="hover:text-foreground">
+              Privacy
+            </Link>
+            <Link to="/terms" className="hover:text-foreground">
+              Terms
+            </Link>
+            <Link to="/refund" className="hover:text-foreground">
+              Refunds
+            </Link>
+          </nav>
         </div>
-        {footerNote ? (
-          <div className="border-t border-border/70 px-8 py-3 text-center text-[11px] text-muted-foreground">
-            {footerNote}
-          </div>
-        ) : null}
       </footer>
 
       {/* Mobile bottom nav */}
@@ -263,7 +315,7 @@ export function AppShell({
           />
           <BottomLink
             to="/community"
-            label="Social"
+            label="Community"
             icon={<Users className="h-5 w-5" />}
             active={isActive("/community")}
           />

@@ -89,8 +89,11 @@ function DailyPage() {
             </h1>
           </div>
           {!done && questions.length > 0 && (
-            <span className="text-xs text-muted-foreground">
-              {idx + 1} / {questions.length}
+            <span className="text-right text-xs text-muted-foreground">
+              <span className="block font-medium text-foreground">
+                {idx + 1} / {questions.length}
+              </span>
+              {Object.keys(answers).length} answered
             </span>
           )}
         </div>
@@ -103,10 +106,26 @@ function DailyPage() {
           </div>
         )}
         {challenge.isError && (
-          <div className="mantis-card p-6 text-sm">
-            <p className="text-red-600">{(challenge.error as Error).message}</p>
-            <Button className="mt-3" onClick={() => challenge.refetch()}>
-              Retry
+          <div className="mantis-card p-6 text-center">
+            <h2 className="text-base font-semibold">Today's challenge is unavailable</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{failMessage(challenge.error)}</p>
+            <div className="mt-4 flex justify-center gap-2">
+              <Button variant="outline" onClick={() => nav({ to: "/learning" })}>
+                Practice a chapter
+              </Button>
+              <Button onClick={() => challenge.refetch()}>Try again</Button>
+            </div>
+          </div>
+        )}
+
+        {challenge.isSuccess && !done && !locked && questions.length === 0 && (
+          <div className="mantis-card p-6 text-center">
+            <h2 className="text-base font-semibold">No challenge is ready yet</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Try again shortly, or continue with a chapter practice set.
+            </p>
+            <Button className="mt-4" onClick={() => nav({ to: "/learning" })}>
+              Start practice
             </Button>
           </div>
         )}
@@ -186,10 +205,19 @@ function DailyPage() {
                 Prev
               </Button>
               {idx + 1 < questions.length ? (
-                <Button onClick={() => setIdx((i) => i + 1)}>Next</Button>
+                <Button disabled={!answers[q.id]} onClick={() => setIdx((i) => i + 1)}>
+                  {answers[q.id] ? "Next" : "Choose an answer"}
+                </Button>
               ) : (
-                <Button disabled={submit.isPending} onClick={() => submit.mutate()}>
-                  {submit.isPending ? "Submitting…" : "Submit challenge"}
+                <Button
+                  disabled={submit.isPending || Object.keys(answers).length < questions.length}
+                  onClick={() => submit.mutate()}
+                >
+                  {submit.isPending
+                    ? "Submitting…"
+                    : Object.keys(answers).length < questions.length
+                      ? `${questions.length - Object.keys(answers).length} unanswered`
+                      : "Submit challenge"}
                 </Button>
               )}
             </div>

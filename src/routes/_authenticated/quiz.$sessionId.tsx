@@ -90,7 +90,7 @@ function QuizPage() {
   const submittedRef = useRef(false);
 
   const idx = state?.currentIndex ?? 0;
-  const answers = state?.answers ?? {};
+  const answers = useMemo(() => state?.answers ?? {}, [state?.answers]);
   const q = questions[idx];
   const needsMore = !alreadySubmitted && questions.length < targetCount;
   const fetchingRef = useRef(false);

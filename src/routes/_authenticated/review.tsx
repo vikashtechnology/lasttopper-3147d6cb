@@ -38,11 +38,15 @@ function ReviewPage() {
   const grade = useMutation({
     mutationFn: (correct: boolean) =>
       gradeReview({ data: { id: queue.data!.due[pos].id, correct } }),
-    onSuccess: () => {
+    onSuccess: async () => {
       setPicked(null);
-      setPos((p) => p + 1);
-      qc.invalidateQueries({ queryKey: ["review-queue"] });
-      qc.invalidateQueries({ queryKey: ["my-profile"] });
+      // The graded row leaves the due queue after refresh. Keep the cursor at
+      // the first row so the next item is not skipped when the array shrinks.
+      setPos(0);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["review-queue"] }),
+        qc.invalidateQueries({ queryKey: ["my-profile"] }),
+      ]);
     },
     onError: (e: Error) => toast.error(failMessage(e)),
   });
@@ -82,7 +86,17 @@ function ReviewPage() {
           </div>
         )}
 
-        {!queue.isLoading && !item && (
+        {queue.isError && (
+          <div className="mantis-card p-6 text-center">
+            <h2 className="text-base font-semibold">Your review queue did not load</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{failMessage(queue.error)}</p>
+            <Button className="mt-4" variant="outline" onClick={() => queue.refetch()}>
+              Try again
+            </Button>
+          </div>
+        )}
+
+        {queue.isSuccess && !item && (
           <div className="mantis-card p-6 text-center">
             <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-500" />
             <h2 className="mt-3 text-lg font-semibold">Nothing due right now</h2>

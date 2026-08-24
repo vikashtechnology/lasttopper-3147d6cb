@@ -280,7 +280,7 @@ function HomePage() {
         />
         <NavTile
           icon={<History className="h-5 w-5" />}
-          title="History"
+          title="Quiz history"
           body="Past attempts"
           onClick={() => navigate({ to: "/history" })}
         />
