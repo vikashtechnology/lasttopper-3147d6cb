@@ -29,7 +29,8 @@ export const getReviewQueue = createServerFn({ method: "GET" })
       const ans = (s.answers as Record<string, string>) ?? {};
       for (const q of qs) if (ans[q.id] !== q.correct) wrong.push(q);
     }
-    if (wrong.length) await upsertReviewItems(context.supabase, context.userId, wrong.slice(0, 200));
+    if (wrong.length)
+      await upsertReviewItems(context.supabase, context.userId, wrong.slice(0, 200));
 
     const nowIso = new Date().toISOString();
     const { data: due } = await context.supabase
@@ -73,7 +74,9 @@ export const gradeReview = createServerFn({ method: "POST" })
     const { data: item } = await context.supabase
       .from("review_items")
       .select("box, reviewed_count")
-      .eq("id", data.id).eq("user_id", context.userId).maybeSingle();
+      .eq("id", data.id)
+      .eq("user_id", context.userId)
+      .maybeSingle();
     if (!item) throw new Error("Review item not found");
 
     const box = data.correct ? Math.min(5, Number(item.box ?? 1) + 1) : 1;
@@ -85,7 +88,11 @@ export const gradeReview = createServerFn({ method: "POST" })
     }
 
     if (data.correct && box >= 5) {
-      await context.supabase.from("review_items").delete().eq("id", data.id).eq("user_id", context.userId);
+      await context.supabase
+        .from("review_items")
+        .delete()
+        .eq("id", data.id)
+        .eq("user_id", context.userId);
       return { retired: true, box, due_at: dueAt };
     }
 
@@ -97,6 +104,7 @@ export const gradeReview = createServerFn({ method: "POST" })
         last_result: data.correct ? "correct" : "wrong",
         reviewed_count: Number(item.reviewed_count ?? 0) + 1,
       })
-      .eq("id", data.id).eq("user_id", context.userId);
+      .eq("id", data.id)
+      .eq("user_id", context.userId);
     return { retired: false, box, due_at: dueAt };
   });

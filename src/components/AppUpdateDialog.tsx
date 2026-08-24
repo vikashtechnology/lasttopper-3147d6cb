@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { Download, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { getLatestRelease, type AppRelease } from "@/lib/app-release.functions";
 
@@ -72,8 +78,14 @@ export function AppUpdateDialog() {
   if (!release) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => (release.mandatory ? null : v ? setOpen(true) : later())}>
-      <DialogContent className="max-w-sm backdrop-blur-md" onInteractOutside={(e) => release.mandatory && e.preventDefault()}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => (release.mandatory ? null : v ? setOpen(true) : later())}
+    >
+      <DialogContent
+        className="max-w-sm backdrop-blur-md"
+        onInteractOutside={(e) => release.mandatory && e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
@@ -86,7 +98,9 @@ export function AppUpdateDialog() {
           </DialogDescription>
         </DialogHeader>
         {release.notes ? (
-          <p className="whitespace-pre-line rounded-lg bg-muted p-3 text-sm text-muted-foreground">{release.notes}</p>
+          <p className="whitespace-pre-line rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+            {release.notes}
+          </p>
         ) : null}
         <div className="mt-2 flex gap-2">
           {!release.mandatory ? (

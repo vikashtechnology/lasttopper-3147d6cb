@@ -5,7 +5,15 @@ import { getChapterTopics, getTopicRevision, type ReviseTopic } from "@/lib/revi
 import { Button } from "@/components/ui/button";
 import { Latex, Formula } from "@/components/Latex";
 import { ReviseDiagram } from "@/components/ReviseDiagram";
-import { ChevronLeft, ChevronDown, Loader2, ExternalLink, Sparkles, BookMarked, Network } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronDown,
+  Loader2,
+  ExternalLink,
+  Sparkles,
+  BookMarked,
+  Network,
+} from "lucide-react";
 import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/revise/$chapterId")({
@@ -36,7 +44,9 @@ function ReviseError({ error, reset }: { error: Error; reset: () => void }) {
       <div className="mx-auto max-w-md space-y-4 rounded-xl border bg-card p-5 text-card-foreground shadow-sm">
         <div>
           <h1 className="text-lg font-semibold">Revision could not load</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{failMessage(error, "Please try again.")}</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {failMessage(error, "Please try again.")}
+          </p>
         </div>
         <div className="flex gap-2">
           <Button onClick={reset}>Retry</Button>
@@ -62,7 +72,12 @@ function ChapterRevisePage() {
     <main className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
-          <Button variant="ghost" size="icon" onClick={() => nav({ to: "/revise" })} aria-label="Back">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => nav({ to: "/revise" })}
+            aria-label="Back"
+          >
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div className="min-w-0">
@@ -94,8 +109,9 @@ function ChapterRevisePage() {
           />
         ))}
         <p className="pt-4 text-center text-[11px] text-muted-foreground">
-          Revision notes are AI summaries written in our own words. Reference links point to third-party sources
-          (NCERT, Unacademy, Vedantu, Oswaal, BYJU'S) for further reading — all rights belong to the respective owners.
+          Revision notes are AI summaries written in our own words. Reference links point to
+          third-party sources (NCERT, Unacademy, Vedantu, Oswaal, BYJU'S) for further reading — all
+          rights belong to the respective owners.
         </p>
       </section>
     </main>
@@ -149,7 +165,9 @@ function TopicCard({
           </span>
           <span className="truncate text-sm font-semibold">{topic.title}</span>
         </div>
-        <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+        />
       </button>
 
       {open && (
@@ -214,9 +232,6 @@ function TopicCard({
                 </div>
               )}
 
-
-
-
               {detail.refs?.length > 0 && (
                 <div>
                   <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -234,7 +249,9 @@ function TopicCard({
                           <span className="inline-flex shrink-0 items-center rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
                             {r.source.split(".")[0]}
                           </span>
-                          <span className="flex-1 truncate group-hover:text-primary">{r.title}</span>
+                          <span className="flex-1 truncate group-hover:text-primary">
+                            {r.title}
+                          </span>
                           <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
                         </a>
                       </li>

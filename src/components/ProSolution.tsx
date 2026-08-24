@@ -42,7 +42,12 @@ export function ProSolution({ question }: { question: Q }) {
           <Lock className="h-3.5 w-3.5 text-amber-500" />
           Full AI step-by-step solution is a Pro feature.
         </div>
-        <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => nav({ to: "/pricing" })}>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 text-xs"
+          onClick={() => nav({ to: "/pricing" })}
+        >
           <Sparkles className="mr-1 h-3.5 w-3.5" /> Go Pro
         </Button>
       </div>

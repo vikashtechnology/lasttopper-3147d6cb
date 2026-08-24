@@ -1,7 +1,7 @@
 /**
  * Referral link capture.
  *
- * Invite links look like https://lasttopper.lovable.app/auth?ref=ABC12345.
+ * Invite links look like https://your-app.example/auth?ref=ABC12345.
  * On the web the code is in the URL; inside the Android/iOS app the same link
  * arrives through the deep-link listener. Either way we stash it so the
  * onboarding screen can prefill it after Google sign-in.

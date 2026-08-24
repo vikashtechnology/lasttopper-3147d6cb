@@ -74,7 +74,14 @@ function AdminAppUpdate() {
       return;
     }
     save.mutate(
-      { version: version.trim(), version_code: versionCode, download_url: url.trim(), notes, mandatory, is_active: true },
+      {
+        version: version.trim(),
+        version_code: versionCode,
+        download_url: url.trim(),
+        notes,
+        mandatory,
+        is_active: true,
+      },
       {
         onSuccess: () => {
           setVersion("");
@@ -93,8 +100,8 @@ function AdminAppUpdate() {
     <section className="mx-auto max-w-3xl px-4 py-6">
       <h2 className="text-lg font-semibold">App update</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Publish a new version. Anyone running an older build of the Android/iOS app sees an update popup with your
-        download link the next time they open it.
+        Publish a new version. Anyone running an older build of the Android/iOS app sees an update
+        popup with your download link the next time they open it.
       </p>
 
       <div className="mt-4 space-y-3 rounded-2xl border border-border bg-card p-4">
@@ -103,7 +110,11 @@ function AdminAppUpdate() {
           <span className="text-sm font-medium">Publish a release</span>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Input placeholder="Version name (e.g. 1.2.0)" value={version} onChange={(e) => setVersion(e.target.value)} />
+          <Input
+            placeholder="Version name (e.g. 1.2.0)"
+            value={version}
+            onChange={(e) => setVersion(e.target.value)}
+          />
           <Input
             placeholder="Version code (e.g. 3)"
             inputMode="numeric"
@@ -111,8 +122,17 @@ function AdminAppUpdate() {
             onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
           />
         </div>
-        <Input placeholder="Download URL (Play Store or APK link)" value={url} onChange={(e) => setUrl(e.target.value)} />
-        <Textarea placeholder="What's new (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
+        <Input
+          placeholder="Download URL (Play Store or APK link)"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+        />
+        <Textarea
+          placeholder="What's new (optional)"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={3}
+        />
         <div className="flex items-center justify-between">
           <label className="flex items-center gap-2 text-sm">
             <Switch checked={mandatory} onCheckedChange={setMandatory} />
@@ -131,9 +151,15 @@ function AdminAppUpdate() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold">
-                  v{r.version} <span className="text-muted-foreground">(code {r.version_code})</span>
+                  v{r.version}{" "}
+                  <span className="text-muted-foreground">(code {r.version_code})</span>
                 </div>
-                <a href={r.download_url} target="_blank" rel="noreferrer" className="break-all text-xs text-primary underline">
+                <a
+                  href={r.download_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="break-all text-xs text-primary underline"
+                >
                   {r.download_url}
                 </a>
               </div>
@@ -155,13 +181,23 @@ function AdminAppUpdate() {
                   />
                   Live
                 </label>
-                <button className="rounded p-2 text-destructive" onClick={() => remove.mutate(r.id)} aria-label="Delete release">
+                <button
+                  className="rounded p-2 text-destructive"
+                  onClick={() => remove.mutate(r.id)}
+                  aria-label="Delete release"
+                >
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             </div>
-            {r.notes ? <p className="mt-2 whitespace-pre-line text-xs text-muted-foreground">{r.notes}</p> : null}
-            {r.mandatory ? <div className="mt-2 text-xs font-medium text-amber-600 dark:text-amber-400">Forced update</div> : null}
+            {r.notes ? (
+              <p className="mt-2 whitespace-pre-line text-xs text-muted-foreground">{r.notes}</p>
+            ) : null}
+            {r.mandatory ? (
+              <div className="mt-2 text-xs font-medium text-amber-600 dark:text-amber-400">
+                Forced update
+              </div>
+            ) : null}
           </div>
         ))}
         {!list.isLoading && rows.length === 0 ? (

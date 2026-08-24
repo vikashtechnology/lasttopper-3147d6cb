@@ -146,7 +146,10 @@ function ResultsPage() {
       ctx.fillStyle = "rgba(255,255,255,0.06)";
       ctx.strokeStyle = "rgba(255,255,255,0.15)";
       ctx.lineWidth = 2;
-      const cardX = 80, cardY = 200, cardW = W - 160, cardH = H - 400;
+      const cardX = 80,
+        cardY = 200,
+        cardW = W - 160,
+        cardH = H - 400;
       const r = 40;
       ctx.beginPath();
       ctx.moveTo(cardX + r, cardY);
@@ -201,7 +204,10 @@ function ResultsPage() {
       const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
       if (!blob) throw new Error("Could not create image");
       const file = new File([blob], `scorecard-${sessionId}.png`, { type: "image/png" });
-      const origin = typeof window !== "undefined" ? window.location.origin : "https://lasttopper.lovable.app";
+      const origin =
+        typeof window !== "undefined"
+          ? window.location.origin
+          : "https://last-topper-web-test.vercel.app";
       const code = ref.data?.code;
       const inviteUrl = code ? `${origin}/?ref=${code}` : origin;
       const shareText = `I scored ${accuracy.toFixed(1)}% (${correct}/${total}) on Last Topper! Join me${code ? ` with code ${code}` : ""}: ${inviteUrl}`;
@@ -223,7 +229,6 @@ function ResultsPage() {
     } catch (e) {
       const msg = failMessage(e, "Failed to share");
       if (!/aborted/i.test(msg)) toast.error(msg);
-
     } finally {
       setSharing(false);
     }
@@ -260,7 +265,12 @@ function ResultsPage() {
             <div className="text-xs text-muted-foreground">Quiz complete</div>
             <div className="text-base font-semibold">Your results</div>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => nav({ to: "/home" })} aria-label="Home">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => nav({ to: "/home" })}
+            aria-label="Home"
+          >
             <Home className="h-5 w-5" />
           </Button>
         </div>
@@ -271,15 +281,12 @@ function ResultsPage() {
           <div className="mb-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
-              This session was <strong>auto-submitted</strong> because the app was inactive too long.
-              Your progress up to that point was saved.
+              This session was <strong>auto-submitted</strong> because the app was inactive too
+              long. Your progress up to that point was saved.
             </div>
           </div>
         )}
-        <div
-          ref={scorecardRef}
-          className="rounded-2xl border bg-card p-5 shadow-sm"
-        >
+        <div ref={scorecardRef} className="rounded-2xl border bg-card p-5 shadow-sm">
           <div className="text-sm text-muted-foreground">Last Topper · Accuracy</div>
           <div className="mt-1 text-4xl font-bold">{accuracy.toFixed(1)}%</div>
           <div className="mt-4 grid grid-cols-4 gap-3 text-center">
@@ -291,13 +298,26 @@ function ResultsPage() {
         </div>
         <XpProgress className="mt-4" />
         <div className="mt-4 flex flex-wrap gap-2">
-          <Button className="flex-1 min-w-[140px]" onClick={practiceIncorrect} disabled={starting || incorrect === 0}>
+          <Button
+            className="flex-1 min-w-[140px]"
+            onClick={practiceIncorrect}
+            disabled={starting || incorrect === 0}
+          >
             <Repeat className="mr-2 h-4 w-4" /> Practice incorrect
           </Button>
-          <Button variant="outline" className="flex-1 min-w-[140px]" onClick={shareScorecard} disabled={sharing}>
+          <Button
+            variant="outline"
+            className="flex-1 min-w-[140px]"
+            onClick={shareScorecard}
+            disabled={sharing}
+          >
             <Share2 className="mr-2 h-4 w-4" /> {sharing ? "Preparing…" : "Share scorecard"}
           </Button>
-          <Button variant="outline" className="flex-1 min-w-[120px]" onClick={() => nav({ to: "/learning" })}>
+          <Button
+            variant="outline"
+            className="flex-1 min-w-[120px]"
+            onClick={() => nav({ to: "/learning" })}
+          >
             New quiz
           </Button>
         </div>
@@ -346,8 +366,8 @@ function ResultsPage() {
                             k === q.correct
                               ? "bg-emerald-50 text-emerald-900"
                               : k === chosen
-                              ? "bg-red-50 text-red-900"
-                              : ""
+                                ? "bg-red-50 text-red-900"
+                                : ""
                           }`}
                         >
                           <span className="font-semibold">{k}.</span>
@@ -356,7 +376,9 @@ function ResultsPage() {
                       ))}
                     </div>
                     <div className="mt-3 rounded-lg bg-muted p-3 text-sm">
-                      <div className="mb-1 text-xs font-semibold text-muted-foreground">Step-by-step explanation</div>
+                      <div className="mb-1 text-xs font-semibold text-muted-foreground">
+                        Step-by-step explanation
+                      </div>
                       <Latex className="block">{q.explanation}</Latex>
                     </div>
                     <ProSolution question={q} />
@@ -406,7 +428,9 @@ function ResultsPage() {
               </div>
             </div>
             <div>
-              <Label className="text-xs" htmlFor="report-msg">Details (optional)</Label>
+              <Label className="text-xs" htmlFor="report-msg">
+                Details (optional)
+              </Label>
               <Textarea
                 id="report-msg"
                 value={reportMsg}
@@ -418,7 +442,9 @@ function ResultsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setReportFor(null)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setReportFor(null)}>
+              Cancel
+            </Button>
             <Button onClick={submitReport} disabled={reporting}>
               {reporting ? "Sending…" : "Send report"}
             </Button>
@@ -429,8 +455,17 @@ function ResultsPage() {
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: string | number; tone?: "pos" | "neg" }) {
-  const color = tone === "pos" ? "text-emerald-600" : tone === "neg" ? "text-red-600" : "text-foreground";
+function Stat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string | number;
+  tone?: "pos" | "neg";
+}) {
+  const color =
+    tone === "pos" ? "text-emerald-600" : tone === "neg" ? "text-red-600" : "text-foreground";
   return (
     <div className="rounded-lg bg-muted p-2">
       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>

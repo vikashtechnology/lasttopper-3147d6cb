@@ -11,14 +11,16 @@ import { Input } from "@/components/ui/input";
 import { payWithRazorpay } from "@/lib/razorpay-client";
 import { failMessage } from "@/lib/friendly-error";
 
-
 const profileQuery = { queryKey: ["my-profile"], queryFn: () => getMyProfile() } as const;
 
 export const Route = createFileRoute("/_authenticated/pricing")({
   head: () => ({
     meta: [
       { title: "Pricing — Last Topper" },
-      { name: "description", content: "Upgrade to Pro for unlimited AI question sets, priority battles, and more." },
+      {
+        name: "description",
+        content: "Upgrade to Pro for unlimited AI question sets, priority battles, and more.",
+      },
       { property: "og:title", content: "Pricing — Last Topper" },
       { property: "og:description", content: "Simple pricing. Practice more, rank higher." },
       { property: "og:type", content: "website" },
@@ -105,7 +107,8 @@ function PricingPage() {
         name: p?.full_name,
         email: p?.email,
         voucher_code: voucherPercent && code.trim() ? code.trim().toUpperCase() : undefined,
-        promo_code: !voucherPercent && promoPercent && promo.trim() ? promo.trim().toUpperCase() : undefined,
+        promo_code:
+          !voucherPercent && promoPercent && promo.trim() ? promo.trim().toUpperCase() : undefined,
       });
       toast.success("Welcome to Pro! 🎉");
       qc.invalidateQueries({ queryKey: ["my-profile"] });
@@ -126,7 +129,6 @@ function PricingPage() {
   const cta = `Subscribe ₹${payable}/${unit}`;
   const strike = percentOff ? `₹${base}` : undefined;
 
-
   return (
     <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
       <header className="sticky top-0 z-10 border-b border-border/70 bg-background/80 backdrop-blur">
@@ -143,7 +145,9 @@ function PricingPage() {
 
       <section className="mx-auto max-w-4xl px-5 py-10">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Practice more. Rank higher.</h1>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Practice more. Rank higher.
+          </h1>
           <p className="mt-3 text-sm text-muted-foreground">
             Free forever for the essentials. Go Pro for unlimited AI practice.
           </p>
@@ -191,8 +195,8 @@ function PricingPage() {
             </div>
             {best ? (
               <p className="mt-1 text-xs text-muted-foreground">
-                You have a <b className="text-primary">{best.percent}% off</b> referral voucher — expires{" "}
-                {new Date(best.expires_at as string).toLocaleDateString()}.
+                You have a <b className="text-primary">{best.percent}% off</b> referral voucher —
+                expires {new Date(best.expires_at as string).toLocaleDateString()}.
               </p>
             ) : (
               <p className="mt-1 text-xs text-muted-foreground">
@@ -231,7 +235,12 @@ function PricingPage() {
                 placeholder="Enter promo code"
                 className="h-9"
               />
-              <Button size="sm" variant="outline" onClick={applyPromo} disabled={promoChecking || !promo.trim()}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={applyPromo}
+                disabled={promoChecking || !promo.trim()}
+              >
                 {promoChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
               </Button>
             </div>
@@ -242,7 +251,9 @@ function PricingPage() {
             )}
             {promoError && <p className="mt-2 text-xs text-destructive">{promoError}</p>}
             {voucherPercent > 0 && promoPercent > 0 && (
-              <p className="mt-1 text-xs text-muted-foreground">Your referral voucher gives a bigger or equal saving and will be used.</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Your referral voucher gives a bigger or equal saving and will be used.
+              </p>
             )}
           </div>
         )}
@@ -275,7 +286,11 @@ function PricingPage() {
                 </Button>
               ) : (
                 <Button className="w-full" onClick={subscribe} disabled={loading}>
-                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                  {loading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-2 h-4 w-4" />
+                  )}
                   {loading ? "Opening checkout…" : cta}
                 </Button>
               )
@@ -324,7 +339,9 @@ function PlanCard({
         )}
       </div>
       <div className="mt-4 flex items-baseline gap-1">
-        {strike && <span className="mr-1 text-base text-muted-foreground line-through">{strike}</span>}
+        {strike && (
+          <span className="mr-1 text-base text-muted-foreground line-through">{strike}</span>
+        )}
         <span className="text-3xl font-bold">{price}</span>
         {period && <span className="text-sm text-muted-foreground">{period}</span>}
       </div>

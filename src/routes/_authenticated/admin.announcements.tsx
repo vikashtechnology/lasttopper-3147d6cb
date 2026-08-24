@@ -17,7 +17,10 @@ function AdminAnnouncements() {
   const [audience, setAudience] = useState<"all" | "pro" | "free">("all");
   const [msg, setMsg] = useState<string | null>(null);
 
-  const history = useQuery({ queryKey: ["admin-announcements"], queryFn: () => adminListAnnouncements() });
+  const history = useQuery({
+    queryKey: ["admin-announcements"],
+    queryFn: () => adminListAnnouncements(),
+  });
 
   const send = useMutation({
     mutationFn: () => adminBroadcast({ data: { title, body, link, audience } }),
@@ -71,7 +74,9 @@ function AdminAnnouncements() {
                 key={a}
                 onClick={() => setAudience(a)}
                 className={`rounded-full px-3 py-1.5 text-xs font-medium ${
-                  audience === a ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                  audience === a
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 {a === "all" ? "All users" : a === "pro" ? "Pro only" : "Free only"}
@@ -80,10 +85,17 @@ function AdminAnnouncements() {
           </div>
           <button
             disabled={disabled}
-            onClick={() => { setMsg(null); send.mutate(); }}
+            onClick={() => {
+              setMsg(null);
+              send.mutate();
+            }}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50"
           >
-            {send.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            {send.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
             Send announcement
           </button>
           {msg && <p className="text-xs text-muted-foreground">{msg}</p>}

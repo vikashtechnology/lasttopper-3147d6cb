@@ -80,7 +80,8 @@ function AdminPromos() {
   const create = () => {
     const pct = Number(percent);
     if (!code.trim()) return toast.error("Enter a code");
-    if (!Number.isInteger(pct) || pct < 1 || pct > 100) return toast.error("Discount must be 1–100%");
+    if (!Number.isInteger(pct) || pct < 1 || pct > 100)
+      return toast.error("Discount must be 1–100%");
     if (plans.length === 0) return toast.error("Pick at least one plan");
     save.mutate({
       code: code.trim().toUpperCase(),
@@ -103,11 +104,20 @@ function AdminPromos() {
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <label className="text-xs text-muted-foreground">Promo code</label>
-            <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="TOPPER50" />
+            <Input
+              value={code}
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              placeholder="TOPPER50"
+            />
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Discount %</label>
-            <Input value={percent} onChange={(e) => setPercent(e.target.value)} inputMode="numeric" placeholder="20" />
+            <Input
+              value={percent}
+              onChange={(e) => setPercent(e.target.value)}
+              inputMode="numeric"
+              placeholder="20"
+            />
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Valid until</label>
@@ -115,7 +125,12 @@ function AdminPromos() {
           </div>
           <div>
             <label className="text-xs text-muted-foreground">Max uses (optional)</label>
-            <Input value={maxUses} onChange={(e) => setMaxUses(e.target.value)} inputMode="numeric" placeholder="Unlimited" />
+            <Input
+              value={maxUses}
+              onChange={(e) => setMaxUses(e.target.value)}
+              inputMode="numeric"
+              placeholder="Unlimited"
+            />
           </div>
         </div>
         <div className="mt-4">
@@ -127,7 +142,9 @@ function AdminPromos() {
                 type="button"
                 onClick={() => togglePlan(p.key)}
                 className={`rounded-full px-3 py-1.5 text-xs font-medium ${
-                  plans.includes(p.key) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                  plans.includes(p.key)
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 {p.label}
@@ -151,10 +168,10 @@ function AdminPromos() {
               <div className="font-mono text-sm font-semibold">{p.code}</div>
               <div className="text-xs text-muted-foreground">
                 {p.percent}% off ·{" "}
-                {p.plans
-                  .map((k) => PLANS.find((x) => x.key === k)?.label ?? k)
-                  .join(", ")}
-                {p.valid_until ? ` · till ${new Date(p.valid_until).toLocaleDateString()}` : " · no expiry"}
+                {p.plans.map((k) => PLANS.find((x) => x.key === k)?.label ?? k).join(", ")}
+                {p.valid_until
+                  ? ` · till ${new Date(p.valid_until).toLocaleDateString()}`
+                  : " · no expiry"}
                 {` · used ${p.used_count}${p.max_uses ? `/${p.max_uses}` : ""}`}
               </div>
             </div>

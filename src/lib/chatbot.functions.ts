@@ -94,11 +94,16 @@ export const explainStepByStep = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { data: profile } = await context.supabase
-      .from("users").select("is_pro").eq("id", context.userId).maybeSingle();
+      .from("users")
+      .select("is_pro")
+      .eq("id", context.userId)
+      .maybeSingle();
     if (!profile?.is_pro) throw new Error("PRO_ONLY");
 
     const opts = data.options
-      ? Object.entries(data.options).map(([k, v]) => `${k}. ${v}`).join("\n")
+      ? Object.entries(data.options)
+          .map(([k, v]) => `${k}. ${v}`)
+          .join("\n")
       : "";
     try {
       const reply = await aiChatText({

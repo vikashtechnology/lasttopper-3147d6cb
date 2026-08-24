@@ -79,7 +79,12 @@ function MistakesPage() {
     <main className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
-          <Button variant="ghost" size="icon" onClick={() => nav({ to: "/home" })} aria-label="Back">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => nav({ to: "/home" })}
+            aria-label="Back"
+          >
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1">
@@ -112,7 +117,9 @@ function MistakesPage() {
                       <span className="font-medium">{m.question.correct}</span>
                     </div>
                     <details className="mt-2">
-                      <summary className="cursor-pointer text-xs text-primary">Show explanation</summary>
+                      <summary className="cursor-pointer text-xs text-primary">
+                        Show explanation
+                      </summary>
                       <div className="mt-2 rounded-md bg-muted p-3 text-sm">
                         <Latex className="block">{m.question.explanation}</Latex>
                       </div>

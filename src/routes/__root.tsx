@@ -10,16 +10,10 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { registerPWA } from "@/lib/pwa-register";
 import { storeReferralFromUrl } from "@/lib/referral-link";
-import {
-  parseOAuthCallback,
-  closeNativeBrowser,
-  clearStoredOAuthState,
-  nativeRouteFromUrl,
-} from "@/lib/native-auth";
+import { parseOAuthCallback, closeNativeBrowser, nativeRouteFromUrl } from "@/lib/native-auth";
 
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
@@ -51,10 +45,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
@@ -111,7 +101,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -143,7 +136,7 @@ function RootComponent() {
     storeReferralFromUrl();
   }, []);
 
-  // Deep links (https://lasttopper.lovable.app/...) opened while the native app
+  // Verified HTTPS deep links opened while the native app
   // is running: keep the user in-app and capture any ?ref= invite code.
   useEffect(() => {
     let remove: (() => void) | undefined;
@@ -164,7 +157,6 @@ function RootComponent() {
                 access_token: tokens.access_token,
                 refresh_token: tokens.refresh_token,
               });
-              clearStoredOAuthState();
               if (!error) {
                 void router.navigate({ to: "/home", replace: true });
                 return;
@@ -188,8 +180,6 @@ function RootComponent() {
     return () => remove?.();
   }, [router]);
 
-
-
   // Android hardware/system back button: go one step back in history instead
   // of closing the app or jumping home. Exits only when history is empty.
   useEffect(() => {
@@ -210,7 +200,6 @@ function RootComponent() {
     })();
     return () => remove?.();
   }, []);
-
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
@@ -234,4 +223,3 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
-

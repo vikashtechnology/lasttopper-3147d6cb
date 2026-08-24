@@ -105,7 +105,9 @@ function QuizPage() {
         if (r.added > 0) qc.invalidateQueries({ queryKey: ["quiz-session", sessionId] });
       })
       .catch((e) => toast.error(failMessage(e, "Failed to load more")))
-      .finally(() => { fetchingRef.current = false; });
+      .finally(() => {
+        fetchingRef.current = false;
+      });
   }, [idx, questions.length, needsMore, sessionId, qc]);
 
   const [now, setNow] = useState(() => Date.now());
@@ -124,7 +126,11 @@ function QuizPage() {
     try {
       const timeTaken = Math.max(0, Math.floor((Date.now() - startTimeMs) / 1000));
       await submitQuizSession({
-        data: { id: sessionId, answers: answers as Record<string, Answer>, time_taken_seconds: timeTaken },
+        data: {
+          id: sessionId,
+          answers: answers as Record<string, Answer>,
+          time_taken_seconds: timeTaken,
+        },
       });
       clearSession(sessionId);
       if (auto) toast.info("Time's up — auto-submitted");
@@ -162,7 +168,12 @@ function QuizPage() {
     <main className="flex min-h-screen flex-col bg-background">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-3">
-          <Button variant="ghost" size="icon" onClick={() => nav({ to: "/learning" })} aria-label="Exit">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => nav({ to: "/learning" })}
+            aria-label="Exit"
+          >
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div className="text-xs font-medium text-muted-foreground">
@@ -251,9 +262,13 @@ function QuizPage() {
               disabled={idx + 1 >= questions.length}
             >
               {idx + 1 >= questions.length ? (
-                <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Loading</>
+                <>
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" /> Loading
+                </>
               ) : (
-                <>Next <ChevronRight className="ml-1 h-4 w-4" /></>
+                <>
+                  Next <ChevronRight className="ml-1 h-4 w-4" />
+                </>
               )}
             </Button>
           ) : (

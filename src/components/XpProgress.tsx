@@ -7,13 +7,7 @@ import { tierProgress } from "@/lib/xp";
  * Live XP bar showing progress from the current rank to the next one.
  * Reads the shared ["my-profile"] cache so it updates as XP is awarded.
  */
-export function XpProgress({
-  gained,
-  className = "",
-}: {
-  gained?: number;
-  className?: string;
-}) {
+export function XpProgress({ gained, className = "" }: { gained?: number; className?: string }) {
   const profile = useQuery({ queryKey: ["my-profile"], queryFn: () => getMyProfile() });
   const prof = profile.data as { reputation?: number; is_pro?: boolean } | undefined;
   const xp = Number(prof?.reputation ?? 0);
@@ -38,7 +32,9 @@ export function XpProgress({
         <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
           <Zap className="h-3.5 w-3.5" />
           {xp} XP
-          {gained ? <span className="ml-1 text-emerald-600 dark:text-emerald-400">+{gained}</span> : null}
+          {gained ? (
+            <span className="ml-1 text-emerald-600 dark:text-emerald-400">+{gained}</span>
+          ) : null}
         </span>
       </div>
 

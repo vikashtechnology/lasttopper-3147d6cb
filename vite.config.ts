@@ -1,30 +1,54 @@
-// @lovable.dev/vite-tanstack-config already includes the following — do NOT add them manually
-// or the app will break with duplicate plugins:
-//   - TanStack devtools (dev-only, first), tanstackStart, viteReact, tailwindcss, tsConfigPaths,
-//     nitro (build-only using cloudflare as a default target), VITE_* env injection, @ path alias,
-//     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
-// You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import tailwindcss from "@tailwindcss/vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+import { nitro } from "nitro/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
-export default defineConfig({
-  tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
-    server: { entry: "server" },
+export default defineConfig(({ command }) => ({
+  server: {
+    host: "0.0.0.0",
+    port: 8080,
+    allowedHosts: [".e2b.app"],
+  },
+  resolve: {
+    tsconfigPaths: true,
+    dedupe: [
+      "react",
+      "react-dom",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
+      "@tanstack/react-query",
+      "@tanstack/query-core",
+    ],
   },
   plugins: [
+    tailwindcss(),
+    tanstackStart({
+      server: { entry: "server" },
+      importProtection: {
+        behavior: "error",
+        client: {
+          files: ["**/server/**"],
+          specifiers: ["server-only"],
+        },
+      },
+    }),
+    ...(command === "build" ? [nitro({ defaultPreset: "node" })] : []),
+    react(),
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: null,
+      outDir: process.env.VERCEL ? ".vercel/output/static" : ".output/public",
       filename: "pwa-sw.js",
       devOptions: { enabled: false },
       includeAssets: ["app-icon-512.png"],
       manifest: false,
       workbox: {
         navigateFallback: "/",
-        navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//],
+        navigateFallbackDenylist: [/^\/api\//],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
           {
             urlPattern: ({ request }) => request.mode === "navigate",
@@ -41,4 +65,4 @@ export default defineConfig({
       },
     }),
   ],
-});
+}));

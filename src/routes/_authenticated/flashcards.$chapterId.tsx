@@ -10,7 +10,10 @@ export const Route = createFileRoute("/_authenticated/flashcards/$chapterId")({
   head: () => ({
     meta: [
       { title: "Formula Flashcards — Last Topper" },
-      { name: "description", content: "Flip through NCERT formulas and key points chapter by chapter." },
+      {
+        name: "description",
+        content: "Flip through NCERT formulas and key points chapter by chapter.",
+      },
       { property: "og:title", content: "Formula Flashcards — Last Topper" },
       { property: "og:description", content: "Rapid-fire formula and key-point recall cards." },
       { property: "og:type", content: "website" },
@@ -50,18 +53,30 @@ function FlashcardsPage() {
     for (const f of t.formulas ?? []) {
       const text = String(f);
       const { label } = parseFormula(text);
-      out.push({ topic: t.title, front: label ?? `Formula — ${t.title}`, back: text, isFormula: true });
+      out.push({
+        topic: t.title,
+        front: label ?? `Formula — ${t.title}`,
+        back: text,
+        isFormula: true,
+      });
     }
 
     for (const p of t.key_points ?? []) {
       const text = typeof p === "string" ? p : String(p);
       const [head, ...rest] = text.split(/[:—-]\s/);
-      out.push({ topic: t.title, front: rest.length ? head : `Recall: ${t.title}`, back: rest.length ? rest.join(" ") : text });
+      out.push({
+        topic: t.title,
+        front: rest.length ? head : `Recall: ${t.title}`,
+        back: rest.length ? rest.join(" ") : text,
+      });
     }
     return out;
   }, [revision.data]);
 
-  useEffect(() => { setCardIdx(0); setFlipped(false); }, [topicIdx, revision.data]);
+  useEffect(() => {
+    setCardIdx(0);
+    setFlipped(false);
+  }, [topicIdx, revision.data]);
 
   const card = cards[cardIdx];
 
@@ -69,16 +84,27 @@ function FlashcardsPage() {
     <main className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
-          <Button variant="ghost" size="icon" onClick={() => nav({ to: "/revise/$chapterId", params: { chapterId } })} aria-label="Back">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => nav({ to: "/revise/$chapterId", params: { chapterId } })}
+            aria-label="Back"
+          >
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1">
-            <div className="text-xs text-muted-foreground">{topics.data?.chapter?.name ?? "Chapter"}</div>
+            <div className="text-xs text-muted-foreground">
+              {topics.data?.chapter?.name ?? "Chapter"}
+            </div>
             <h1 className="flex items-center gap-2 text-base font-semibold">
               <Layers className="h-4 w-4 text-primary" /> Flashcards
             </h1>
           </div>
-          {cards.length > 0 && <span className="text-xs text-muted-foreground">{cardIdx + 1} / {cards.length}</span>}
+          {cards.length > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {cardIdx + 1} / {cards.length}
+            </span>
+          )}
         </div>
       </header>
 
@@ -90,7 +116,9 @@ function FlashcardsPage() {
                 key={t.id}
                 onClick={() => setTopicIdx(i)}
                 className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-xs ${
-                  i === topicIdx ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"
+                  i === topicIdx
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "text-muted-foreground"
                 }`}
               >
                 {t.title}
@@ -129,7 +157,14 @@ function FlashcardsPage() {
               )}
             </button>
             <div className="flex items-center justify-between">
-              <Button variant="outline" disabled={cardIdx === 0} onClick={() => { setCardIdx((i) => i - 1); setFlipped(false); }}>
+              <Button
+                variant="outline"
+                disabled={cardIdx === 0}
+                onClick={() => {
+                  setCardIdx((i) => i - 1);
+                  setFlipped(false);
+                }}
+              >
                 <ChevronLeft className="mr-1 h-4 w-4" /> Prev
               </Button>
               <Button variant="ghost" size="sm" onClick={() => setFlipped((f) => !f)}>
@@ -137,7 +172,10 @@ function FlashcardsPage() {
               </Button>
               <Button
                 disabled={cardIdx + 1 >= cards.length}
-                onClick={() => { setCardIdx((i) => i + 1); setFlipped(false); }}
+                onClick={() => {
+                  setCardIdx((i) => i + 1);
+                  setFlipped(false);
+                }}
               >
                 Next <ChevronRight className="ml-1 h-4 w-4" />
               </Button>

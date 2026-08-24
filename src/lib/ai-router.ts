@@ -4,7 +4,6 @@
  * Order of attempts (each key is tried until one succeeds):
  *   1. GEMINI_API_KEY_1 / _2 / _3   -> Google Generative Language (OpenAI-compatible endpoint)
  *   2. OPENROUTER_API_KEY_1 / _2    -> OpenRouter
- *   3. LOVABLE_API_KEY              -> Lovable AI Gateway (final safety net)
  *
  * A provider is skipped and the next key used when it returns
  * 401 / 402 / 403 / 429 (quota, billing or auth exhausted) or a 5xx.
@@ -74,7 +73,6 @@ function buildProviders(): Provider[] {
     }
   }
 
-
   for (const name of ["GEMINI_API_KEY_1", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3"]) {
     const key = process.env[name]?.trim();
     if (!key) continue;
@@ -104,17 +102,6 @@ function buildProviders(): Provider[] {
       url: "https://api.x.ai/v1/chat/completions",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${grok}` },
       model: toGrokModel,
-    });
-  }
-
-
-  const lov = process.env.LOVABLE_API_KEY?.trim();
-  if (lov) {
-    list.push({
-      label: "LOVABLE_API_KEY",
-      url: "https://ai.gateway.lovable.dev/v1/chat/completions",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${lov}` },
-      model: (m) => m,
     });
   }
 
@@ -176,7 +163,10 @@ export async function aiChat(body: ChatBody): Promise<any> {
     }
   }
 
-  throw new AiUnavailableError(`All AI providers failed (last ${lastStatus}: ${lastText.slice(0, 200)})`, lastStatus);
+  throw new AiUnavailableError(
+    `All AI providers failed (last ${lastStatus}: ${lastText.slice(0, 200)})`,
+    lastStatus,
+  );
 }
 
 /** Convenience: returns the assistant message text. */

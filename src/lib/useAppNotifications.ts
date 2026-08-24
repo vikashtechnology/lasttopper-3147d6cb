@@ -1,6 +1,10 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { notifyNow, scheduleRecurringReminders, requestNotificationPermission } from "@/lib/local-notifications";
+import {
+  notifyNow,
+  scheduleRecurringReminders,
+  requestNotificationPermission,
+} from "@/lib/local-notifications";
 
 /**
  * Mounts device notifications:
@@ -29,7 +33,10 @@ export function useAppNotifications() {
         (payload) => {
           const row = payload.new as { title?: string; user_id?: string };
           if (row.user_id && row.user_id === userId) return;
-          void notifyNow("New discussion in Community 💬", row.title ?? "Someone started a new thread.");
+          void notifyNow(
+            "New discussion in Community 💬",
+            row.title ?? "Someone started a new thread.",
+          );
         },
       )
       .on(
@@ -38,7 +45,10 @@ export function useAppNotifications() {
         (payload) => {
           const row = payload.new as { body?: string; user_id?: string };
           if (row.user_id && row.user_id === userId) return;
-          void notifyNow("New message in your study group 👥", row.body?.slice(0, 120) ?? "Tap to read.");
+          void notifyNow(
+            "New message in your study group 👥",
+            row.body?.slice(0, 120) ?? "Tap to read.",
+          );
         },
       )
       .subscribe();
@@ -50,7 +60,12 @@ export function useAppNotifications() {
         .channel(`personal-notifications-${userId}`)
         .on(
           "postgres_changes",
-          { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` },
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "notifications",
+            filter: `user_id=eq.${userId}`,
+          },
           (payload) => {
             const row = payload.new as { title?: string; body?: string };
             void notifyNow(row.title ?? "Last Topper", row.body ?? "");

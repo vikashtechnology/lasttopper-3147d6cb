@@ -17,8 +17,14 @@ export type AdminPromo = {
 
 const planEnum = z.enum(["pro_weekly", "pro", "pro_yearly"]);
 
-async function assertAdmin(ctx: { supabase: import("@supabase/supabase-js").SupabaseClient; userId: string }) {
-  const { data, error } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
+async function assertAdmin(ctx: {
+  supabase: import("@supabase/supabase-js").SupabaseClient;
+  userId: string;
+}) {
+  const { data, error } = await ctx.supabase.rpc("has_role", {
+    _user_id: ctx.userId,
+    _role: "admin",
+  });
   if (error) throw error;
   if (!data) throw new Error("Forbidden: admin only");
 }
@@ -43,7 +49,9 @@ export const adminListPromoCodes = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("promo_codes")
-      .select("id, code, percent, plans, valid_until, max_uses, used_count, is_active, note, created_at")
+      .select(
+        "id, code, percent, plans, valid_until, max_uses, used_count, is_active, note, created_at",
+      )
       .order("created_at", { ascending: false })
       .limit(200);
     if (error) throw error;

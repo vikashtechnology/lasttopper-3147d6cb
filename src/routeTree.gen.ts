@@ -9,76 +9,70 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as RefundRouteImport } from './routes/refund'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthVerifiedRouteImport } from './routes/auth.verified'
-import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
-import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated/review'
-import { Route as AuthenticatedPyqRouteImport } from './routes/_authenticated/pyq'
-import { Route as AuthenticatedPricingRouteImport } from './routes/_authenticated/pricing'
-import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
-import { Route as AuthenticatedMistakesRouteImport } from './routes/_authenticated/mistakes'
-import { Route as AuthenticatedLearningRouteImport } from './routes/_authenticated/learning'
-import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
-import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
-import { Route as AuthenticatedDailyRouteImport } from './routes/_authenticated/daily'
-import { Route as AuthenticatedCommunityRouteImport } from './routes/_authenticated/community'
-import { Route as AuthenticatedBattleRouteImport } from './routes/_authenticated/battle'
-import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RefundRouteImport } from './routes/refund'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedReviseIndexRouteImport } from './routes/_authenticated/revise.index'
-import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
-import { Route as AuthenticatedBattleIndexRouteImport } from './routes/_authenticated/battle.index'
+import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedBattleRouteImport } from './routes/_authenticated/battle'
+import { Route as AuthenticatedCommunityRouteImport } from './routes/_authenticated/community'
+import { Route as AuthenticatedDailyRouteImport } from './routes/_authenticated/daily'
+import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
+import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
+import { Route as AuthenticatedLearningRouteImport } from './routes/_authenticated/learning'
+import { Route as AuthenticatedMistakesRouteImport } from './routes/_authenticated/mistakes'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedPricingRouteImport } from './routes/_authenticated/pricing'
+import { Route as AuthenticatedPyqRouteImport } from './routes/_authenticated/pyq'
+import { Route as AuthenticatedReviewRouteImport } from './routes/_authenticated/review'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as AuthVerifiedRouteImport } from './routes/auth.verified'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
-import { Route as AuthenticatedReviseChapterIdRouteImport } from './routes/_authenticated/revise.$chapterId'
-import { Route as AuthenticatedResultsSessionIdRouteImport } from './routes/_authenticated/results.$sessionId'
-import { Route as AuthenticatedQuizSessionIdRouteImport } from './routes/_authenticated/quiz.$sessionId'
-import { Route as AuthenticatedProfileUserIdRouteImport } from './routes/_authenticated/profile.$userId'
-import { Route as AuthenticatedFlashcardsChapterIdRouteImport } from './routes/_authenticated/flashcards.$chapterId'
-import { Route as AuthenticatedCommunityGroupsRouteImport } from './routes/_authenticated/community.groups'
-import { Route as AuthenticatedCommunityFeedRouteImport } from './routes/_authenticated/community.feed'
-import { Route as AuthenticatedCommunityDoubtsRouteImport } from './routes/_authenticated/community.doubts'
-import { Route as AuthenticatedBattleWalletRouteImport } from './routes/_authenticated/battle.wallet'
-import { Route as AuthenticatedBattleMegaRouteImport } from './routes/_authenticated/battle.mega'
-import { Route as AuthenticatedBattleLeaderboardRouteImport } from './routes/_authenticated/battle.leaderboard'
-import { Route as AuthenticatedBattleHistoryRouteImport } from './routes/_authenticated/battle.history'
-import { Route as AuthenticatedBattle1v1RouteImport } from './routes/_authenticated/battle.1v1'
-import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
-import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
-import { Route as AuthenticatedAdminSocialRouteImport } from './routes/_authenticated/admin.social'
-import { Route as AuthenticatedAdminPromosRouteImport } from './routes/_authenticated/admin.promos'
-import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_authenticated/admin.moderation'
-import { Route as AuthenticatedAdminBankRouteImport } from './routes/_authenticated/admin.bank'
-import { Route as AuthenticatedAdminAppUpdateRouteImport } from './routes/_authenticated/admin.app-update'
-import { Route as AuthenticatedAdminAnnouncementsRouteImport } from './routes/_authenticated/admin.announcements'
 import { Route as AuthenticatedAdminAdminsRouteImport } from './routes/_authenticated/admin.admins'
-import { Route as ApiPublicHooksTelegramWithdrawalRouteImport } from './routes/api/public/hooks/telegram-withdrawal'
-import { Route as ApiPublicHooksRazorpayRouteImport } from './routes/api/public/hooks/razorpay'
-import { Route as ApiPublicHooksProcessWithdrawalsRouteImport } from './routes/api/public/hooks/process-withdrawals'
-import { Route as ApiPublicHooksMegaTestLifecycleRouteImport } from './routes/api/public/hooks/mega-test-lifecycle'
-import { Route as AuthenticatedCommunityPostPostIdRouteImport } from './routes/_authenticated/community.post.$postId'
-import { Route as AuthenticatedCommunityGroupGroupIdRouteImport } from './routes/_authenticated/community.group.$groupId'
-import { Route as AuthenticatedCommunityForumCategoryIdRouteImport } from './routes/_authenticated/community.forum.$categoryId'
-import { Route as AuthenticatedCommunityDoubtDoubtIdRouteImport } from './routes/_authenticated/community.doubt.$doubtId'
+import { Route as AuthenticatedAdminAnnouncementsRouteImport } from './routes/_authenticated/admin.announcements'
+import { Route as AuthenticatedAdminAppUpdateRouteImport } from './routes/_authenticated/admin.app-update'
+import { Route as AuthenticatedAdminBankRouteImport } from './routes/_authenticated/admin.bank'
+import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_authenticated/admin.moderation'
+import { Route as AuthenticatedAdminPromosRouteImport } from './routes/_authenticated/admin.promos'
+import { Route as AuthenticatedAdminSocialRouteImport } from './routes/_authenticated/admin.social'
+import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
+import { Route as AuthenticatedBattleIndexRouteImport } from './routes/_authenticated/battle.index'
+import { Route as AuthenticatedBattle1v1RouteImport } from './routes/_authenticated/battle.1v1'
+import { Route as AuthenticatedBattleHistoryRouteImport } from './routes/_authenticated/battle.history'
+import { Route as AuthenticatedBattleLeaderboardRouteImport } from './routes/_authenticated/battle.leaderboard'
+import { Route as AuthenticatedBattleMegaRouteImport } from './routes/_authenticated/battle.mega'
+import { Route as AuthenticatedBattleWalletRouteImport } from './routes/_authenticated/battle.wallet'
+import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
+import { Route as AuthenticatedCommunityDoubtsRouteImport } from './routes/_authenticated/community.doubts'
+import { Route as AuthenticatedCommunityFeedRouteImport } from './routes/_authenticated/community.feed'
+import { Route as AuthenticatedCommunityGroupsRouteImport } from './routes/_authenticated/community.groups'
+import { Route as AuthenticatedFlashcardsChapterIdRouteImport } from './routes/_authenticated/flashcards.$chapterId'
+import { Route as AuthenticatedProfileUserIdRouteImport } from './routes/_authenticated/profile.$userId'
+import { Route as AuthenticatedQuizSessionIdRouteImport } from './routes/_authenticated/quiz.$sessionId'
+import { Route as AuthenticatedResultsSessionIdRouteImport } from './routes/_authenticated/results.$sessionId'
+import { Route as AuthenticatedReviseIndexRouteImport } from './routes/_authenticated/revise.index'
+import { Route as AuthenticatedReviseChapterIdRouteImport } from './routes/_authenticated/revise.$chapterId'
 import { Route as AuthenticatedBattlePlaySessionIdRouteImport } from './routes/_authenticated/battle.play.$sessionId'
+import { Route as AuthenticatedCommunityDoubtDoubtIdRouteImport } from './routes/_authenticated/community.doubt.$doubtId'
+import { Route as AuthenticatedCommunityForumCategoryIdRouteImport } from './routes/_authenticated/community.forum.$categoryId'
+import { Route as AuthenticatedCommunityGroupGroupIdRouteImport } from './routes/_authenticated/community.group.$groupId'
+import { Route as AuthenticatedCommunityPostPostIdRouteImport } from './routes/_authenticated/community.post.$postId'
+import { Route as ApiPublicHooksMegaTestLifecycleRouteImport } from './routes/api/public/hooks/mega-test-lifecycle'
+import { Route as ApiPublicHooksProcessWithdrawalsRouteImport } from './routes/api/public/hooks/process-withdrawals'
+import { Route as ApiPublicHooksRazorpayRouteImport } from './routes/api/public/hooks/razorpay'
+import { Route as ApiPublicHooksTelegramWithdrawalRouteImport } from './routes/api/public/hooks/telegram-withdrawal'
 
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RefundRoute = RefundRouteImport.update({
-  id: '/refund',
-  path: '/refund',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -86,38 +80,64 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const RefundRoute = RefundRouteImport.update({
+  id: '/refund',
+  path: '/refund',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthVerifiedRoute = AuthVerifiedRouteImport.update({
-  id: '/verified',
-  path: '/verified',
-  getParentRoute: () => AuthRoute,
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/callback',
-  path: '/callback',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthenticatedReviewRoute = AuthenticatedReviewRouteImport.update({
-  id: '/review',
-  path: '/review',
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedPyqRoute = AuthenticatedPyqRouteImport.update({
-  id: '/pyq',
-  path: '/pyq',
+const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedPricingRoute = AuthenticatedPricingRouteImport.update({
-  id: '/pricing',
-  path: '/pricing',
+const AuthenticatedBattleRoute = AuthenticatedBattleRouteImport.update({
+  id: '/battle',
+  path: '/battle',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCommunityRoute = AuthenticatedCommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDailyRoute = AuthenticatedDailyRouteImport.update({
+  id: '/daily',
+  path: '/daily',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedLearningRoute = AuthenticatedLearningRouteImport.update({
+  id: '/learning',
+  path: '/learning',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMistakesRoute = AuthenticatedMistakesRouteImport.update({
+  id: '/mistakes',
+  path: '/mistakes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedNotificationsRoute =
@@ -126,188 +146,40 @@ const AuthenticatedNotificationsRoute =
     path: '/notifications',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedMistakesRoute = AuthenticatedMistakesRouteImport.update({
-  id: '/mistakes',
-  path: '/mistakes',
+const AuthenticatedPricingRoute = AuthenticatedPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedLearningRoute = AuthenticatedLearningRouteImport.update({
-  id: '/learning',
-  path: '/learning',
+const AuthenticatedPyqRoute = AuthenticatedPyqRouteImport.update({
+  id: '/pyq',
+  path: '/pyq',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
-  id: '/home',
-  path: '/home',
+const AuthenticatedReviewRoute = AuthenticatedReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
-  id: '/history',
-  path: '/history',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
 } as any)
-const AuthenticatedDailyRoute = AuthenticatedDailyRouteImport.update({
-  id: '/daily',
-  path: '/daily',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const AuthVerifiedRoute = AuthVerifiedRouteImport.update({
+  id: '/verified',
+  path: '/verified',
+  getParentRoute: () => AuthRoute,
 } as any)
-const AuthenticatedCommunityRoute = AuthenticatedCommunityRouteImport.update({
-  id: '/community',
-  path: '/community',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedBattleRoute = AuthenticatedBattleRouteImport.update({
-  id: '/battle',
-  path: '/battle',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
-  id: '/analytics',
-  path: '/analytics',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedReviseIndexRoute =
-  AuthenticatedReviseIndexRouteImport.update({
-    id: '/revise/',
-    path: '/revise/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedCommunityIndexRoute =
-  AuthenticatedCommunityIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedCommunityRoute,
-  } as any)
-const AuthenticatedBattleIndexRoute =
-  AuthenticatedBattleIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedBattleRoute,
-  } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const AuthenticatedReviseChapterIdRoute =
-  AuthenticatedReviseChapterIdRouteImport.update({
-    id: '/revise/$chapterId',
-    path: '/revise/$chapterId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedResultsSessionIdRoute =
-  AuthenticatedResultsSessionIdRouteImport.update({
-    id: '/results/$sessionId',
-    path: '/results/$sessionId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedQuizSessionIdRoute =
-  AuthenticatedQuizSessionIdRouteImport.update({
-    id: '/quiz/$sessionId',
-    path: '/quiz/$sessionId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedProfileUserIdRoute =
-  AuthenticatedProfileUserIdRouteImport.update({
-    id: '/profile/$userId',
-    path: '/profile/$userId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedFlashcardsChapterIdRoute =
-  AuthenticatedFlashcardsChapterIdRouteImport.update({
-    id: '/flashcards/$chapterId',
-    path: '/flashcards/$chapterId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedCommunityGroupsRoute =
-  AuthenticatedCommunityGroupsRouteImport.update({
-    id: '/groups',
-    path: '/groups',
-    getParentRoute: () => AuthenticatedCommunityRoute,
-  } as any)
-const AuthenticatedCommunityFeedRoute =
-  AuthenticatedCommunityFeedRouteImport.update({
-    id: '/feed',
-    path: '/feed',
-    getParentRoute: () => AuthenticatedCommunityRoute,
-  } as any)
-const AuthenticatedCommunityDoubtsRoute =
-  AuthenticatedCommunityDoubtsRouteImport.update({
-    id: '/doubts',
-    path: '/doubts',
-    getParentRoute: () => AuthenticatedCommunityRoute,
-  } as any)
-const AuthenticatedBattleWalletRoute =
-  AuthenticatedBattleWalletRouteImport.update({
-    id: '/wallet',
-    path: '/wallet',
-    getParentRoute: () => AuthenticatedBattleRoute,
-  } as any)
-const AuthenticatedBattleMegaRoute = AuthenticatedBattleMegaRouteImport.update({
-  id: '/mega',
-  path: '/mega',
-  getParentRoute: () => AuthenticatedBattleRoute,
-} as any)
-const AuthenticatedBattleLeaderboardRoute =
-  AuthenticatedBattleLeaderboardRouteImport.update({
-    id: '/leaderboard',
-    path: '/leaderboard',
-    getParentRoute: () => AuthenticatedBattleRoute,
-  } as any)
-const AuthenticatedBattleHistoryRoute =
-  AuthenticatedBattleHistoryRouteImport.update({
-    id: '/history',
-    path: '/history',
-    getParentRoute: () => AuthenticatedBattleRoute,
-  } as any)
-const AuthenticatedBattle1v1Route = AuthenticatedBattle1v1RouteImport.update({
-  id: '/1v1',
-  path: '/1v1',
-  getParentRoute: () => AuthenticatedBattleRoute,
-} as any)
-const AuthenticatedAdminWithdrawalsRoute =
-  AuthenticatedAdminWithdrawalsRouteImport.update({
-    id: '/withdrawals',
-    path: '/withdrawals',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AuthenticatedAdminSocialRoute =
-  AuthenticatedAdminSocialRouteImport.update({
-    id: '/social',
-    path: '/social',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminPromosRoute =
-  AuthenticatedAdminPromosRouteImport.update({
-    id: '/promos',
-    path: '/promos',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminModerationRoute =
-  AuthenticatedAdminModerationRouteImport.update({
-    id: '/moderation',
-    path: '/moderation',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminBankRoute = AuthenticatedAdminBankRouteImport.update({
-  id: '/bank',
-  path: '/bank',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AuthenticatedAdminAppUpdateRoute =
-  AuthenticatedAdminAppUpdateRouteImport.update({
-    id: '/app-update',
-    path: '/app-update',
+const AuthenticatedAdminAdminsRoute =
+  AuthenticatedAdminAdminsRouteImport.update({
+    id: '/admins',
+    path: '/admins',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminAnnouncementsRoute =
@@ -316,45 +188,150 @@ const AuthenticatedAdminAnnouncementsRoute =
     path: '/announcements',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedAdminAdminsRoute =
-  AuthenticatedAdminAdminsRouteImport.update({
-    id: '/admins',
-    path: '/admins',
+const AuthenticatedAdminAppUpdateRoute =
+  AuthenticatedAdminAppUpdateRouteImport.update({
+    id: '/app-update',
+    path: '/app-update',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const ApiPublicHooksTelegramWithdrawalRoute =
-  ApiPublicHooksTelegramWithdrawalRouteImport.update({
-    id: '/api/public/hooks/telegram-withdrawal',
-    path: '/api/public/hooks/telegram-withdrawal',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksRazorpayRoute = ApiPublicHooksRazorpayRouteImport.update({
-  id: '/api/public/hooks/razorpay',
-  path: '/api/public/hooks/razorpay',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedAdminBankRoute = AuthenticatedAdminBankRouteImport.update({
+  id: '/bank',
+  path: '/bank',
+  getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const ApiPublicHooksProcessWithdrawalsRoute =
-  ApiPublicHooksProcessWithdrawalsRouteImport.update({
-    id: '/api/public/hooks/process-withdrawals',
-    path: '/api/public/hooks/process-withdrawals',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedAdminModerationRoute =
+  AuthenticatedAdminModerationRouteImport.update({
+    id: '/moderation',
+    path: '/moderation',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const ApiPublicHooksMegaTestLifecycleRoute =
-  ApiPublicHooksMegaTestLifecycleRouteImport.update({
-    id: '/api/public/hooks/mega-test-lifecycle',
-    path: '/api/public/hooks/mega-test-lifecycle',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedAdminPromosRoute =
+  AuthenticatedAdminPromosRouteImport.update({
+    id: '/promos',
+    path: '/promos',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedCommunityPostPostIdRoute =
-  AuthenticatedCommunityPostPostIdRouteImport.update({
-    id: '/post/$postId',
-    path: '/post/$postId',
+const AuthenticatedAdminSocialRoute =
+  AuthenticatedAdminSocialRouteImport.update({
+    id: '/social',
+    path: '/social',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminWithdrawalsRoute =
+  AuthenticatedAdminWithdrawalsRouteImport.update({
+    id: '/withdrawals',
+    path: '/withdrawals',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedBattleIndexRoute =
+  AuthenticatedBattleIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedBattleRoute,
+  } as any)
+const AuthenticatedBattle1v1Route = AuthenticatedBattle1v1RouteImport.update({
+  id: '/1v1',
+  path: '/1v1',
+  getParentRoute: () => AuthenticatedBattleRoute,
+} as any)
+const AuthenticatedBattleHistoryRoute =
+  AuthenticatedBattleHistoryRouteImport.update({
+    id: '/history',
+    path: '/history',
+    getParentRoute: () => AuthenticatedBattleRoute,
+  } as any)
+const AuthenticatedBattleLeaderboardRoute =
+  AuthenticatedBattleLeaderboardRouteImport.update({
+    id: '/leaderboard',
+    path: '/leaderboard',
+    getParentRoute: () => AuthenticatedBattleRoute,
+  } as any)
+const AuthenticatedBattleMegaRoute = AuthenticatedBattleMegaRouteImport.update({
+  id: '/mega',
+  path: '/mega',
+  getParentRoute: () => AuthenticatedBattleRoute,
+} as any)
+const AuthenticatedBattleWalletRoute =
+  AuthenticatedBattleWalletRouteImport.update({
+    id: '/wallet',
+    path: '/wallet',
+    getParentRoute: () => AuthenticatedBattleRoute,
+  } as any)
+const AuthenticatedCommunityIndexRoute =
+  AuthenticatedCommunityIndexRouteImport.update({
+    id: '/',
+    path: '/',
     getParentRoute: () => AuthenticatedCommunityRoute,
   } as any)
-const AuthenticatedCommunityGroupGroupIdRoute =
-  AuthenticatedCommunityGroupGroupIdRouteImport.update({
-    id: '/group/$groupId',
-    path: '/group/$groupId',
+const AuthenticatedCommunityDoubtsRoute =
+  AuthenticatedCommunityDoubtsRouteImport.update({
+    id: '/doubts',
+    path: '/doubts',
+    getParentRoute: () => AuthenticatedCommunityRoute,
+  } as any)
+const AuthenticatedCommunityFeedRoute =
+  AuthenticatedCommunityFeedRouteImport.update({
+    id: '/feed',
+    path: '/feed',
+    getParentRoute: () => AuthenticatedCommunityRoute,
+  } as any)
+const AuthenticatedCommunityGroupsRoute =
+  AuthenticatedCommunityGroupsRouteImport.update({
+    id: '/groups',
+    path: '/groups',
+    getParentRoute: () => AuthenticatedCommunityRoute,
+  } as any)
+const AuthenticatedFlashcardsChapterIdRoute =
+  AuthenticatedFlashcardsChapterIdRouteImport.update({
+    id: '/flashcards/$chapterId',
+    path: '/flashcards/$chapterId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedProfileUserIdRoute =
+  AuthenticatedProfileUserIdRouteImport.update({
+    id: '/profile/$userId',
+    path: '/profile/$userId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedQuizSessionIdRoute =
+  AuthenticatedQuizSessionIdRouteImport.update({
+    id: '/quiz/$sessionId',
+    path: '/quiz/$sessionId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedResultsSessionIdRoute =
+  AuthenticatedResultsSessionIdRouteImport.update({
+    id: '/results/$sessionId',
+    path: '/results/$sessionId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedReviseIndexRoute =
+  AuthenticatedReviseIndexRouteImport.update({
+    id: '/revise/',
+    path: '/revise/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedReviseChapterIdRoute =
+  AuthenticatedReviseChapterIdRouteImport.update({
+    id: '/revise/$chapterId',
+    path: '/revise/$chapterId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedBattlePlaySessionIdRoute =
+  AuthenticatedBattlePlaySessionIdRouteImport.update({
+    id: '/play/$sessionId',
+    path: '/play/$sessionId',
+    getParentRoute: () => AuthenticatedBattleRoute,
+  } as any)
+const AuthenticatedCommunityDoubtDoubtIdRoute =
+  AuthenticatedCommunityDoubtDoubtIdRouteImport.update({
+    id: '/doubt/$doubtId',
+    path: '/doubt/$doubtId',
     getParentRoute: () => AuthenticatedCommunityRoute,
   } as any)
 const AuthenticatedCommunityForumCategoryIdRoute =
@@ -363,17 +340,40 @@ const AuthenticatedCommunityForumCategoryIdRoute =
     path: '/forum/$categoryId',
     getParentRoute: () => AuthenticatedCommunityRoute,
   } as any)
-const AuthenticatedCommunityDoubtDoubtIdRoute =
-  AuthenticatedCommunityDoubtDoubtIdRouteImport.update({
-    id: '/doubt/$doubtId',
-    path: '/doubt/$doubtId',
+const AuthenticatedCommunityGroupGroupIdRoute =
+  AuthenticatedCommunityGroupGroupIdRouteImport.update({
+    id: '/group/$groupId',
+    path: '/group/$groupId',
     getParentRoute: () => AuthenticatedCommunityRoute,
   } as any)
-const AuthenticatedBattlePlaySessionIdRoute =
-  AuthenticatedBattlePlaySessionIdRouteImport.update({
-    id: '/play/$sessionId',
-    path: '/play/$sessionId',
-    getParentRoute: () => AuthenticatedBattleRoute,
+const AuthenticatedCommunityPostPostIdRoute =
+  AuthenticatedCommunityPostPostIdRouteImport.update({
+    id: '/post/$postId',
+    path: '/post/$postId',
+    getParentRoute: () => AuthenticatedCommunityRoute,
+  } as any)
+const ApiPublicHooksMegaTestLifecycleRoute =
+  ApiPublicHooksMegaTestLifecycleRouteImport.update({
+    id: '/api/public/hooks/mega-test-lifecycle',
+    path: '/api/public/hooks/mega-test-lifecycle',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksProcessWithdrawalsRoute =
+  ApiPublicHooksProcessWithdrawalsRouteImport.update({
+    id: '/api/public/hooks/process-withdrawals',
+    path: '/api/public/hooks/process-withdrawals',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksRazorpayRoute = ApiPublicHooksRazorpayRouteImport.update({
+  id: '/api/public/hooks/razorpay',
+  path: '/api/public/hooks/razorpay',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksTelegramWithdrawalRoute =
+  ApiPublicHooksTelegramWithdrawalRouteImport.update({
+    id: '/api/public/hooks/telegram-withdrawal',
+    path: '/api/public/hooks/telegram-withdrawal',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -733,32 +733,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/refund': {
-      id: '/refund'
-      path: '/refund'
-      fullPath: '/refund'
-      preLoaderRoute: typeof RefundRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -768,102 +747,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/verified': {
-      id: '/auth/verified'
-      path: '/verified'
-      fullPath: '/auth/verified'
-      preLoaderRoute: typeof AuthVerifiedRouteImport
-      parentRoute: typeof AuthRoute
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackRouteImport
-      parentRoute: typeof AuthRoute
+    '/refund': {
+      id: '/refund'
+      path: '/refund'
+      fullPath: '/refund'
+      preLoaderRoute: typeof RefundRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/review': {
-      id: '/_authenticated/review'
-      path: '/review'
-      fullPath: '/review'
-      preLoaderRoute: typeof AuthenticatedReviewRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/pyq': {
-      id: '/_authenticated/pyq'
-      path: '/pyq'
-      fullPath: '/pyq'
-      preLoaderRoute: typeof AuthenticatedPyqRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/pricing': {
-      id: '/_authenticated/pricing'
-      path: '/pricing'
-      fullPath: '/pricing'
-      preLoaderRoute: typeof AuthenticatedPricingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/notifications': {
-      id: '/_authenticated/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/mistakes': {
-      id: '/_authenticated/mistakes'
-      path: '/mistakes'
-      fullPath: '/mistakes'
-      preLoaderRoute: typeof AuthenticatedMistakesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/learning': {
-      id: '/_authenticated/learning'
-      path: '/learning'
-      fullPath: '/learning'
-      preLoaderRoute: typeof AuthenticatedLearningRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/home': {
-      id: '/_authenticated/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof AuthenticatedHomeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/history': {
-      id: '/_authenticated/history'
-      path: '/history'
-      fullPath: '/history'
-      preLoaderRoute: typeof AuthenticatedHistoryRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/daily': {
-      id: '/_authenticated/daily'
-      path: '/daily'
-      fullPath: '/daily'
-      preLoaderRoute: typeof AuthenticatedDailyRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/community': {
-      id: '/_authenticated/community'
-      path: '/community'
-      fullPath: '/community'
-      preLoaderRoute: typeof AuthenticatedCommunityRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/battle': {
-      id: '/_authenticated/battle'
-      path: '/battle'
-      fullPath: '/battle'
-      preLoaderRoute: typeof AuthenticatedBattleRouteImport
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/analytics': {
@@ -873,186 +789,102 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+    '/_authenticated/battle': {
+      id: '/_authenticated/battle'
+      path: '/battle'
+      fullPath: '/battle'
+      preLoaderRoute: typeof AuthenticatedBattleRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/revise/': {
-      id: '/_authenticated/revise/'
-      path: '/revise'
-      fullPath: '/revise/'
-      preLoaderRoute: typeof AuthenticatedReviseIndexRouteImport
+    '/_authenticated/community': {
+      id: '/_authenticated/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof AuthenticatedCommunityRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/community/': {
-      id: '/_authenticated/community/'
-      path: '/'
-      fullPath: '/community/'
-      preLoaderRoute: typeof AuthenticatedCommunityIndexRouteImport
-      parentRoute: typeof AuthenticatedCommunityRoute
+    '/_authenticated/daily': {
+      id: '/_authenticated/daily'
+      path: '/daily'
+      fullPath: '/daily'
+      preLoaderRoute: typeof AuthenticatedDailyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/battle/': {
-      id: '/_authenticated/battle/'
-      path: '/'
-      fullPath: '/battle/'
-      preLoaderRoute: typeof AuthenticatedBattleIndexRouteImport
-      parentRoute: typeof AuthenticatedBattleRoute
+    '/_authenticated/history': {
+      id: '/_authenticated/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof AuthenticatedHistoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/home': {
+      id: '/_authenticated/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedHomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/learning': {
+      id: '/_authenticated/learning'
+      path: '/learning'
+      fullPath: '/learning'
+      preLoaderRoute: typeof AuthenticatedLearningRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mistakes': {
+      id: '/_authenticated/mistakes'
+      path: '/mistakes'
+      fullPath: '/mistakes'
+      preLoaderRoute: typeof AuthenticatedMistakesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pricing': {
+      id: '/_authenticated/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof AuthenticatedPricingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pyq': {
+      id: '/_authenticated/pyq'
+      path: '/pyq'
+      fullPath: '/pyq'
+      preLoaderRoute: typeof AuthenticatedPyqRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/review': {
+      id: '/_authenticated/review'
+      path: '/review'
+      fullPath: '/review'
+      preLoaderRoute: typeof AuthenticatedReviewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
+    }
+    '/auth/verified': {
+      id: '/auth/verified'
+      path: '/verified'
+      fullPath: '/auth/verified'
+      preLoaderRoute: typeof AuthVerifiedRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/revise/$chapterId': {
-      id: '/_authenticated/revise/$chapterId'
-      path: '/revise/$chapterId'
-      fullPath: '/revise/$chapterId'
-      preLoaderRoute: typeof AuthenticatedReviseChapterIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/results/$sessionId': {
-      id: '/_authenticated/results/$sessionId'
-      path: '/results/$sessionId'
-      fullPath: '/results/$sessionId'
-      preLoaderRoute: typeof AuthenticatedResultsSessionIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/quiz/$sessionId': {
-      id: '/_authenticated/quiz/$sessionId'
-      path: '/quiz/$sessionId'
-      fullPath: '/quiz/$sessionId'
-      preLoaderRoute: typeof AuthenticatedQuizSessionIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/profile/$userId': {
-      id: '/_authenticated/profile/$userId'
-      path: '/profile/$userId'
-      fullPath: '/profile/$userId'
-      preLoaderRoute: typeof AuthenticatedProfileUserIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/flashcards/$chapterId': {
-      id: '/_authenticated/flashcards/$chapterId'
-      path: '/flashcards/$chapterId'
-      fullPath: '/flashcards/$chapterId'
-      preLoaderRoute: typeof AuthenticatedFlashcardsChapterIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/community/groups': {
-      id: '/_authenticated/community/groups'
-      path: '/groups'
-      fullPath: '/community/groups'
-      preLoaderRoute: typeof AuthenticatedCommunityGroupsRouteImport
-      parentRoute: typeof AuthenticatedCommunityRoute
-    }
-    '/_authenticated/community/feed': {
-      id: '/_authenticated/community/feed'
-      path: '/feed'
-      fullPath: '/community/feed'
-      preLoaderRoute: typeof AuthenticatedCommunityFeedRouteImport
-      parentRoute: typeof AuthenticatedCommunityRoute
-    }
-    '/_authenticated/community/doubts': {
-      id: '/_authenticated/community/doubts'
-      path: '/doubts'
-      fullPath: '/community/doubts'
-      preLoaderRoute: typeof AuthenticatedCommunityDoubtsRouteImport
-      parentRoute: typeof AuthenticatedCommunityRoute
-    }
-    '/_authenticated/battle/wallet': {
-      id: '/_authenticated/battle/wallet'
-      path: '/wallet'
-      fullPath: '/battle/wallet'
-      preLoaderRoute: typeof AuthenticatedBattleWalletRouteImport
-      parentRoute: typeof AuthenticatedBattleRoute
-    }
-    '/_authenticated/battle/mega': {
-      id: '/_authenticated/battle/mega'
-      path: '/mega'
-      fullPath: '/battle/mega'
-      preLoaderRoute: typeof AuthenticatedBattleMegaRouteImport
-      parentRoute: typeof AuthenticatedBattleRoute
-    }
-    '/_authenticated/battle/leaderboard': {
-      id: '/_authenticated/battle/leaderboard'
-      path: '/leaderboard'
-      fullPath: '/battle/leaderboard'
-      preLoaderRoute: typeof AuthenticatedBattleLeaderboardRouteImport
-      parentRoute: typeof AuthenticatedBattleRoute
-    }
-    '/_authenticated/battle/history': {
-      id: '/_authenticated/battle/history'
-      path: '/history'
-      fullPath: '/battle/history'
-      preLoaderRoute: typeof AuthenticatedBattleHistoryRouteImport
-      parentRoute: typeof AuthenticatedBattleRoute
-    }
-    '/_authenticated/battle/1v1': {
-      id: '/_authenticated/battle/1v1'
-      path: '/1v1'
-      fullPath: '/battle/1v1'
-      preLoaderRoute: typeof AuthenticatedBattle1v1RouteImport
-      parentRoute: typeof AuthenticatedBattleRoute
-    }
-    '/_authenticated/admin/withdrawals': {
-      id: '/_authenticated/admin/withdrawals'
-      path: '/withdrawals'
-      fullPath: '/admin/withdrawals'
-      preLoaderRoute: typeof AuthenticatedAdminWithdrawalsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/users': {
-      id: '/_authenticated/admin/users'
-      path: '/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/social': {
-      id: '/_authenticated/admin/social'
-      path: '/social'
-      fullPath: '/admin/social'
-      preLoaderRoute: typeof AuthenticatedAdminSocialRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/promos': {
-      id: '/_authenticated/admin/promos'
-      path: '/promos'
-      fullPath: '/admin/promos'
-      preLoaderRoute: typeof AuthenticatedAdminPromosRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/moderation': {
-      id: '/_authenticated/admin/moderation'
-      path: '/moderation'
-      fullPath: '/admin/moderation'
-      preLoaderRoute: typeof AuthenticatedAdminModerationRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/bank': {
-      id: '/_authenticated/admin/bank'
-      path: '/bank'
-      fullPath: '/admin/bank'
-      preLoaderRoute: typeof AuthenticatedAdminBankRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/app-update': {
-      id: '/_authenticated/admin/app-update'
-      path: '/app-update'
-      fullPath: '/admin/app-update'
-      preLoaderRoute: typeof AuthenticatedAdminAppUpdateRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/announcements': {
-      id: '/_authenticated/admin/announcements'
-      path: '/announcements'
-      fullPath: '/admin/announcements'
-      preLoaderRoute: typeof AuthenticatedAdminAnnouncementsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/admins': {
@@ -1062,46 +894,186 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/api/public/hooks/telegram-withdrawal': {
-      id: '/api/public/hooks/telegram-withdrawal'
-      path: '/api/public/hooks/telegram-withdrawal'
-      fullPath: '/api/public/hooks/telegram-withdrawal'
-      preLoaderRoute: typeof ApiPublicHooksTelegramWithdrawalRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/admin/announcements': {
+      id: '/_authenticated/admin/announcements'
+      path: '/announcements'
+      fullPath: '/admin/announcements'
+      preLoaderRoute: typeof AuthenticatedAdminAnnouncementsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/api/public/hooks/razorpay': {
-      id: '/api/public/hooks/razorpay'
-      path: '/api/public/hooks/razorpay'
-      fullPath: '/api/public/hooks/razorpay'
-      preLoaderRoute: typeof ApiPublicHooksRazorpayRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/admin/app-update': {
+      id: '/_authenticated/admin/app-update'
+      path: '/app-update'
+      fullPath: '/admin/app-update'
+      preLoaderRoute: typeof AuthenticatedAdminAppUpdateRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/api/public/hooks/process-withdrawals': {
-      id: '/api/public/hooks/process-withdrawals'
-      path: '/api/public/hooks/process-withdrawals'
-      fullPath: '/api/public/hooks/process-withdrawals'
-      preLoaderRoute: typeof ApiPublicHooksProcessWithdrawalsRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/admin/bank': {
+      id: '/_authenticated/admin/bank'
+      path: '/bank'
+      fullPath: '/admin/bank'
+      preLoaderRoute: typeof AuthenticatedAdminBankRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/api/public/hooks/mega-test-lifecycle': {
-      id: '/api/public/hooks/mega-test-lifecycle'
-      path: '/api/public/hooks/mega-test-lifecycle'
-      fullPath: '/api/public/hooks/mega-test-lifecycle'
-      preLoaderRoute: typeof ApiPublicHooksMegaTestLifecycleRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/admin/moderation': {
+      id: '/_authenticated/admin/moderation'
+      path: '/moderation'
+      fullPath: '/admin/moderation'
+      preLoaderRoute: typeof AuthenticatedAdminModerationRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/community/post/$postId': {
-      id: '/_authenticated/community/post/$postId'
-      path: '/post/$postId'
-      fullPath: '/community/post/$postId'
-      preLoaderRoute: typeof AuthenticatedCommunityPostPostIdRouteImport
+    '/_authenticated/admin/promos': {
+      id: '/_authenticated/admin/promos'
+      path: '/promos'
+      fullPath: '/admin/promos'
+      preLoaderRoute: typeof AuthenticatedAdminPromosRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/social': {
+      id: '/_authenticated/admin/social'
+      path: '/social'
+      fullPath: '/admin/social'
+      preLoaderRoute: typeof AuthenticatedAdminSocialRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/users': {
+      id: '/_authenticated/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/withdrawals': {
+      id: '/_authenticated/admin/withdrawals'
+      path: '/withdrawals'
+      fullPath: '/admin/withdrawals'
+      preLoaderRoute: typeof AuthenticatedAdminWithdrawalsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/battle/': {
+      id: '/_authenticated/battle/'
+      path: '/'
+      fullPath: '/battle/'
+      preLoaderRoute: typeof AuthenticatedBattleIndexRouteImport
+      parentRoute: typeof AuthenticatedBattleRoute
+    }
+    '/_authenticated/battle/1v1': {
+      id: '/_authenticated/battle/1v1'
+      path: '/1v1'
+      fullPath: '/battle/1v1'
+      preLoaderRoute: typeof AuthenticatedBattle1v1RouteImport
+      parentRoute: typeof AuthenticatedBattleRoute
+    }
+    '/_authenticated/battle/history': {
+      id: '/_authenticated/battle/history'
+      path: '/history'
+      fullPath: '/battle/history'
+      preLoaderRoute: typeof AuthenticatedBattleHistoryRouteImport
+      parentRoute: typeof AuthenticatedBattleRoute
+    }
+    '/_authenticated/battle/leaderboard': {
+      id: '/_authenticated/battle/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/battle/leaderboard'
+      preLoaderRoute: typeof AuthenticatedBattleLeaderboardRouteImport
+      parentRoute: typeof AuthenticatedBattleRoute
+    }
+    '/_authenticated/battle/mega': {
+      id: '/_authenticated/battle/mega'
+      path: '/mega'
+      fullPath: '/battle/mega'
+      preLoaderRoute: typeof AuthenticatedBattleMegaRouteImport
+      parentRoute: typeof AuthenticatedBattleRoute
+    }
+    '/_authenticated/battle/wallet': {
+      id: '/_authenticated/battle/wallet'
+      path: '/wallet'
+      fullPath: '/battle/wallet'
+      preLoaderRoute: typeof AuthenticatedBattleWalletRouteImport
+      parentRoute: typeof AuthenticatedBattleRoute
+    }
+    '/_authenticated/community/': {
+      id: '/_authenticated/community/'
+      path: '/'
+      fullPath: '/community/'
+      preLoaderRoute: typeof AuthenticatedCommunityIndexRouteImport
       parentRoute: typeof AuthenticatedCommunityRoute
     }
-    '/_authenticated/community/group/$groupId': {
-      id: '/_authenticated/community/group/$groupId'
-      path: '/group/$groupId'
-      fullPath: '/community/group/$groupId'
-      preLoaderRoute: typeof AuthenticatedCommunityGroupGroupIdRouteImport
+    '/_authenticated/community/doubts': {
+      id: '/_authenticated/community/doubts'
+      path: '/doubts'
+      fullPath: '/community/doubts'
+      preLoaderRoute: typeof AuthenticatedCommunityDoubtsRouteImport
+      parentRoute: typeof AuthenticatedCommunityRoute
+    }
+    '/_authenticated/community/feed': {
+      id: '/_authenticated/community/feed'
+      path: '/feed'
+      fullPath: '/community/feed'
+      preLoaderRoute: typeof AuthenticatedCommunityFeedRouteImport
+      parentRoute: typeof AuthenticatedCommunityRoute
+    }
+    '/_authenticated/community/groups': {
+      id: '/_authenticated/community/groups'
+      path: '/groups'
+      fullPath: '/community/groups'
+      preLoaderRoute: typeof AuthenticatedCommunityGroupsRouteImport
+      parentRoute: typeof AuthenticatedCommunityRoute
+    }
+    '/_authenticated/flashcards/$chapterId': {
+      id: '/_authenticated/flashcards/$chapterId'
+      path: '/flashcards/$chapterId'
+      fullPath: '/flashcards/$chapterId'
+      preLoaderRoute: typeof AuthenticatedFlashcardsChapterIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile/$userId': {
+      id: '/_authenticated/profile/$userId'
+      path: '/profile/$userId'
+      fullPath: '/profile/$userId'
+      preLoaderRoute: typeof AuthenticatedProfileUserIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/quiz/$sessionId': {
+      id: '/_authenticated/quiz/$sessionId'
+      path: '/quiz/$sessionId'
+      fullPath: '/quiz/$sessionId'
+      preLoaderRoute: typeof AuthenticatedQuizSessionIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/results/$sessionId': {
+      id: '/_authenticated/results/$sessionId'
+      path: '/results/$sessionId'
+      fullPath: '/results/$sessionId'
+      preLoaderRoute: typeof AuthenticatedResultsSessionIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/revise/': {
+      id: '/_authenticated/revise/'
+      path: '/revise'
+      fullPath: '/revise/'
+      preLoaderRoute: typeof AuthenticatedReviseIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/revise/$chapterId': {
+      id: '/_authenticated/revise/$chapterId'
+      path: '/revise/$chapterId'
+      fullPath: '/revise/$chapterId'
+      preLoaderRoute: typeof AuthenticatedReviseChapterIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/battle/play/$sessionId': {
+      id: '/_authenticated/battle/play/$sessionId'
+      path: '/play/$sessionId'
+      fullPath: '/battle/play/$sessionId'
+      preLoaderRoute: typeof AuthenticatedBattlePlaySessionIdRouteImport
+      parentRoute: typeof AuthenticatedBattleRoute
+    }
+    '/_authenticated/community/doubt/$doubtId': {
+      id: '/_authenticated/community/doubt/$doubtId'
+      path: '/doubt/$doubtId'
+      fullPath: '/community/doubt/$doubtId'
+      preLoaderRoute: typeof AuthenticatedCommunityDoubtDoubtIdRouteImport
       parentRoute: typeof AuthenticatedCommunityRoute
     }
     '/_authenticated/community/forum/$categoryId': {
@@ -1111,19 +1083,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCommunityForumCategoryIdRouteImport
       parentRoute: typeof AuthenticatedCommunityRoute
     }
-    '/_authenticated/community/doubt/$doubtId': {
-      id: '/_authenticated/community/doubt/$doubtId'
-      path: '/doubt/$doubtId'
-      fullPath: '/community/doubt/$doubtId'
-      preLoaderRoute: typeof AuthenticatedCommunityDoubtDoubtIdRouteImport
+    '/_authenticated/community/group/$groupId': {
+      id: '/_authenticated/community/group/$groupId'
+      path: '/group/$groupId'
+      fullPath: '/community/group/$groupId'
+      preLoaderRoute: typeof AuthenticatedCommunityGroupGroupIdRouteImport
       parentRoute: typeof AuthenticatedCommunityRoute
     }
-    '/_authenticated/battle/play/$sessionId': {
-      id: '/_authenticated/battle/play/$sessionId'
-      path: '/play/$sessionId'
-      fullPath: '/battle/play/$sessionId'
-      preLoaderRoute: typeof AuthenticatedBattlePlaySessionIdRouteImport
-      parentRoute: typeof AuthenticatedBattleRoute
+    '/_authenticated/community/post/$postId': {
+      id: '/_authenticated/community/post/$postId'
+      path: '/post/$postId'
+      fullPath: '/community/post/$postId'
+      preLoaderRoute: typeof AuthenticatedCommunityPostPostIdRouteImport
+      parentRoute: typeof AuthenticatedCommunityRoute
+    }
+    '/api/public/hooks/mega-test-lifecycle': {
+      id: '/api/public/hooks/mega-test-lifecycle'
+      path: '/api/public/hooks/mega-test-lifecycle'
+      fullPath: '/api/public/hooks/mega-test-lifecycle'
+      preLoaderRoute: typeof ApiPublicHooksMegaTestLifecycleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/process-withdrawals': {
+      id: '/api/public/hooks/process-withdrawals'
+      path: '/api/public/hooks/process-withdrawals'
+      fullPath: '/api/public/hooks/process-withdrawals'
+      preLoaderRoute: typeof ApiPublicHooksProcessWithdrawalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/razorpay': {
+      id: '/api/public/hooks/razorpay'
+      path: '/api/public/hooks/razorpay'
+      fullPath: '/api/public/hooks/razorpay'
+      preLoaderRoute: typeof ApiPublicHooksRazorpayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/telegram-withdrawal': {
+      id: '/api/public/hooks/telegram-withdrawal'
+      path: '/api/public/hooks/telegram-withdrawal'
+      fullPath: '/api/public/hooks/telegram-withdrawal'
+      preLoaderRoute: typeof ApiPublicHooksTelegramWithdrawalRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -1286,3 +1286,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

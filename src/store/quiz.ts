@@ -34,7 +34,11 @@ export const useQuizStore = create<QuizState>()(
       },
       setAnswer: (sessionId, questionId, answer) =>
         set((s) => {
-          const cur = s.sessions[sessionId] ?? { answers: {}, currentIndex: 0, startedAt: Date.now() };
+          const cur = s.sessions[sessionId] ?? {
+            answers: {},
+            currentIndex: 0,
+            startedAt: Date.now(),
+          };
           return {
             sessions: {
               ...s.sessions,
@@ -44,7 +48,11 @@ export const useQuizStore = create<QuizState>()(
         }),
       setIndex: (sessionId, index) =>
         set((s) => {
-          const cur = s.sessions[sessionId] ?? { answers: {}, currentIndex: 0, startedAt: Date.now() };
+          const cur = s.sessions[sessionId] ?? {
+            answers: {},
+            currentIndex: 0,
+            startedAt: Date.now(),
+          };
           return { sessions: { ...s.sessions, [sessionId]: { ...cur, currentIndex: index } } };
         }),
       clearSession: (sessionId) =>

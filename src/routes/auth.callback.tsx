@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   parseOAuthCallback,
   closeNativeBrowser,
-  clearStoredOAuthState,
   isNativeApp,
   appSchemeCallbackUrl,
   NATIVE_CALLBACK_MARKER,
@@ -38,19 +37,12 @@ function AuthCallback() {
       storeReferralFromUrl();
       const parsed = parseOAuthCallback(window.location.href);
       const callbackUrl = new URL(window.location.href);
-      const isNativeReturn =
-        callbackUrl.searchParams.get(NATIVE_CALLBACK_MARKER) === "1" ||
-        parsed?.state?.startsWith("native-") === true;
+      const isNativeReturn = callbackUrl.searchParams.get(NATIVE_CALLBACK_MARKER) === "1";
 
       // Sign-in was started from the installed app but this page is running in
       // Chrome/Safari (App Link verification unavailable). Bounce the tokens
       // back into the app through the lasttopper:// custom scheme.
-      if (
-        parsed &&
-        !parsed.error &&
-        isNativeReturn &&
-        !(await isNativeApp())
-      ) {
+      if (parsed && !parsed.error && isNativeReturn && !(await isNativeApp())) {
         const deepLink = appSchemeCallbackUrl({
           access_token: parsed.access_token,
           refresh_token: parsed.refresh_token,
@@ -67,7 +59,6 @@ function AuthCallback() {
           access_token: parsed.access_token,
           refresh_token: parsed.refresh_token,
         });
-        clearStoredOAuthState();
         void closeNativeBrowser();
         if (!error) {
           navigate({ to: "/home", replace: true });
@@ -82,8 +73,13 @@ function AuthCallback() {
         navigate({ to: "/home", replace: true });
         return;
       }
-      setMessage("Sign-in didn't complete. Please try again.");
-      setTimeout(() => navigate({ to: "/auth", replace: true }), 1500);
+      if (parsed?.error) {
+        console.error("OAuth error:", parsed.error);
+        setMessage(`Sign-in error: ${parsed.error}`);
+      } else {
+        setMessage("Sign-in didn't complete. Please try again.");
+      }
+      setTimeout(() => navigate({ to: "/auth", replace: true }), 3000);
     })();
   }, [navigate]);
 

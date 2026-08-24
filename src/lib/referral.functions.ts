@@ -94,4 +94,3 @@ export const applyReferralCode = createServerFn({ method: "POST" })
     if (error) return { ok: false as const, error: "Could not apply referral code" };
     return { ok: true as const };
   });
-

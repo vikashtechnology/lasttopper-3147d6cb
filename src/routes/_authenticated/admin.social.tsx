@@ -19,7 +19,10 @@ export const Route = createFileRoute("/_authenticated/admin/social")({
   head: () => ({
     meta: [
       { title: "Social Links — Admin — Last Topper" },
-      { name: "description", content: "Configure YouTube, Telegram, Discord and other social links." },
+      {
+        name: "description",
+        content: "Configure YouTube, Telegram, Discord and other social links.",
+      },
       { property: "og:title", content: "Social Links — Admin" },
       { property: "og:description", content: "Manage the app's social media links." },
       { property: "og:type", content: "website" },
@@ -31,7 +34,10 @@ export const Route = createFileRoute("/_authenticated/admin/social")({
 
 function AdminSocial() {
   const qc = useQueryClient();
-  const list = useQuery({ queryKey: ["admin-social-links"], queryFn: () => adminListSocialLinks() });
+  const list = useQuery({
+    queryKey: ["admin-social-links"],
+    queryFn: () => adminListSocialLinks(),
+  });
   const [newPlatform, setNewPlatform] = useState("");
   const [newLabel, setNewLabel] = useState("");
   const [newUrl, setNewUrl] = useState("");
@@ -69,8 +75,8 @@ function AdminSocial() {
     <section className="mx-auto max-w-3xl px-4 py-6">
       <h2 className="text-lg font-semibold">Social links</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Add your channel links and turn them on. Enabled links show in the sidebar “Follow us” menu and at the bottom of
-        user profiles.
+        Add your channel links and turn them on. Enabled links show in the sidebar “Follow us” menu
+        and at the bottom of user profiles.
       </p>
 
       <div className="mt-4 space-y-3">
@@ -88,9 +94,21 @@ function AdminSocial() {
       <div className="mt-6 rounded-2xl border border-dashed border-border p-4">
         <div className="mb-2 text-sm font-medium">Add another platform</div>
         <div className="grid gap-2 sm:grid-cols-3">
-          <Input placeholder="key (e.g. threads)" value={newPlatform} onChange={(e) => setNewPlatform(e.target.value)} />
-          <Input placeholder="Label (e.g. Threads)" value={newLabel} onChange={(e) => setNewLabel(e.target.value)} />
-          <Input placeholder="https://…" value={newUrl} onChange={(e) => setNewUrl(e.target.value)} />
+          <Input
+            placeholder="key (e.g. threads)"
+            value={newPlatform}
+            onChange={(e) => setNewPlatform(e.target.value)}
+          />
+          <Input
+            placeholder="Label (e.g. Threads)"
+            value={newLabel}
+            onChange={(e) => setNewLabel(e.target.value)}
+          />
+          <Input
+            placeholder="https://…"
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+          />
         </div>
         <Button
           className="mt-3"
@@ -134,7 +152,9 @@ function LinkRow({
   return (
     <div className="rounded-2xl border border-border bg-card p-3">
       <div className="flex items-center gap-2">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-muted">{socialIcon(row.platform)}</span>
+        <span className="grid h-8 w-8 place-items-center rounded-lg bg-muted">
+          {socialIcon(row.platform)}
+        </span>
         <div className="text-sm font-medium">{row.label}</div>
         <div className="ml-auto flex items-center gap-2">
           <Switch

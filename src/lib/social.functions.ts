@@ -24,8 +24,14 @@ export const listSocialLinks = createServerFn({ method: "GET" })
     return ((data ?? []) as SocialLink[]).filter((l) => !!l.url?.trim());
   });
 
-async function assertAdmin(ctx: { supabase: import("@supabase/supabase-js").SupabaseClient; userId: string }) {
-  const { data, error } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
+async function assertAdmin(ctx: {
+  supabase: import("@supabase/supabase-js").SupabaseClient;
+  userId: string;
+}) {
+  const { data, error } = await ctx.supabase.rpc("has_role", {
+    _user_id: ctx.userId,
+    _role: "admin",
+  });
   if (error) throw error;
   if (!data) throw new Error("Forbidden: admin only");
 }
@@ -46,7 +52,12 @@ export const adminListSocialLinks = createServerFn({ method: "GET" })
 
 const upsertSchema = z.object({
   id: z.string().uuid().optional(),
-  platform: z.string().trim().min(2).max(30).regex(/^[a-z0-9_-]+$/i),
+  platform: z
+    .string()
+    .trim()
+    .min(2)
+    .max(30)
+    .regex(/^[a-z0-9_-]+$/i),
   label: z.string().trim().min(1).max(40),
   url: z.string().trim().max(300),
   enabled: z.boolean(),
@@ -59,7 +70,8 @@ export const adminSaveSocialLink = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const url = data.url.trim();
-    if (url && !/^https?:\/\//i.test(url)) throw new Error("Link must start with http:// or https://");
+    if (url && !/^https?:\/\//i.test(url))
+      throw new Error("Link must start with http:// or https://");
     if (data.enabled && !url) throw new Error("Add a link before enabling it.");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

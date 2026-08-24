@@ -18,7 +18,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 type Purpose = "pro" | "pro_yearly" | "pro_weekly" | "wallet_topup";
 
-
 function amountFor(purpose: Purpose, requested?: number): number {
   if (purpose === "pro_weekly") return 4900; // ₹49 / week
   if (purpose === "pro") return 14900; // ₹149 / month
@@ -72,7 +71,6 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
     const auth = Buffer.from(`${key}:${secret}`).toString("base64");
     const receipt = `${data.purpose}_${context.userId.slice(0, 8)}_${Date.now()}`;
 
-
     const res = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Basic ${auth}` },
@@ -87,12 +85,20 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
       const t = await res.text();
       console.error("[razorpay] order create failed", res.status, t);
       if (res.status === 401) {
-        throw new Error("Payment gateway not configured correctly. Please contact support (invalid Razorpay keys).");
+        throw new Error(
+          "Payment gateway not configured correctly. Please contact support (invalid Razorpay keys).",
+        );
       }
       throw new Error(`Failed to create order: ${res.status}`);
     }
     const order = (await res.json()) as { id: string; amount: number; currency: string };
-    return { order_id: order.id, amount: order.amount, currency: order.currency, key_id: key, discount_percent: discountPercent };
+    return {
+      order_id: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      key_id: key,
+      discount_percent: discountPercent,
+    };
   });
 
 const verifySchema = z.object({
@@ -119,7 +125,9 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => verifySchema.parse(d))
   .handler(async ({ data, context }) => {
-    if (!verifySignature(data.razorpay_order_id, data.razorpay_payment_id, data.razorpay_signature)) {
+    if (
+      !verifySignature(data.razorpay_order_id, data.razorpay_payment_id, data.razorpay_signature)
+    ) {
       throw new Error("Invalid payment signature");
     }
 
@@ -143,19 +151,28 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
       return { ok: true as const, purpose: data.purpose };
     }
 
-
     // wallet_topup
     const amount = data.amount_inr ?? 0;
     if (amount <= 0) throw new Error("Invalid amount");
     const note = `Wallet top-up via Razorpay (${data.razorpay_payment_id})`;
     // Idempotency: if this payment_id was already credited (by client retry or webhook), no-op.
     const { data: dup } = await context.supabase
-      .from("wallet_transactions").select("id, balance_after").eq("note", note).maybeSingle();
+      .from("wallet_transactions")
+      .select("id, balance_after")
+      .eq("note", note)
+      .maybeSingle();
     if (dup) {
-      return { ok: true as const, purpose: "wallet_topup" as const, balance: Number(dup.balance_after ?? 0) };
+      return {
+        ok: true as const,
+        purpose: "wallet_topup" as const,
+        balance: Number(dup.balance_after ?? 0),
+      };
     }
     const { data: u } = await context.supabase
-      .from("users").select("balance, referred_by, referral_credited").eq("id", context.userId).maybeSingle();
+      .from("users")
+      .select("balance, referred_by, referral_credited")
+      .eq("id", context.userId)
+      .maybeSingle();
     const cur = Number(u?.balance ?? 0);
     const next = cur + amount;
     await context.supabase.from("users").update({ balance: next }).eq("id", context.userId);
@@ -169,15 +186,16 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
       reference_id: null,
     });
 
-
     // Referral reward: first-ever top-up gives the referrer a one-time Pro
     // discount voucher (15%–25% off any Pro plan).
     if (u?.referred_by && !u.referral_credited) {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { awardReferralVoucher } = await import("@/lib/voucher.server");
       const voucher = await awardReferralVoucher(u.referred_by);
-      await supabaseAdmin.from("users")
-        .update({ referral_credited: true }).eq("id", context.userId);
+      await supabaseAdmin
+        .from("users")
+        .update({ referral_credited: true })
+        .eq("id", context.userId);
       if (voucher) {
         await supabaseAdmin.from("notifications").insert({
           user_id: u.referred_by,

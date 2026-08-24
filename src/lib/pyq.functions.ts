@@ -9,10 +9,17 @@ export const getPyqOptions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<PyqOption[]> => {
     const { data: profile } = await context.supabase
-      .from("users").select("profession").eq("id", context.userId).maybeSingle();
+      .from("users")
+      .select("profession")
+      .eq("id", context.userId)
+      .maybeSingle();
     const profession = profile?.profession ?? null;
 
-    let q = context.supabase.from("question_bank").select("exam, exam_year").not("exam", "is", null).limit(5000);
+    let q = context.supabase
+      .from("question_bank")
+      .select("exam, exam_year")
+      .not("exam", "is", null)
+      .limit(5000);
     if (profession) q = q.or(`profession.eq.${profession},profession.is.null`);
     const { data } = await q;
 
@@ -34,15 +41,20 @@ export const getPyqOptions = createServerFn({ method: "GET" })
 export const startPyqQuiz = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      exam: z.string().min(1).max(40),
-      year: z.number().int().nullable(),
-      count: z.number().int().min(5).max(100),
-    }).parse(d),
+    z
+      .object({
+        exam: z.string().min(1).max(40),
+        year: z.number().int().nullable(),
+        count: z.number().int().min(5).max(100),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { data: profile } = await context.supabase
-      .from("users").select("profession, is_pro").eq("id", context.userId).maybeSingle();
+      .from("users")
+      .select("profession, is_pro")
+      .eq("id", context.userId)
+      .maybeSingle();
     if (data.count > 20 && !profile?.is_pro) throw new Error("PRO_REQUIRED");
     const profession = profile?.profession ?? null;
 
@@ -55,7 +67,8 @@ export const startPyqQuiz = createServerFn({ method: "POST" })
     if (profession) q = q.or(`profession.eq.${profession},profession.is.null`);
     const { data: pool, error } = await q;
     if (error) throw error;
-    if (!pool || pool.length === 0) throw new Error("No past-year questions available for that selection yet.");
+    if (!pool || pool.length === 0)
+      throw new Error("No past-year questions available for that selection yet.");
 
     const questions: QuizQuestion[] = [...pool]
       .sort(() => Math.random() - 0.5)
@@ -73,9 +86,18 @@ export const startPyqQuiz = createServerFn({ method: "POST" })
     let chapterIds = Array.from(new Set(questions.map((x) => x.chapter_id))).filter(Boolean);
     if (chapterIds.length === 0) {
       const { data: subjects } = await context.supabase
-        .from("subjects").select("id").eq("profession", (profession ?? "pcm") as "pcm" | "pcb").limit(1);
+        .from("subjects")
+        .select("id")
+        .eq("profession", (profession ?? "pcm") as "pcm" | "pcb")
+        .limit(1);
       const { data: ch } = await context.supabase
-        .from("chapters").select("id").in("subject_id", (subjects ?? []).map((s) => s.id)).limit(1);
+        .from("chapters")
+        .select("id")
+        .in(
+          "subject_id",
+          (subjects ?? []).map((s) => s.id),
+        )
+        .limit(1);
       chapterIds = (ch ?? []).map((c) => c.id as string);
     }
 
@@ -92,7 +114,8 @@ export const startPyqQuiz = createServerFn({ method: "POST" })
         start_time: nowIso,
         last_heartbeat: nowIso,
       })
-      .select("id").single();
+      .select("id")
+      .single();
     if (iErr) throw iErr;
     return { id: row.id as string, count: questions.length };
   });

@@ -13,8 +13,6 @@ import { getPendingReferral, clearPendingReferral } from "@/lib/referral-link";
 import { useUserStore, type Profession } from "@/store/user";
 import { failMessage } from "@/lib/friendly-error";
 
-
-
 type Step = "details" | "profession" | "tutorial";
 
 export function OnboardingFlow({ open }: { open: boolean }) {
@@ -70,12 +68,13 @@ export function OnboardingFlow({ open }: { open: boolean }) {
       if (code.length >= 4) {
         try {
           const res = await applyReferralCode({ data: { code } });
-          if (res.ok) { toast.success("Referral code applied"); clearPendingReferral(); }
-          else toast.error(res.error);
+          if (res.ok) {
+            toast.success("Referral code applied");
+            clearPendingReferral();
+          } else toast.error(res.error);
         } catch (err) {
           toast.error(failMessage(err, "Invalid referral code"));
         }
-
       }
       setStep("profession");
     } catch (e) {
@@ -137,7 +136,6 @@ export function OnboardingFlow({ open }: { open: boolean }) {
                 One-time verification. Your email must be unique to your account.
               </p>
 
-
               <div className="mt-5 space-y-4">
                 <div>
                   <Label className="text-xs">Full name</Label>
@@ -175,7 +173,6 @@ export function OnboardingFlow({ open }: { open: boolean }) {
                   />
                 </div>
 
-
                 <div>
                   <Label className="text-xs">Referral code (optional)</Label>
                   <Input
@@ -195,11 +192,21 @@ export function OnboardingFlow({ open }: { open: boolean }) {
                   />
                   <span>
                     I agree to the{" "}
-                    <a href="/terms" target="_blank" rel="noreferrer" className="underline hover:text-foreground">
+                    <a
+                      href="/terms"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline hover:text-foreground"
+                    >
                       Terms &amp; Conditions
                     </a>{" "}
                     and{" "}
-                    <a href="/privacy" target="_blank" rel="noreferrer" className="underline hover:text-foreground">
+                    <a
+                      href="/privacy"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline hover:text-foreground"
+                    >
                       Privacy Policy
                     </a>
                     .

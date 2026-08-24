@@ -101,7 +101,10 @@ export const pushPendingQuestReminders = createServerFn({ method: "POST" })
       .select("kind")
       .eq("user_id", userId)
       .gte("created_at", since)
-      .in("kind", pending.map((q) => q.kind));
+      .in(
+        "kind",
+        pending.map((q) => q.kind),
+      );
     const seen = new Set((already ?? []).map((r) => r.kind as string));
 
     const rows = pending

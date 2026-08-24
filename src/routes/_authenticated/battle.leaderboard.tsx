@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Trophy } from "lucide-react";
 import { RankBadge } from "@/components/RankBadge";
 
-
 export const Route = createFileRoute("/_authenticated/battle/leaderboard")({
   head: () => ({
     meta: [
@@ -23,14 +22,21 @@ export const Route = createFileRoute("/_authenticated/battle/leaderboard")({
 
 function Board() {
   const qc = useQueryClient();
-  const q = useQuery({ queryKey: ["quick-leaderboard"], queryFn: () => getQuickLeaderboard(), refetchInterval: 15000 });
+  const q = useQuery({
+    queryKey: ["quick-leaderboard"],
+    queryFn: () => getQuickLeaderboard(),
+    refetchInterval: 15000,
+  });
   useEffect(() => {
     const ch = supabase
       .channel("board-battles")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "battle_sessions" },
-        () => qc.invalidateQueries({ queryKey: ["quick-leaderboard"] }))
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "battle_sessions" }, () =>
+        qc.invalidateQueries({ queryKey: ["quick-leaderboard"] }),
+      )
       .subscribe();
-    return () => { void supabase.removeChannel(ch); };
+    return () => {
+      void supabase.removeChannel(ch);
+    };
   }, [qc]);
 
   const items = q.data ?? [];
@@ -52,21 +58,32 @@ function Board() {
                   r.is_me ? "border-cyan-400/60 bg-cyan-400/10" : "border-white/5 bg-white/[0.02]"
                 }`}
               >
-                <span className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
-                  r.rank === 1 ? "bg-yellow-400 text-black" : r.rank === 2 ? "bg-slate-300 text-black" : r.rank === 3 ? "bg-orange-400 text-black" : "bg-white/10 text-white"
-                }`}>{r.rank}</span>
+                <span
+                  className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+                    r.rank === 1
+                      ? "bg-yellow-400 text-black"
+                      : r.rank === 2
+                        ? "bg-slate-300 text-black"
+                        : r.rank === 3
+                          ? "bg-orange-400 text-black"
+                          : "bg-white/10 text-white"
+                  }`}
+                >
+                  {r.rank}
+                </span>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm">
                     {r.user.full_name ?? r.user.email ?? "Player"}
                     {r.is_me && <span className="ml-1 text-xs text-primary">(you)</span>}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>{r.correct_count} correct · {r.time_taken_seconds}s</span>
+                    <span>
+                      {r.correct_count} correct · {r.time_taken_seconds}s
+                    </span>
                     {r.is_demo ? <RankBadge xp={r.xp ?? 0} /> : null}
                   </div>
                 </div>
                 <div className="text-lg font-bold text-primary">{r.score}</div>
-
               </li>
             ))}
           </ol>

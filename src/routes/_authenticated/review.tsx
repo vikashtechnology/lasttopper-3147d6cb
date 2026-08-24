@@ -13,7 +13,10 @@ export const Route = createFileRoute("/_authenticated/review")({
   head: () => ({
     meta: [
       { title: "Spaced Repetition — Last Topper" },
-      { name: "description", content: "Your missed questions resurface on day 1, 3, 7, 16 and 35 until you master them." },
+      {
+        name: "description",
+        content: "Your missed questions resurface on day 1, 3, 7, 16 and 35 until you master them.",
+      },
       { property: "og:title", content: "Spaced Repetition — Last Topper" },
       { property: "og:description", content: "Fix weak chapters with scheduled recall practice." },
       { property: "og:type", content: "website" },
@@ -33,7 +36,8 @@ function ReviewPage() {
   const [picked, setPicked] = useState<Letter | null>(null);
 
   const grade = useMutation({
-    mutationFn: (correct: boolean) => gradeReview({ data: { id: queue.data!.due[pos].id, correct } }),
+    mutationFn: (correct: boolean) =>
+      gradeReview({ data: { id: queue.data!.due[pos].id, correct } }),
     onSuccess: () => {
       setPicked(null);
       setPos((p) => p + 1);
@@ -49,7 +53,12 @@ function ReviewPage() {
     <main className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
-          <Button variant="ghost" size="icon" onClick={() => nav({ to: "/home" })} aria-label="Back">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => nav({ to: "/home" })}
+            aria-label="Back"
+          >
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1">
@@ -78,9 +87,12 @@ function ReviewPage() {
             <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-500" />
             <h2 className="mt-3 text-lg font-semibold">Nothing due right now</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Missed questions come back on day 1, 3, 7, 16 and 35. Keep practising and they'll appear here.
+              Missed questions come back on day 1, 3, 7, 16 and 35. Keep practising and they'll
+              appear here.
             </p>
-            <Button className="mt-4" onClick={() => nav({ to: "/learning" })}>Practice a chapter</Button>
+            <Button className="mt-4" onClick={() => nav({ to: "/learning" })}>
+              Practice a chapter
+            </Button>
           </div>
         )}
 
@@ -107,8 +119,12 @@ function ReviewPage() {
                             : "hover:border-primary/40"
                       }`}
                     >
-                      <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-bold">{l}</span>
-                      <span className="flex-1"><Latex>{item.question.options[l]}</Latex></span>
+                      <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-bold">
+                        {l}
+                      </span>
+                      <span className="flex-1">
+                        <Latex>{item.question.options[l]}</Latex>
+                      </span>
                     </button>
                   );
                 })}

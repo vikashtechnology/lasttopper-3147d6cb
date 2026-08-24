@@ -15,8 +15,12 @@ function AdminModeration() {
   const reports = useQuery({ queryKey: ["admin-reports"], queryFn: () => adminListReports() });
 
   const resolve = useMutation({
-    mutationFn: (v: { report_id: string; action: "dismiss" | "delete_content" }) => adminResolveReport({ data: v }),
-    onSuccess: () => { toast.success("Done"); qc.invalidateQueries({ queryKey: ["admin-reports"] }); },
+    mutationFn: (v: { report_id: string; action: "dismiss" | "delete_content" }) =>
+      adminResolveReport({ data: v }),
+    onSuccess: () => {
+      toast.success("Done");
+      qc.invalidateQueries({ queryKey: ["admin-reports"] });
+    },
     onError: (e: Error) => toast.error(failMessage(e)),
   });
 
@@ -33,11 +37,21 @@ function AdminModeration() {
             <div className="mt-1 text-sm">Reason: {r.reason}</div>
             {r.message && <div className="text-xs text-muted-foreground">{r.message}</div>}
             <div className="mt-3 flex gap-2">
-              <Button size="sm" variant="destructive" onClick={() => resolve.mutate({ report_id: r.id, action: "delete_content" })}>
-                <Trash2 className="mr-1 h-3.5 w-3.5" />Delete content
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => resolve.mutate({ report_id: r.id, action: "delete_content" })}
+              >
+                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                Delete content
               </Button>
-              <Button size="sm" variant="outline" onClick={() => resolve.mutate({ report_id: r.id, action: "dismiss" })}>
-                <X className="mr-1 h-3.5 w-3.5" />Dismiss
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => resolve.mutate({ report_id: r.id, action: "dismiss" })}
+              >
+                <X className="mr-1 h-3.5 w-3.5" />
+                Dismiss
               </Button>
             </div>
           </div>

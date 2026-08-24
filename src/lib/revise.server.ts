@@ -31,7 +31,7 @@ function sanitizeTitle(value: unknown): string | null {
 }
 
 function isAiGenerationError(error: unknown): boolean {
-  return error instanceof Error && /AI|credits|busy|gateway|LOVABLE_API_KEY/i.test(error.message);
+  return error instanceof Error && /AI|credits|busy|gateway|provider/i.test(error.message);
 }
 
 async function callAi<T>(
@@ -40,29 +40,30 @@ async function callAi<T>(
   runner: (body: any) => Promise<any> = aiChat,
 ): Promise<T> {
   const json = await runner({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are an NCERT-aligned exam tutor for Indian JEE/NEET students. Reply only using the requested tool. Content must be strictly from NCERT curriculum (Class 11–12).",
-        },
-        { role: "user", content: prompt },
-      ],
-      tools: [
-        {
-          type: "function",
-          function: { name: "reply", description: "Return structured response", parameters: schema },
-        },
-      ],
-      tool_choice: { type: "function", function: { name: "reply" } },
+    model: "google/gemini-2.5-flash",
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are an NCERT-aligned exam tutor for Indian JEE/NEET students. Reply only using the requested tool. Content must be strictly from NCERT curriculum (Class 11–12).",
+      },
+      { role: "user", content: prompt },
+    ],
+    tools: [
+      {
+        type: "function",
+        function: { name: "reply", description: "Return structured response", parameters: schema },
+      },
+    ],
+    tool_choice: { type: "function", function: { name: "reply" } },
   });
   const args = json?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
   if (!args) throw new Error("AI returned no content");
   return JSON.parse(args) as T;
 }
 
-const callGemini = <T,>(prompt: string, schema: Record<string, unknown>) => callAi<T>(prompt, schema);
+const callGemini = <T>(prompt: string, schema: Record<string, unknown>) =>
+  callAi<T>(prompt, schema);
 
 const DIAGRAM_SCHEMA = {
   type: "object",
@@ -103,21 +104,17 @@ Also return diagram_caption: one short line (max 90 chars).`,
   return fallbackDiagram(topicTitle);
 }
 
-
-
 async function firecrawlReferences(topic: string, chapter: string): Promise<ReviseReference[]> {
-  const lovKey = process.env.LOVABLE_API_KEY;
   const fcKey = process.env.FIRECRAWL_API_KEY;
-  if (!lovKey || !fcKey) return fallbackReferences();
+  if (!fcKey) return fallbackReferences();
   const sites = ["ncert.nic.in", "unacademy.com", "vedantu.com", "oswaalbooks.com", "byjus.com"];
   const query = `${topic} ${chapter} ${sites.map((s) => `site:${s}`).join(" OR ")}`;
   try {
-    const res = await fetch("https://connector-gateway.lovable.dev/firecrawl/v2/search", {
+    const res = await fetch("https://api.firecrawl.dev/v2/search", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${lovKey}`,
-        "X-Connection-Api-Key": fcKey,
+        Authorization: `Bearer ${fcKey}`,
       },
       body: JSON.stringify({ query, limit: 6 }),
     });
@@ -150,7 +147,11 @@ async function firecrawlReferences(topic: string, chapter: string): Promise<Revi
 
 function fallbackReferences(): ReviseReference[] {
   return [
-    { title: "NCERT official textbooks", url: "https://ncert.nic.in/textbook.php", source: "ncert.nic.in" },
+    {
+      title: "NCERT official textbooks",
+      url: "https://ncert.nic.in/textbook.php",
+      source: "ncert.nic.in",
+    },
     { title: "NCERT official resources", url: "https://ncert.nic.in", source: "ncert.nic.in" },
   ];
 }
@@ -195,11 +196,19 @@ function buildTopicRows(chapterId: string, titles: string[]) {
     .slice(0, 12);
 }
 
-function fallbackRevision(topicTitle: string, chapter: ChapterDetails): Pick<ReviseTopic, "summary" | "key_points" | "formulas" | "refs" | "diagram" | "diagram_caption"> {
+function fallbackRevision(
+  topicTitle: string,
+  chapter: ChapterDetails,
+): Pick<
+  ReviseTopic,
+  "summary" | "key_points" | "formulas" | "refs" | "diagram" | "diagram_caption"
+> {
   const subject = chapter.subjects?.name ?? "subject";
   const classText = chapter.class_level ? `Class ${chapter.class_level}` : "NCERT";
   const formulas = /math|physics|chem/i.test(subject)
-    ? ["Revise the NCERT formulas, symbols, units, reactions, and standard results connected with this topic."]
+    ? [
+        "Revise the NCERT formulas, symbols, units, reactions, and standard results connected with this topic.",
+      ]
     : [];
 
   return {
@@ -228,17 +237,23 @@ function sanitizeDiagram(value: unknown): string | null {
     .trim()
     .slice(0, 3000);
   if (!code) return null;
-  if (!/^(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram(-v2)?|mindmap|erDiagram|timeline)\b/i.test(code)) {
+  if (
+    !/^(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram(-v2)?|mindmap|erDiagram|timeline)\b/i.test(
+      code,
+    )
+  ) {
     return null;
   }
   return code;
 }
 
-
 export async function listChapterTopics(
   chapterId: string,
   context: SupabaseContext,
-): Promise<{ chapter: { id: string; name: string; class_level: number | null } | null; topics: ReviseTopic[] }> {
+): Promise<{
+  chapter: { id: string; name: string; class_level: number | null } | null;
+  topics: ReviseTopic[];
+}> {
   const { data: chapter } = await context.supabase
     .from("chapters")
     .select("id, name, class_level, subject_id")
@@ -271,13 +286,19 @@ export async function listChapterTopics(
         properties: {
           topics: {
             type: "array",
-            items: { type: "object", properties: { title: { type: "string" } }, required: ["title"] },
+            items: {
+              type: "object",
+              properties: { title: { type: "string" } },
+              required: ["title"],
+            },
           },
         },
         required: ["topics"],
       },
     );
-    const aiTitles = (result.topics ?? []).map((topic) => sanitizeTitle(topic.title)).filter(Boolean) as string[];
+    const aiTitles = (result.topics ?? [])
+      .map((topic) => sanitizeTitle(topic.title))
+      .filter(Boolean) as string[];
     if (aiTitles.length > 0) titles = aiTitles;
   } catch (error) {
     if (!isAiGenerationError(error)) throw error;
@@ -286,14 +307,20 @@ export async function listChapterTopics(
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: inserted, error } = await supabaseAdmin
     .from("revise_topics")
-    .upsert(buildTopicRows(chapterId, titles), { onConflict: "chapter_id,slug", ignoreDuplicates: true })
+    .upsert(buildTopicRows(chapterId, titles), {
+      onConflict: "chapter_id,slug",
+      ignoreDuplicates: true,
+    })
     .select("*")
     .order("display_order");
   if (error) throw error;
   return { chapter, topics: (inserted ?? []) as unknown as ReviseTopic[] };
 }
 
-export async function readTopicRevision(topicId: string, context: SupabaseContext): Promise<ReviseTopic> {
+export async function readTopicRevision(
+  topicId: string,
+  context: SupabaseContext,
+): Promise<ReviseTopic> {
   const { data: topic, error } = await context.supabase
     .from("revise_topics")
     .select("*, chapters(name, class_level, subjects(name))")
@@ -378,4 +405,3 @@ Do NOT include copyrighted text from any textbook — write in your own words.`,
     return { ...(rest as unknown as ReviseTopic), ...fallback };
   }
 }
-

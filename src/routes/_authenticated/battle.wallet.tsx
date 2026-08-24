@@ -12,7 +12,6 @@ import { shareOrCopy } from "@/lib/native-share";
 import { payWithRazorpay } from "@/lib/razorpay-client";
 import { failMessage } from "@/lib/friendly-error";
 
-
 export const Route = createFileRoute("/_authenticated/battle/wallet")({
   head: () => ({
     meta: [
@@ -67,8 +66,6 @@ function WalletPage() {
     }
   };
 
-
-
   const copyCode = async () => {
     const code = ref.data?.code;
     if (!code) return;
@@ -100,23 +97,30 @@ function WalletPage() {
   useEffect(() => {
     const ch = supabase
       .channel("wallet-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "wallet_transactions" },
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "wallet_transactions" },
         () => {
           qc.invalidateQueries({ queryKey: ["wallet"] });
           qc.invalidateQueries({ queryKey: ["referral"] });
-        })
-      .on("postgres_changes", { event: "*", schema: "public", table: "withdrawal_requests" },
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "withdrawal_requests" },
         () => {
           qc.invalidateQueries({ queryKey: ["withdrawals"] });
           qc.invalidateQueries({ queryKey: ["wallet"] });
-        })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "users" },
-        () => qc.invalidateQueries({ queryKey: ["wallet"] }))
+        },
+      )
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "users" }, () =>
+        qc.invalidateQueries({ queryKey: ["wallet"] }),
+      )
       .subscribe();
-    return () => { void supabase.removeChannel(ch); };
+    return () => {
+      void supabase.removeChannel(ch);
+    };
   }, [qc]);
-
-
 
   const [showForm, setShowForm] = useState(false);
   const [amt, setAmt] = useState<number>(0);
@@ -128,20 +132,27 @@ function WalletPage() {
   const [bankName, setBankName] = useState("");
 
   const req = useMutation({
-    mutationFn: () => requestWithdrawal({
-      data: {
-        amount: amt, method,
-        upi_id: method === "upi" ? upi : undefined,
-        account_name: method === "bank" ? name : undefined,
-        account_number: method === "bank" ? acc : undefined,
-        ifsc: method === "bank" ? ifsc : undefined,
-        bank_name: method === "bank" ? bankName : undefined,
-      },
-    }),
+    mutationFn: () =>
+      requestWithdrawal({
+        data: {
+          amount: amt,
+          method,
+          upi_id: method === "upi" ? upi : undefined,
+          account_name: method === "bank" ? name : undefined,
+          account_number: method === "bank" ? acc : undefined,
+          ifsc: method === "bank" ? ifsc : undefined,
+          bank_name: method === "bank" ? bankName : undefined,
+        },
+      }),
     onSuccess: () => {
       toast.success("Withdrawal requested — processes in 20 min");
       setShowForm(false);
-      setAmt(0); setUpi(""); setAcc(""); setIfsc(""); setName(""); setBankName("");
+      setAmt(0);
+      setUpi("");
+      setAcc("");
+      setIfsc("");
+      setName("");
+      setBankName("");
       qc.invalidateQueries({ queryKey: ["wallet"] });
       qc.invalidateQueries({ queryKey: ["withdrawals"] });
     },
@@ -158,13 +169,16 @@ function WalletPage() {
           <span className="text-xs uppercase tracking-widest">Topper Coin balance</span>
         </div>
         <div className="mt-2 flex items-baseline gap-2">
-          <span className="battle-title inline-flex items-center gap-1.5 text-4xl text-foreground"><TopperCoin size={32} />{bal.toFixed(2)} TC</span>
+          <span className="battle-title inline-flex items-center gap-1.5 text-4xl text-foreground">
+            <TopperCoin size={32} />
+            {bal.toFixed(2)} TC
+          </span>
           <span className="text-xs text-muted-foreground">1 TC = ₹1</span>
-
         </div>
         {(ref.data?.mega_credits ?? 0) > 0 && (
           <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-fuchsia-400/10 px-2 py-0.5 text-[11px] text-fuchsia-200">
-            <Gift className="h-3 w-3" /> <TopperCoin size={12} />{ref.data?.mega_credits} referral credits · Mega Test only
+            <Gift className="h-3 w-3" /> <TopperCoin size={12} />
+            {ref.data?.mega_credits} referral credits · Mega Test only
           </div>
         )}
 
@@ -187,29 +201,43 @@ function WalletPage() {
       <div className="battle-glass p-3 space-y-2 text-xs">
         <div className="flex items-center gap-1.5 text-muted-foreground">
           <Gift className="h-3.5 w-3.5" />
-          <span className="text-[10px] uppercase tracking-widest">Refer & earn — 15–25% off Pro per friend</span>
+          <span className="text-[10px] uppercase tracking-widest">
+            Refer & earn — 15–25% off Pro per friend
+          </span>
         </div>
         <p className="text-[11px] text-muted-foreground leading-snug">
-          Friend signs up + first top-up → you get a Pro discount voucher (15%–25% off any plan), redeemable on the Pricing page.
+          Friend signs up + first top-up → you get a Pro discount voucher (15%–25% off any plan),
+          redeemable on the Pricing page.
         </p>
-
 
         {ref.data?.code && (
           <div className="flex items-center gap-1.5">
             <code className="flex-1 rounded-md border border-border bg-background/60 px-2 py-1 font-mono text-xs tracking-widest">
               {ref.data.code}
             </code>
-            <button onClick={copyCode} className="rounded-md border border-border p-1.5" aria-label="Copy code">
+            <button
+              onClick={copyCode}
+              className="rounded-md border border-border p-1.5"
+              aria-label="Copy code"
+            >
               <Copy className="h-3.5 w-3.5" />
             </button>
-            <button onClick={shareCode} className="rounded-md border border-border p-1.5" aria-label="Share">
+            <button
+              onClick={shareCode}
+              className="rounded-md border border-border p-1.5"
+              aria-label="Share"
+            >
               <Share2 className="h-3.5 w-3.5" />
             </button>
           </div>
         )}
         <div className="flex gap-3 text-[11px] text-muted-foreground">
-          <span>Invited: <b className="text-foreground">{ref.data?.invited ?? 0}</b></span>
-          <span>Converted: <b className="text-foreground">{ref.data?.converted ?? 0}</b></span>
+          <span>
+            Invited: <b className="text-foreground">{ref.data?.invited ?? 0}</b>
+          </span>
+          <span>
+            Converted: <b className="text-foreground">{ref.data?.converted ?? 0}</b>
+          </span>
         </div>
 
         {/* Milestone: every 10 converted referrals = 1 free week of Pro */}
@@ -229,7 +257,11 @@ function WalletPage() {
             {ref.data?.to_next_milestone ?? 10} more converted referral
             {(ref.data?.to_next_milestone ?? 10) === 1 ? "" : "s"} → 7 days of Pro, auto-activated.
             {(ref.data?.milestones_earned ?? 0) > 0 && (
-              <> You've already unlocked <b className="text-amber-500">{(ref.data?.milestones_earned ?? 0) * 7} days</b>.</>
+              <>
+                {" "}
+                You've already unlocked{" "}
+                <b className="text-amber-500">{(ref.data?.milestones_earned ?? 0) * 7} days</b>.
+              </>
             )}
           </p>
         </div>
@@ -253,7 +285,6 @@ function WalletPage() {
         )}
       </div>
 
-
       {showTopup && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fade-in"
@@ -264,12 +295,16 @@ function WalletPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <div className="text-xs uppercase tracking-widest text-muted-foreground">Add money via Razorpay</div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">
+                Add money via Razorpay
+              </div>
               <button
                 onClick={() => !topupLoading && setShowTopup(false)}
                 className="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground"
                 aria-label="Close"
-              >✕</button>
+              >
+                ✕
+              </button>
             </div>
             <div className="flex flex-wrap gap-2">
               {[50, 100, 200, 500].map((v) => (
@@ -277,17 +312,29 @@ function WalletPage() {
                   key={v}
                   onClick={() => setTopupAmt(v)}
                   className={`inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs ${topupAmt === v ? "border-cyan-500/60 bg-cyan-500/10 text-cyan-700 dark:text-cyan-100" : "border-border"}`}
-                ><TopperCoin size={12} />{v}</button>
+                >
+                  <TopperCoin size={12} />
+                  {v}
+                </button>
               ))}
             </div>
             <input
               className="w-full rounded-lg border border-border bg-background/60 px-3 py-2"
-              type="number" min={10} max={5000} placeholder="Amount (Topper Coins)"
-              value={topupAmt || ""} onChange={(e) => setTopupAmt(Number(e.target.value))}
+              type="number"
+              min={10}
+              max={5000}
+              placeholder="Amount (Topper Coins)"
+              value={topupAmt || ""}
+              onChange={(e) => setTopupAmt(Number(e.target.value))}
             />
             <button className="battle-btn w-full" disabled={topupLoading} onClick={topup}>
-              {topupLoading ? "Opening checkout…" : (
-                <span className="inline-flex items-center gap-1">Pay ₹{topupAmt} · get <TopperCoin size={14} />{topupAmt} TC</span>
+              {topupLoading ? (
+                "Opening checkout…"
+              ) : (
+                <span className="inline-flex items-center gap-1">
+                  Pay ₹{topupAmt} · get <TopperCoin size={14} />
+                  {topupAmt} TC
+                </span>
               )}
             </button>
           </div>
@@ -304,30 +351,47 @@ function WalletPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <div className="text-xs uppercase tracking-widest text-muted-foreground">Withdraw to {method.toUpperCase()}</div>
+              <div className="text-xs uppercase tracking-widest text-muted-foreground">
+                Withdraw to {method.toUpperCase()}
+              </div>
               <button
                 onClick={() => !req.isPending && setShowForm(false)}
                 className="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground"
                 aria-label="Close"
-              >✕</button>
+              >
+                ✕
+              </button>
             </div>
             <div className="flex gap-2">
               <button
                 className={`flex-1 rounded-lg border p-2 ${method === "upi" ? "border-cyan-500/60 bg-cyan-500/10 text-cyan-700 dark:text-cyan-100" : "border-border"}`}
                 onClick={() => setMethod("upi")}
-              >UPI</button>
+              >
+                UPI
+              </button>
               <button
                 className={`flex-1 rounded-lg border p-2 ${method === "bank" ? "border-cyan-500/60 bg-cyan-500/10 text-cyan-700 dark:text-cyan-100" : "border-border"}`}
                 onClick={() => setMethod("bank")}
-              >Bank</button>
+              >
+                Bank
+              </button>
             </div>
             <input
               className="w-full rounded-lg border border-border bg-background/60 px-3 py-2"
-              type="number" min={1} max={bal} placeholder="Amount (Topper Coins)"
-              value={amt || ""} onChange={(e) => setAmt(Number(e.target.value))}
+              type="number"
+              min={1}
+              max={bal}
+              placeholder="Amount (Topper Coins)"
+              value={amt || ""}
+              onChange={(e) => setAmt(Number(e.target.value))}
             />
             {method === "upi" ? (
-              <input className="w-full rounded-lg border border-border bg-background/60 px-3 py-2" placeholder="you@upi" value={upi} onChange={(e) => setUpi(e.target.value)} />
+              <input
+                className="w-full rounded-lg border border-border bg-background/60 px-3 py-2"
+                placeholder="you@upi"
+                value={upi}
+                onChange={(e) => setUpi(e.target.value)}
+              />
             ) : (
               <>
                 <select
@@ -337,26 +401,74 @@ function WalletPage() {
                 >
                   <option value="">Select bank</option>
                   {[
-                    "State Bank of India","HDFC Bank","ICICI Bank","Axis Bank","Kotak Mahindra Bank",
-                    "Punjab National Bank","Bank of Baroda","Canara Bank","Union Bank of India","Bank of India",
-                    "IndusInd Bank","Yes Bank","IDFC First Bank","IDBI Bank","Federal Bank",
-                    "RBL Bank","Central Bank of India","Indian Bank","Indian Overseas Bank","UCO Bank",
-                    "Bank of Maharashtra","Karnataka Bank","South Indian Bank","City Union Bank","AU Small Finance Bank",
-                    "Bandhan Bank","DCB Bank","Jammu & Kashmir Bank","Karur Vysya Bank","Tamilnad Mercantile Bank",
-                    "Paytm Payments Bank","Airtel Payments Bank","India Post Payments Bank",
+                    "State Bank of India",
+                    "HDFC Bank",
+                    "ICICI Bank",
+                    "Axis Bank",
+                    "Kotak Mahindra Bank",
+                    "Punjab National Bank",
+                    "Bank of Baroda",
+                    "Canara Bank",
+                    "Union Bank of India",
+                    "Bank of India",
+                    "IndusInd Bank",
+                    "Yes Bank",
+                    "IDFC First Bank",
+                    "IDBI Bank",
+                    "Federal Bank",
+                    "RBL Bank",
+                    "Central Bank of India",
+                    "Indian Bank",
+                    "Indian Overseas Bank",
+                    "UCO Bank",
+                    "Bank of Maharashtra",
+                    "Karnataka Bank",
+                    "South Indian Bank",
+                    "City Union Bank",
+                    "AU Small Finance Bank",
+                    "Bandhan Bank",
+                    "DCB Bank",
+                    "Jammu & Kashmir Bank",
+                    "Karur Vysya Bank",
+                    "Tamilnad Mercantile Bank",
+                    "Paytm Payments Bank",
+                    "Airtel Payments Bank",
+                    "India Post Payments Bank",
                   ].map((b) => (
-                    <option key={b} value={b}>{b}</option>
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
                   ))}
                   <option value="Other">Other</option>
                 </select>
-                <input className="w-full rounded-lg border border-border bg-background/60 px-3 py-2" placeholder="Account holder name" value={name} onChange={(e) => setName(e.target.value)} />
-                <input className="w-full rounded-lg border border-border bg-background/60 px-3 py-2" placeholder="Account number" value={acc} onChange={(e) => setAcc(e.target.value)} />
-                <input className="w-full rounded-lg border border-border bg-background/60 px-3 py-2" placeholder="IFSC" value={ifsc} onChange={(e) => setIfsc(e.target.value)} />
+                <input
+                  className="w-full rounded-lg border border-border bg-background/60 px-3 py-2"
+                  placeholder="Account holder name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+                <input
+                  className="w-full rounded-lg border border-border bg-background/60 px-3 py-2"
+                  placeholder="Account number"
+                  value={acc}
+                  onChange={(e) => setAcc(e.target.value)}
+                />
+                <input
+                  className="w-full rounded-lg border border-border bg-background/60 px-3 py-2"
+                  placeholder="IFSC"
+                  value={ifsc}
+                  onChange={(e) => setIfsc(e.target.value)}
+                />
               </>
             )}
             <button
               className="battle-btn w-full"
-              disabled={req.isPending || amt <= 0 || amt > bal || (method === "upi" ? !upi : !acc || !ifsc || !name || !bankName)}
+              disabled={
+                req.isPending ||
+                amt <= 0 ||
+                amt > bal ||
+                (method === "upi" ? !upi : !acc || !ifsc || !name || !bankName)
+              }
               onClick={() => req.mutate()}
             >
               {req.isPending ? "Submitting…" : "Confirm withdrawal"}
@@ -366,22 +478,34 @@ function WalletPage() {
       )}
 
       <div className="battle-glass p-5">
-        <h2 className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">Withdrawal requests</h2>
+        <h2 className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">
+          Withdrawal requests
+        </h2>
         {(wr.data ?? []).length === 0 ? (
           <p className="text-sm text-muted-foreground">No requests yet.</p>
         ) : (
           <ul className="space-y-1.5 text-sm">
             {(wr.data ?? []).map((r) => (
-              <li key={r.id} className="flex items-center justify-between rounded-lg border border-border bg-background/40 p-2.5">
+              <li
+                key={r.id}
+                className="flex items-center justify-between rounded-lg border border-border bg-background/40 p-2.5"
+              >
                 <div>
-                  <div className="inline-flex items-center gap-1 font-medium text-foreground"><TopperCoin size={14} />{Number(r.amount).toFixed(2)} TC · {r.method.toUpperCase()}</div>
+                  <div className="inline-flex items-center gap-1 font-medium text-foreground">
+                    <TopperCoin size={14} />
+                    {Number(r.amount).toFixed(2)} TC · {r.method.toUpperCase()}
+                  </div>
                   <div className="text-xs text-muted-foreground">
                     {r.status === "pending"
                       ? `Processes at ${new Date(r.process_after).toLocaleTimeString()}`
                       : `${r.status} · ${r.processed_at ? new Date(r.processed_at).toLocaleString() : ""}`}
                   </div>
                 </div>
-                <span className={`text-xs uppercase ${r.status === "processed" ? "text-emerald-500 dark:text-emerald-300" : (r.status === "failed" || r.status === "rejected") ? "text-red-500 dark:text-red-300" : "text-amber-500 dark:text-amber-300"}`}>{r.status === "rejected" ? "failed" : r.status}</span>
+                <span
+                  className={`text-xs uppercase ${r.status === "processed" ? "text-emerald-500 dark:text-emerald-300" : r.status === "failed" || r.status === "rejected" ? "text-red-500 dark:text-red-300" : "text-amber-500 dark:text-amber-300"}`}
+                >
+                  {r.status === "rejected" ? "failed" : r.status}
+                </span>
               </li>
             ))}
           </ul>
@@ -389,7 +513,9 @@ function WalletPage() {
       </div>
 
       <div className="battle-glass p-5">
-        <h2 className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">Recent transactions</h2>
+        <h2 className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">
+          Recent transactions
+        </h2>
         {(w.data?.transactions ?? []).length === 0 ? (
           <p className="text-sm text-muted-foreground">No activity yet.</p>
         ) : (
@@ -397,13 +523,22 @@ function WalletPage() {
             {(w.data?.transactions ?? []).map((t) => {
               const label = formatTxLabel(t.category, t.note, t.type);
               return (
-                <li key={t.id} className="flex items-center justify-between rounded-lg border border-border bg-background/40 p-2.5">
+                <li
+                  key={t.id}
+                  className="flex items-center justify-between rounded-lg border border-border bg-background/40 p-2.5"
+                >
                   <div>
                     <div className="font-medium text-foreground">{label}</div>
-                    <div className="text-xs text-muted-foreground">{new Date(t.created_at).toLocaleString()}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(t.created_at).toLocaleString()}
+                    </div>
                   </div>
-                  <span className={`inline-flex items-center gap-0.5 font-semibold ${t.type === "credit" ? "text-emerald-500 dark:text-emerald-300" : "text-red-500 dark:text-red-300"}`}>
-                    {t.type === "credit" ? "+" : "−"}<TopperCoin size={12} />{Number(t.amount).toFixed(2)} TC
+                  <span
+                    className={`inline-flex items-center gap-0.5 font-semibold ${t.type === "credit" ? "text-emerald-500 dark:text-emerald-300" : "text-red-500 dark:text-red-300"}`}
+                  >
+                    {t.type === "credit" ? "+" : "−"}
+                    <TopperCoin size={12} />
+                    {Number(t.amount).toFixed(2)} TC
                   </span>
                 </li>
               );
@@ -412,27 +547,38 @@ function WalletPage() {
         )}
       </div>
 
-
       <footer className="mt-4 flex items-center justify-center gap-4 pb-6 text-xs text-muted-foreground">
-        <Link to="/terms" className="hover:text-foreground hover:underline">Terms</Link>
+        <Link to="/terms" className="hover:text-foreground hover:underline">
+          Terms
+        </Link>
         <span aria-hidden>•</span>
-        <Link to="/privacy" className="hover:text-foreground hover:underline">Privacy Policy</Link>
+        <Link to="/privacy" className="hover:text-foreground hover:underline">
+          Privacy Policy
+        </Link>
         <span aria-hidden>•</span>
-        <Link to="/refund" className="hover:text-foreground hover:underline">Refund Policy</Link>
+        <Link to="/refund" className="hover:text-foreground hover:underline">
+          Refund Policy
+        </Link>
       </footer>
     </div>
   );
 }
 
-function formatTxLabel(category: string, note: string | null, type: "credit" | "debit" | string): string {
+function formatTxLabel(
+  category: string,
+  note: string | null,
+  type: "credit" | "debit" | string,
+): string {
   const c = (category ?? "").toLowerCase();
   if (c === "referral") return "Referral reward";
   if (c === "topup" || c === "deposit") return "Money added successful";
   if (c === "withdrawal") return "Withdrawal processed";
-  if (c === "refund") return note?.toLowerCase().includes("reject") ? "Withdrawal rejected — refunded" : "Refund credited";
+  if (c === "refund")
+    return note?.toLowerCase().includes("reject")
+      ? "Withdrawal rejected — refunded"
+      : "Refund credited";
   if (c === "prize") return note ?? "Prize credited";
   if (c === "entry" || c === "entry_fee") return "Mega Test entry";
   if (c === "subscription" || c === "pro") return "Pro subscription";
   return note ?? (type === "credit" ? "Credit" : "Debit");
 }
-

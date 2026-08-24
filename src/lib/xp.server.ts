@@ -8,11 +8,7 @@ type AnyClient = {
  * Award XP for correctly solved questions.
  * 10 XP per correct answer at Bronze, doubling with each rank crossed.
  */
-export async function awardQuestionXp(
-  client: AnyClient,
-  userId: string,
-  correctCount: number,
-) {
+export async function awardQuestionXp(client: AnyClient, userId: string, correctCount: number) {
   if (!correctCount || correctCount <= 0) return { gained: 0, xp: 0, tierUp: false };
 
   const { data: row } = await client

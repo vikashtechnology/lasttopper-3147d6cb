@@ -27,7 +27,8 @@ export function socialIcon(platform: string, className = "h-4 w-4") {
   const p = platform.toLowerCase();
   if (p.includes("youtube")) return <Youtube className={className} />;
   if (p.includes("telegram")) return <Send className={className} />;
-  if (p.includes("discord") || p.includes("whatsapp")) return <MessageCircle className={className} />;
+  if (p.includes("discord") || p.includes("whatsapp"))
+    return <MessageCircle className={className} />;
   if (p.includes("twitter") || p === "x") return <Twitter className={className} />;
   if (p.includes("instagram")) return <Instagram className={className} />;
   if (p.includes("facebook")) return <Facebook className={className} />;
@@ -53,7 +54,9 @@ export function SocialLinksDropdown({ onNavigate }: { onNavigate?: () => void })
       >
         <Share2 className="h-3.5 w-3.5" />
         <span>Follow us</span>
-        <ChevronDown className={`ml-auto h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown
+          className={`ml-auto h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`}
+        />
       </button>
       {open ? (
         <ul className="mt-0.5 space-y-0.5">

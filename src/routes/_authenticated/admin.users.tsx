@@ -7,7 +7,11 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Shield, ShieldOff, Sparkles, XCircle } from "lucide-react";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { failMessage } from "@/lib/friendly-error";
 
@@ -18,16 +22,23 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
 function AdminUsers() {
   const [q, setQ] = useState("");
   const qc = useQueryClient();
-  const users = useQuery({ queryKey: ["admin-users", q], queryFn: () => adminListUsers({ data: { q: q || undefined } }) });
+  const users = useQuery({
+    queryKey: ["admin-users", q],
+    queryFn: () => adminListUsers({ data: { q: q || undefined } }),
+  });
 
   const ban = useMutation({
     mutationFn: (v: { user_id: string; banned: boolean }) => adminSetBan({ data: v }),
-    onSuccess: (_r, v) => { toast.success(v.banned ? "Banned" : "Unbanned"); qc.invalidateQueries({ queryKey: ["admin-users"] }); },
+    onSuccess: (_r, v) => {
+      toast.success(v.banned ? "Banned" : "Unbanned");
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
     onError: (e: Error) => toast.error(failMessage(e)),
   });
 
   const grant = useMutation({
-    mutationFn: (v: { user_id: string; plan: "weekly" | "monthly" | "yearly" | "revoke" }) => adminGrantPro({ data: v }),
+    mutationFn: (v: { user_id: string; plan: "weekly" | "monthly" | "yearly" | "revoke" }) =>
+      adminGrantPro({ data: v }),
     onSuccess: (_r, v) => {
       toast.success(v.plan === "revoke" ? "Pro revoked" : `Pro granted (${v.plan})`);
       qc.invalidateQueries({ queryKey: ["admin-users"] });
@@ -37,7 +48,12 @@ function AdminUsers() {
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-6">
-      <Input placeholder="Search by email, name, phone…" value={q} onChange={(e) => setQ(e.target.value)} className="mb-4" />
+      <Input
+        placeholder="Search by email, name, phone…"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        className="mb-4"
+      />
       <div className="overflow-x-auto rounded-2xl border border-border bg-card">
         <table className="min-w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs">
@@ -54,7 +70,9 @@ function AdminUsers() {
           </thead>
           <tbody>
             {users.data?.map((u) => {
-              const proActive = !!u.is_pro && (!u.pro_until || new Date(u.pro_until as string).getTime() > Date.now());
+              const proActive =
+                !!u.is_pro &&
+                (!u.pro_until || new Date(u.pro_until as string).getTime() > Date.now());
               return (
                 <tr key={u.id} className="border-t border-border">
                   <td className="p-3">
@@ -68,33 +86,49 @@ function AdminUsers() {
                   <td className="p-3">
                     {proActive ? (
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
-                        Pro{u.pro_until ? ` · till ${new Date(u.pro_until as string).toLocaleDateString()}` : ""}
+                        Pro
+                        {u.pro_until
+                          ? ` · till ${new Date(u.pro_until as string).toLocaleDateString()}`
+                          : ""}
                       </span>
                     ) : (
                       <span className="text-xs text-muted-foreground">Free</span>
                     )}
                   </td>
                   <td className="p-3">
-                    {u.is_banned
-                      ? <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs text-red-600">Banned</span>
-                      : <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs text-green-600">Active</span>}
+                    {u.is_banned ? (
+                      <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs text-red-600">
+                        Banned
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-green-500/10 px-2 py-0.5 text-xs text-green-600">
+                        Active
+                      </span>
+                    )}
                   </td>
                   <td className="p-3">
                     <div className="flex justify-end gap-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button size="sm" variant="outline" disabled={grant.isPending}>
-                            <Sparkles className="mr-1 h-3.5 w-3.5" />Pro
+                            <Sparkles className="mr-1 h-3.5 w-3.5" />
+                            Pro
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => grant.mutate({ user_id: u.id, plan: "weekly" })}>
+                          <DropdownMenuItem
+                            onClick={() => grant.mutate({ user_id: u.id, plan: "weekly" })}
+                          >
                             Grant 1 week
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => grant.mutate({ user_id: u.id, plan: "monthly" })}>
+                          <DropdownMenuItem
+                            onClick={() => grant.mutate({ user_id: u.id, plan: "monthly" })}
+                          >
                             Grant 1 month
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => grant.mutate({ user_id: u.id, plan: "yearly" })}>
+                          <DropdownMenuItem
+                            onClick={() => grant.mutate({ user_id: u.id, plan: "yearly" })}
+                          >
                             Grant 1 year
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
@@ -102,17 +136,28 @@ function AdminUsers() {
                             className="text-destructive"
                             onClick={() => grant.mutate({ user_id: u.id, plan: "revoke" })}
                           >
-                            <XCircle className="mr-2 h-3.5 w-3.5" />Revoke Pro
+                            <XCircle className="mr-2 h-3.5 w-3.5" />
+                            Revoke Pro
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                       {u.is_banned ? (
-                        <Button size="sm" variant="outline" onClick={() => ban.mutate({ user_id: u.id, banned: false })}>
-                          <ShieldOff className="mr-1 h-3.5 w-3.5" />Unban
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => ban.mutate({ user_id: u.id, banned: false })}
+                        >
+                          <ShieldOff className="mr-1 h-3.5 w-3.5" />
+                          Unban
                         </Button>
                       ) : (
-                        <Button size="sm" variant="destructive" onClick={() => ban.mutate({ user_id: u.id, banned: true })}>
-                          <Shield className="mr-1 h-3.5 w-3.5" />Ban
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => ban.mutate({ user_id: u.id, banned: true })}
+                        >
+                          <Shield className="mr-1 h-3.5 w-3.5" />
+                          Ban
                         </Button>
                       )}
                     </div>

@@ -17,7 +17,10 @@ type Sb = { from: (t: string) => any };
 export const DEFAULT_DAILY_LIMIT = 20;
 
 export class DailyLimitError extends Error {
-  constructor(public used: number, public limit: number) {
+  constructor(
+    public used: number,
+    public limit: number,
+  ) {
     super("DAILY_LIMIT");
     this.name = "DailyLimitError";
   }
@@ -43,7 +46,11 @@ export async function getQuotaState(supabase: Sb, userId: string): Promise<Quota
   const [{ data: profile }, { data: sessions }, { data: daily }, { data: reviews }] =
     await Promise.all([
       supabase.from("users").select("is_pro, daily_question_limit").eq("id", userId).maybeSingle(),
-      supabase.from("quiz_sessions").select("answers").eq("user_id", userId).gte("created_at", start),
+      supabase
+        .from("quiz_sessions")
+        .select("answers")
+        .eq("user_id", userId)
+        .gte("created_at", start),
       supabase
         .from("daily_challenge_attempts")
         .select("total_count")
@@ -68,7 +75,12 @@ export async function getQuotaState(supabase: Sb, userId: string): Promise<Quota
 
   const limit = Number(profile?.daily_question_limit ?? DEFAULT_DAILY_LIMIT) || DEFAULT_DAILY_LIMIT;
   const is_pro = !!profile?.is_pro;
-  return { used, limit, is_pro, remaining: is_pro ? Number.MAX_SAFE_INTEGER : Math.max(0, limit - used) };
+  return {
+    used,
+    limit,
+    is_pro,
+    remaining: is_pro ? Number.MAX_SAFE_INTEGER : Math.max(0, limit - used),
+  };
 }
 
 /** Throws `DailyLimitError` when the user can't attempt `need` more questions today. */

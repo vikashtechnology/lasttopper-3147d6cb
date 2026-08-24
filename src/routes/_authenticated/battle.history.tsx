@@ -21,16 +21,24 @@ export const Route = createFileRoute("/_authenticated/battle/history")({
 
 function HistoryPage() {
   const qc = useQueryClient();
-  const q = useQuery({ queryKey: ["battle-history"], queryFn: () => getBattleHistory(), refetchInterval: 30000 });
+  const q = useQuery({
+    queryKey: ["battle-history"],
+    queryFn: () => getBattleHistory(),
+    refetchInterval: 30000,
+  });
   useEffect(() => {
     const ch = supabase
       .channel("battle-history-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "battle_sessions" },
-        () => qc.invalidateQueries({ queryKey: ["battle-history"] }))
-      .on("postgres_changes", { event: "*", schema: "public", table: "mega_test_entries" },
-        () => qc.invalidateQueries({ queryKey: ["battle-history"] }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "battle_sessions" }, () =>
+        qc.invalidateQueries({ queryKey: ["battle-history"] }),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "mega_test_entries" }, () =>
+        qc.invalidateQueries({ queryKey: ["battle-history"] }),
+      )
       .subscribe();
-    return () => { void supabase.removeChannel(ch); };
+    return () => {
+      void supabase.removeChannel(ch);
+    };
   }, [qc]);
 
   const items = q.data ?? [];
@@ -46,10 +54,14 @@ function HistoryPage() {
         ) : (
           <ul className="space-y-1.5">
             {items.map((r) => (
-              <li key={r.id} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-3">
+              <li
+                key={r.id}
+                className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-3"
+              >
                 <div>
                   <div className="text-sm font-semibold uppercase">
-                    {r.mode === "mega" ? "Mega Test" : "Quick"} · {new Date(r.submitted_at!).toLocaleString()}
+                    {r.mode === "mega" ? "Mega Test" : "Quick"} ·{" "}
+                    {new Date(r.submitted_at!).toLocaleString()}
                   </div>
                   <div className="text-xs text-white/50">
                     {r.correct_count} correct · {r.time_taken_seconds ?? 0}s

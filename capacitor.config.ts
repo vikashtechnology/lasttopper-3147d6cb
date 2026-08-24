@@ -1,16 +1,18 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
+const publicUrl = (
+  process.env.CAPACITOR_SERVER_URL || "https://last-topper-web-test.vercel.app"
+).replace(/\/+$/, "");
+const publicHost = new URL(publicUrl).hostname;
+
 const config: CapacitorConfig = {
   appId: "com.lasttopper.app",
   appName: "Last Topper",
   webDir: "dist",
   android: {
     minSdkVersion: 26,
-    // Prevents screenshots and screen-recording in the native Android app
-    // (FLAG_SECURE is set in MainActivity — see ANDROID.md).
+    // FLAG_SECURE is added by the Android workflow to block screen capture.
     allowMixedContent: false,
-    // Google blocks sign-in from user agents that look like an embedded
-    // WebView, so present the shell as a normal Chrome browser.
     appendUserAgent: "LastTopperApp",
     overrideUserAgent:
       "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36 LastTopperApp",
@@ -21,25 +23,19 @@ const config: CapacitorConfig = {
     appendUserAgent: "LastTopperApp",
   },
   server: {
-    // The native shell loads the published web build.
-    url: "https://lasttopper.lovable.app",
-    hostname: "lasttopper.lovable.app",
+    // The native shell loads the deployed HTTPS build.
+    url: publicUrl,
+    hostname: publicHost,
     cleartext: false,
     androidScheme: "https",
     iosScheme: "https",
-    // Links to these domains stay inside the app instead of opening a browser:
-    // the site itself, Razorpay checkout/UPI, and the backend. Google sign-in
-    // is deliberately NOT listed — it must open in the external browser.
     allowNavigation: [
-      "lasttopper.lovable.app",
-      "lasttopper.github.io",
-      "*.lovable.app",
+      publicHost,
       "*.razorpay.com",
       "api.razorpay.com",
       "checkout.razorpay.com",
       "*.supabase.co",
     ],
-
   },
   plugins: {
     LocalNotifications: {
@@ -48,7 +44,6 @@ const config: CapacitorConfig = {
       sound: "beep.wav",
     },
   },
-
 };
 
 export default config;

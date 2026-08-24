@@ -23,7 +23,9 @@ function ForumHome() {
             <MessageSquare className="h-5 w-5 text-primary" />
             <div className="flex-1">
               <div className="font-medium">{c.name}</div>
-              {c.description && <div className="text-xs text-muted-foreground">{c.description}</div>}
+              {c.description && (
+                <div className="text-xs text-muted-foreground">{c.description}</div>
+              )}
             </div>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </Link>

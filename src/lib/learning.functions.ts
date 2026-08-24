@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { aiChat } from "@/lib/ai-router";
+import { sendTelegramAlert } from "@/lib/telegram-alert";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -51,7 +52,10 @@ export const getSubjectsWithChapters = createServerFn({ method: "GET" })
     const { data: chapters, error: cErr } = await context.supabase
       .from("chapters")
       .select("id, subject_id, name, class_level, display_order")
-      .in("subject_id", (subjects ?? []).map((s) => s.id))
+      .in(
+        "subject_id",
+        (subjects ?? []).map((s) => s.id),
+      )
       .order("class_level")
       .order("display_order");
     if (cErr) throw cErr;
@@ -73,7 +77,8 @@ async function callGeminiBatch(
   count: number,
   batchIndex: number,
 ): Promise<QuizQuestion[]> {
-  const subjectLabel = profession === "pcm" ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
+  const subjectLabel =
+    profession === "pcm" ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
   const prompt = `Generate exactly ${count} exam-style multiple-choice questions for ${subjectLabel}, distributed across these chapters: ${chapterNames.join(", ")}.
 
 STRICT SOURCE POLICY:
@@ -96,7 +101,11 @@ Rules:
     data = await aiChat({
       model: "google/gemini-2.5-flash",
       messages: [
-        { role: "system", content: "You are an NCERT-only exam question generator. You must only use content that appears in official NCERT textbooks. Output STRICT JSON only." },
+        {
+          role: "system",
+          content:
+            "You are an NCERT-only exam question generator. You must only use content that appears in official NCERT textbooks. Output STRICT JSON only.",
+        },
         { role: "user", content: prompt },
       ],
       response_format: { type: "json_object" },
@@ -105,7 +114,8 @@ Rules:
     throw new Error("AI_BUSY");
   }
   const content: string = data?.choices?.[0]?.message?.content ?? "{}";
-  let parsed: { questions?: Array<Omit<QuizQuestion, "id" | "chapter_id"> & { chapter: string }> } = {};
+  let parsed: { questions?: Array<Omit<QuizQuestion, "id" | "chapter_id"> & { chapter: string }> } =
+    {};
   try {
     parsed = JSON.parse(content);
   } catch {
@@ -162,7 +172,6 @@ async function callGeminiForQuestions(
   return results.slice(0, count);
 }
 
-
 export const generateQuestions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => generateSchema.parse(data))
@@ -182,7 +191,6 @@ export const generateQuestions = createServerFn({ method: "POST" })
       await assertQuota(context.supabase, context.userId, data.question_count);
     }
 
-
     const { data: cached } = await context.supabase
       .from("generated_questions")
       .select("id, questions, created_at")
@@ -195,7 +203,9 @@ export const generateQuestions = createServerFn({ method: "POST" })
     const targetKey = [...data.chapter_ids].sort().join(",");
     const hit = (cached ?? []).find((c) => {
       const qs = c.questions as QuizQuestion[];
-      const chSet = Array.from(new Set(qs.map((q) => q.chapter_id))).sort().join(",");
+      const chSet = Array.from(new Set(qs.map((q) => q.chapter_id)))
+        .sort()
+        .join(",");
       return chSet === targetKey;
     });
     if (hit) return { questions: hit.questions as QuizQuestion[], cached: true };
@@ -215,12 +225,25 @@ export const generateQuestions = createServerFn({ method: "POST" })
       // AI failed — try the fallback bank
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { sampleFromBank } = await import("@/lib/question-bank.server");
-      const bank = await sampleFromBank(supabaseAdmin, profession, data.question_count, data.chapter_ids);
+      const bank = await sampleFromBank(
+        supabaseAdmin,
+        profession,
+        data.question_count,
+        data.chapter_ids,
+      );
       if (bank.length >= Math.min(data.question_count, 5)) {
-        return { questions: bank, cached: false, error: "Using saved questions (AI busy)." as const };
+        return {
+          questions: bank,
+          cached: false,
+          error: "Using saved questions (AI busy)." as const,
+        };
       }
       if (msg === "AI_BUSY") {
-        return { questions: [] as QuizQuestion[], cached: false, error: "AI is busy — please try again in a minute." as const };
+        return {
+          questions: [] as QuizQuestion[],
+          cached: false,
+          error: "AI is busy — please try again in a minute." as const,
+        };
       }
       throw e;
     }
@@ -235,7 +258,9 @@ export const generateQuestions = createServerFn({ method: "POST" })
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { saveToBank } = await import("@/lib/question-bank.server");
       void saveToBank(supabaseAdmin, profession, questions);
-    } catch { /* non-fatal */ }
+    } catch {
+      /* non-fatal */
+    }
 
     await context.supabase.from("generated_questions").insert({
       user_id: context.userId,
@@ -247,7 +272,6 @@ export const generateQuestions = createServerFn({ method: "POST" })
 
     return { questions, cached: false };
   });
-
 
 /* ---------------- Progressive (5-at-a-time) generation ---------------- */
 
@@ -261,18 +285,25 @@ const startProgressiveSchema = z.object({
 const PROG_BATCH = 5;
 
 async function generateBatchForSession(
-  supabase: import("@supabase/supabase-js").SupabaseClient<import("@/integrations/supabase/types").Database>,
+  supabase: import("@supabase/supabase-js").SupabaseClient<
+    import("@/integrations/supabase/types").Database
+  >,
   userId: string,
   chapterIds: string[],
   count: number,
   batchIndex: number,
 ): Promise<QuizQuestion[]> {
   const { data: profile } = await supabase
-    .from("users").select("profession").eq("id", userId).maybeSingle();
+    .from("users")
+    .select("profession")
+    .eq("id", userId)
+    .maybeSingle();
   const profession = profile?.profession;
   if (!profession) throw new Error("Complete onboarding first");
   const { data: chapters } = await supabase
-    .from("chapters").select("id, name").in("id", chapterIds);
+    .from("chapters")
+    .select("id, name")
+    .in("id", chapterIds);
   const nameById = new Map((chapters ?? []).map((c) => [c.id, c.name] as const));
   const chapterNames = chapterIds.map((id) => nameById.get(id) ?? "").filter(Boolean);
   try {
@@ -286,7 +317,9 @@ async function generateBatchForSession(
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { saveToBank } = await import("@/lib/question-bank.server");
       void saveToBank(supabaseAdmin, profession, mapped);
-    } catch { /* non-fatal */ }
+    } catch {
+      /* non-fatal */
+    }
     return mapped;
   } catch (e) {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -303,25 +336,30 @@ async function generateBatchForSession(
   }
 }
 
-
 export const startProgressiveQuiz = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => startProgressiveSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { data: profile } = await context.supabase
-      .from("users").select("is_pro").eq("id", context.userId).maybeSingle();
+      .from("users")
+      .select("is_pro")
+      .eq("id", context.userId)
+      .maybeSingle();
     if (data.target_count > 20 && !profile?.is_pro) throw new Error("PRO_REQUIRED");
     {
       const { assertQuota } = await import("@/lib/quota.server");
       await assertQuota(context.supabase, context.userId, data.target_count);
     }
 
-
     const firstCount = Math.min(PROG_BATCH, data.target_count);
     let first: QuizQuestion[];
     try {
       first = await generateBatchForSession(
-        context.supabase, context.userId, data.chapter_ids, firstCount, 0,
+        context.supabase,
+        context.userId,
+        data.chapter_ids,
+        firstCount,
+        0,
       );
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -342,7 +380,8 @@ export const startProgressiveQuiz = createServerFn({ method: "POST" })
         start_time: nowIso,
         last_heartbeat: nowIso,
       })
-      .select("id").single();
+      .select("id")
+      .single();
     if (error) throw error;
     return { id: row.id as string, generated: first.length, target: data.target_count };
   });
@@ -354,10 +393,13 @@ export const extendQuizSession = createServerFn({ method: "POST" })
     const { data: s, error } = await context.supabase
       .from("quiz_sessions")
       .select("questions, question_count, chapter_ids, submitted_at")
-      .eq("id", data.id).eq("user_id", context.userId).maybeSingle();
+      .eq("id", data.id)
+      .eq("user_id", context.userId)
+      .maybeSingle();
     if (error) throw error;
     if (!s) throw new Error("Session not found");
-    if (s.submitted_at) return { done: true as const, added: 0, total: (s.questions as QuizQuestion[]).length };
+    if (s.submitted_at)
+      return { done: true as const, added: 0, total: (s.questions as QuizQuestion[]).length };
     const cur = (s.questions as QuizQuestion[]) ?? [];
     const target = Number(s.question_count ?? 0);
     if (cur.length >= target) return { done: true as const, added: 0, total: cur.length };
@@ -367,13 +409,18 @@ export const extendQuizSession = createServerFn({ method: "POST" })
     const batchIdx = Math.floor(cur.length / PROG_BATCH);
     const chapterIds = (s.chapter_ids as string[]) ?? [];
     const more = await generateBatchForSession(
-      context.supabase, context.userId, chapterIds, n, batchIdx,
+      context.supabase,
+      context.userId,
+      chapterIds,
+      n,
+      batchIdx,
     );
     const next = [...cur, ...more];
     await context.supabase
       .from("quiz_sessions")
       .update({ questions: next as unknown as never })
-      .eq("id", data.id).eq("user_id", context.userId);
+      .eq("id", data.id)
+      .eq("user_id", context.userId);
     return { done: next.length >= target, added: more.length, total: next.length };
   });
 
@@ -435,10 +482,7 @@ export const heartbeatSession = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-function scoreQuestions(
-  questions: QuizQuestion[],
-  answers: Record<string, "A" | "B" | "C" | "D">,
-) {
+function scoreQuestions(questions: QuizQuestion[], answers: Record<string, "A" | "B" | "C" | "D">) {
   let correct = 0;
   for (const q of questions) {
     if (answers[q.id] && answers[q.id] === q.correct) correct += 1;
@@ -507,7 +551,14 @@ export const submitQuizSession = createServerFn({ method: "POST" })
     const { awardQuestionXp } = await import("@/lib/xp.server");
     const xp = await awardQuestionXp(context.supabase, context.userId, correct).catch(() => null);
 
-    return { correct, incorrect, total, accuracy, xp_gained: xp?.gained ?? 0, xp_total: xp?.xp ?? 0 };
+    return {
+      correct,
+      incorrect,
+      total,
+      accuracy,
+      xp_gained: xp?.gained ?? 0,
+      xp_total: xp?.xp ?? 0,
+    };
   });
 
 // Lazy check: auto-submit any live session whose last_heartbeat is stale (>2 min).
@@ -556,14 +607,14 @@ export const getTodayUsage = createServerFn({ method: "GET" })
     return { used: state.used, limit: state.limit, is_pro: state.is_pro };
   });
 
-
-
 export const getQuizHistory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("quiz_sessions")
-      .select("id, question_count, correct_count, incorrect_count, accuracy, time_taken_seconds, submitted_at, was_auto_submitted, chapter_ids")
+      .select(
+        "id, question_count, correct_count, incorrect_count, accuracy, time_taken_seconds, submitted_at, was_auto_submitted, chapter_ids",
+      )
       .eq("user_id", context.userId)
       .not("submitted_at", "is", null)
       .order("submitted_at", { ascending: false })
@@ -614,9 +665,21 @@ export type Analytics = {
   totalAttempted: number;
   overallAccuracy: number;
   bySubject: Array<{ subject: string; accuracy: number; attempted: number }>;
-  byChapter: Array<{ chapter_id: string; chapter: string; subject: string; accuracy: number; attempted: number }>;
+  byChapter: Array<{
+    chapter_id: string;
+    chapter: string;
+    subject: string;
+    accuracy: number;
+    attempted: number;
+  }>;
   studyTimeByDay: Array<{ day: string; minutes: number }>;
-  weakChapters: Array<{ chapter_id: string; chapter: string; subject: string; accuracy: number; attempted: number }>;
+  weakChapters: Array<{
+    chapter_id: string;
+    chapter: string;
+    subject: string;
+    accuracy: number;
+    attempted: number;
+  }>;
 };
 
 export const getAnalytics = createServerFn({ method: "GET" })
@@ -652,16 +715,16 @@ export const getAnalytics = createServerFn({ method: "GET" })
       }
       if (s.submitted_at) {
         const day = new Date(s.submitted_at as string).toISOString().slice(0, 10);
-        studyByDay.set(day, (studyByDay.get(day) ?? 0) + Math.round((s.time_taken_seconds ?? 0) / 60));
+        studyByDay.set(
+          day,
+          (studyByDay.get(day) ?? 0) + Math.round((s.time_taken_seconds ?? 0) / 60),
+        );
       }
     }
 
     const chapterIds = Array.from(chapterAgg.keys()).filter(Boolean);
     const { data: chapters } = chapterIds.length
-      ? await context.supabase
-          .from("chapters")
-          .select("id, name, subject_id")
-          .in("id", chapterIds)
+      ? await context.supabase.from("chapters").select("id, name, subject_id").in("id", chapterIds)
       : { data: [] as Array<{ id: string; name: string; subject_id: string }> };
     const subjectIds = Array.from(new Set((chapters ?? []).map((c) => c.subject_id)));
     const { data: subjects } = subjectIds.length
@@ -669,7 +732,9 @@ export const getAnalytics = createServerFn({ method: "GET" })
       : { data: [] as Array<{ id: string; name: string }> };
     const subjectNameById = new Map((subjects ?? []).map((s) => [s.id, s.name] as const));
     const chapterMeta = new Map(
-      (chapters ?? []).map((c) => [c.id, { name: c.name, subject: subjectNameById.get(c.subject_id) ?? "—" }] as const),
+      (chapters ?? []).map(
+        (c) => [c.id, { name: c.name, subject: subjectNameById.get(c.subject_id) ?? "—" }] as const,
+      ),
     );
 
     const byChapter = Array.from(chapterAgg.entries()).map(([id, v]) => {
@@ -713,7 +778,8 @@ export const getAnalytics = createServerFn({ method: "GET" })
         attempted,
       }));
 
-    const overallAccuracy = totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 1000) / 10 : 0;
+    const overallAccuracy =
+      totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 1000) / 10 : 0;
 
     return { totalAttempted, overallAccuracy, bySubject, byChapter, studyTimeByDay, weakChapters };
   });
@@ -740,35 +806,18 @@ export const reportIssue = createServerFn({ method: "POST" })
     });
     if (error) throw error;
 
-    const lovableKey = process.env.LOVABLE_API_KEY;
-    const telegramKey = (process.env.TELEGRAM_API_KEY_1 ?? process.env.TELEGRAM_API_KEY);
-    const chatId = process.env.REPORT_TELEGRAM_CHAT_ID;
-    if (lovableKey && telegramKey && chatId) {
-      const text = [
-        "🚩 <b>Question reported</b>",
-        `User: <code>${context.userId}</code>`,
-        `Session: <code>${data.session_id ?? "—"}</code>`,
-        `Question: <code>${data.question_id}</code>`,
-        `Reason: ${escapeHtml(data.reason)}`,
-        data.message ? `Note: ${escapeHtml(data.message)}` : "",
-        data.question_text ? `\n${escapeHtml(data.question_text).slice(0, 500)}` : "",
-      ]
-        .filter(Boolean)
-        .join("\n");
-      try {
-        await fetch("https://connector-gateway.lovable.dev/telegram/sendMessage", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${lovableKey}`,
-            "X-Connection-Api-Key": telegramKey,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
-        });
-      } catch (e) {
-        console.error("[telegram] report send failed", e);
-      }
-    }
+    const text = [
+      "🚩 <b>Question reported</b>",
+      `User: <code>${context.userId}</code>`,
+      `Session: <code>${data.session_id ?? "—"}</code>`,
+      `Question: <code>${data.question_id}</code>`,
+      `Reason: ${escapeHtml(data.reason)}`,
+      data.message ? `Note: ${escapeHtml(data.message)}` : "",
+      data.question_text ? `\n${escapeHtml(data.question_text).slice(0, 500)}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    await sendTelegramAlert(text);
     return { ok: true };
   });
 

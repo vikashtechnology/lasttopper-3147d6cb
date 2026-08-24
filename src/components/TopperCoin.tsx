@@ -1,12 +1,6 @@
 import coin from "@/assets/topper-coin.jpg.asset.json";
 
-export function TopperCoin({
-  size = 16,
-  className = "",
-}: {
-  size?: number;
-  className?: string;
-}) {
+export function TopperCoin({ size = 16, className = "" }: { size?: number; className?: string }) {
   return (
     <img
       src={coin.url}

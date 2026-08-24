@@ -32,7 +32,6 @@ import {
   CalendarCheck,
   Repeat2,
   ScrollText,
-
 } from "lucide-react";
 
 const profileQuery = {
@@ -78,9 +77,18 @@ function HomePage() {
     refetchOnWindowFocus: false,
   });
 
-  const unread = useQuery({ queryKey: ["notif-unread"], queryFn: () => unreadNotificationsCount(), refetchInterval: 30000 });
+  const unread = useQuery({
+    queryKey: ["notif-unread"],
+    queryFn: () => unreadNotificationsCount(),
+    refetchInterval: 30000,
+  });
   const admin = useQuery({ queryKey: ["am-i-admin"], queryFn: () => amIAdmin() });
-  const todayUsage = useQuery({ queryKey: ["today-usage"], queryFn: () => getTodayUsage(), refetchInterval: 30000, refetchOnWindowFocus: true });
+  const todayUsage = useQuery({
+    queryKey: ["today-usage"],
+    queryFn: () => getTodayUsage(),
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+  });
 
   const p: UserProfile | null = (profile ?? (data as UserProfile | null)) as UserProfile | null;
   const usedToday = todayUsage.data?.used ?? 0;
@@ -132,11 +140,20 @@ function HomePage() {
             <RankBadge xp={p?.reputation ?? 0} isPro={!!p?.is_pro} className="hidden sm:block" />
           </div>
           {admin.data?.admin && (
-            <Link to="/admin" className="hidden rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground sm:inline-flex" aria-label="Admin">
+            <Link
+              to="/admin"
+              className="hidden rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground sm:inline-flex"
+              aria-label="Admin"
+            >
               <ShieldCheck className="h-4 w-4" />
             </Link>
           )}
-          <Link to="/notifications" data-tour="notifications" className="relative rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Notifications">
+          <Link
+            to="/notifications"
+            data-tour="notifications"
+            className="relative rounded-full p-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+            aria-label="Notifications"
+          >
             <Bell className="h-4 w-4" />
             {unread.data && unread.data.count > 0 ? (
               <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
@@ -156,14 +173,15 @@ function HomePage() {
           )}
         </>
       }
-
     >
       {/* Top row: quota + stats */}
       <section className="grid gap-4 md:grid-cols-3">
         <div className="mantis-card p-5 md:col-span-2" data-tour="quota">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-xs uppercase tracking-wide text-muted-foreground">Today's questions</div>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                Today's questions
+              </div>
               <div className="mt-1 text-3xl font-bold">
                 {usedToday}
                 <span className="text-base font-medium text-muted-foreground">
@@ -177,7 +195,10 @@ function HomePage() {
                 <Sparkles className="h-3 w-3" /> Pro
               </div>
             ) : (
-              <Link to="/pricing" className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/20">
+              <Link
+                to="/pricing"
+                className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/20"
+              >
                 Upgrade to Pro
               </Link>
             )}
@@ -188,30 +209,84 @@ function HomePage() {
             {!p?.is_pro && " Free plan: up to 20 questions per set."}
           </p>
         </div>
-        <StatCard icon={<Flame className="h-4 w-4" />} label="Streak" value={`${p?.streak ?? 0} days`} />
-        <StatCard icon={<Target className="h-4 w-4" />} label="Accuracy" value={`${Math.round(Number(p?.total_accuracy ?? 0))}%`} />
-        <StatCard icon={<Trophy className="h-4 w-4" />} label="Profession" value={(p?.profession ?? "—").toUpperCase()} />
+        <StatCard
+          icon={<Flame className="h-4 w-4" />}
+          label="Streak"
+          value={`${p?.streak ?? 0} days`}
+        />
+        <StatCard
+          icon={<Target className="h-4 w-4" />}
+          label="Accuracy"
+          value={`${Math.round(Number(p?.total_accuracy ?? 0))}%`}
+        />
+        <StatCard
+          icon={<Trophy className="h-4 w-4" />}
+          label="Profession"
+          value={(p?.profession ?? "—").toUpperCase()}
+        />
       </section>
 
       {/* Practice */}
       <SectionHeading title="Practice" hint="Pick a mode to start" />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-tour="practice">
-        <NavTile icon={<CalendarCheck className="h-5 w-5" />} title="Daily challenge" body="10 questions · earn TC" onClick={() => navigate({ to: "/daily" })} />
-        <NavTile icon={<Repeat2 className="h-5 w-5" />} title="Review queue" body="Spaced repetition" onClick={() => navigate({ to: "/review" })} />
-        <NavTile icon={<ScrollText className="h-5 w-5" />} title="Past year papers" body="NEET & JEE PYQs" onClick={() => navigate({ to: "/pyq" })} />
-        <NavTile icon={<BookOpen className="h-5 w-5" />} title="Learning" body="Practice by chapter" onClick={() => navigate({ to: "/learning" })} />
-        <NavTile icon={<BookMarked className="h-5 w-5" />} title="Revise" body="NCERT topic notes" onClick={() => navigate({ to: "/revise" })} />
-        <NavTile icon={<AlertOctagon className="h-5 w-5" />} title="Mistake bank" body="Fix your errors" onClick={() => navigate({ to: "/mistakes" })} />
-        <NavTile icon={<BarChart3 className="h-5 w-5" />} title="Mastery" body="Charts & insights" onClick={() => navigate({ to: "/analytics" })} />
-        <NavTile icon={<History className="h-5 w-5" />} title="History" body="Past attempts" onClick={() => navigate({ to: "/history" })} />
+        <NavTile
+          icon={<CalendarCheck className="h-5 w-5" />}
+          title="Daily challenge"
+          body="10 questions · earn TC"
+          onClick={() => navigate({ to: "/daily" })}
+        />
+        <NavTile
+          icon={<Repeat2 className="h-5 w-5" />}
+          title="Review queue"
+          body="Spaced repetition"
+          onClick={() => navigate({ to: "/review" })}
+        />
+        <NavTile
+          icon={<ScrollText className="h-5 w-5" />}
+          title="Past year papers"
+          body="NEET & JEE PYQs"
+          onClick={() => navigate({ to: "/pyq" })}
+        />
+        <NavTile
+          icon={<BookOpen className="h-5 w-5" />}
+          title="Learning"
+          body="Practice by chapter"
+          onClick={() => navigate({ to: "/learning" })}
+        />
+        <NavTile
+          icon={<BookMarked className="h-5 w-5" />}
+          title="Revise"
+          body="NCERT topic notes"
+          onClick={() => navigate({ to: "/revise" })}
+        />
+        <NavTile
+          icon={<AlertOctagon className="h-5 w-5" />}
+          title="Mistake bank"
+          body="Fix your errors"
+          onClick={() => navigate({ to: "/mistakes" })}
+        />
+        <NavTile
+          icon={<BarChart3 className="h-5 w-5" />}
+          title="Mastery"
+          body="Charts & insights"
+          onClick={() => navigate({ to: "/analytics" })}
+        />
+        <NavTile
+          icon={<History className="h-5 w-5" />}
+          title="History"
+          body="Past attempts"
+          onClick={() => navigate({ to: "/history" })}
+        />
       </div>
 
-
-      <StreakDetailsDialog open={streakOpen} onOpenChange={setStreakOpen} fallbackStreak={p?.streak ?? 0} />
+      <StreakDetailsDialog
+        open={streakOpen}
+        onOpenChange={setStreakOpen}
+        fallbackStreak={p?.streak ?? 0}
+      />
       <OnboardingFlow open={needsOnboarding} />
       <AppTour enabled={!!p && !needsOnboarding} />
       <AiChatBubble />
-
     </AppShell>
   );
 }
@@ -225,15 +300,7 @@ function SectionHeading({ title, hint }: { title: string; hint?: string }) {
   );
 }
 
-function StatCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
+function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="mantis-card p-4">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">

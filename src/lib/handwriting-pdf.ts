@@ -63,4 +63,3 @@ export async function downloadHandwrittenPdf(urls: string[], fileName = "topper-
 
   doc.save(fileName);
 }
-

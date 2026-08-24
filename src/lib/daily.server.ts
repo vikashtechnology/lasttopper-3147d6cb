@@ -19,8 +19,12 @@ export function rewardFor(correct: number): number {
   return 2;
 }
 
-async function aiDailyQuestions(profession: string, chapterNames: string[]): Promise<QuizQuestion[]> {
-  const label = profession === "pcm" ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
+async function aiDailyQuestions(
+  profession: string,
+  chapterNames: string[],
+): Promise<QuizQuestion[]> {
+  const label =
+    profession === "pcm" ? "JEE (Physics, Chemistry, Math)" : "NEET (Physics, Chemistry, Biology)";
   const prompt = `Generate exactly ${DAILY_COUNT} NCERT-only multiple-choice questions for ${label}, mixed across these chapters: ${chapterNames.join(", ")}.
 
 Rules:
@@ -34,13 +38,18 @@ Rules:
   const data = await aiChat({
     model: "google/gemini-2.5-flash",
     messages: [
-      { role: "system", content: "You are an NCERT-only exam question generator. Output STRICT JSON only." },
+      {
+        role: "system",
+        content: "You are an NCERT-only exam question generator. Output STRICT JSON only.",
+      },
       { role: "user", content: prompt },
     ],
     response_format: { type: "json_object" },
   });
   const content: string = data?.choices?.[0]?.message?.content ?? "{}";
-  const parsed = JSON.parse(content) as { questions?: Array<Omit<QuizQuestion, "id" | "chapter_id">> };
+  const parsed = JSON.parse(content) as {
+    questions?: Array<Omit<QuizQuestion, "id" | "chapter_id">>;
+  };
   return (parsed.questions ?? []).slice(0, DAILY_COUNT).map((q, i) => ({
     id: `daily_${Date.now()}_${i}`,
     chapter_id: "",
@@ -65,21 +74,30 @@ export async function ensureDailyChallenge(
     .eq("challenge_date", date)
     .eq("profession", profession)
     .maybeSingle();
-  if (existing) return { id: existing.id as string, questions: (existing.questions as QuizQuestion[]) ?? [] };
+  if (existing)
+    return { id: existing.id as string, questions: (existing.questions as QuizQuestion[]) ?? [] };
 
   const { data: subjects } = await reader
-    .from("subjects").select("id").eq("profession", profession);
+    .from("subjects")
+    .select("id")
+    .eq("profession", profession);
   const { data: chapters } = await reader
     .from("chapters")
     .select("id, name")
-    .in("subject_id", (subjects ?? []).map((s) => s.id))
+    .in(
+      "subject_id",
+      (subjects ?? []).map((s) => s.id),
+    )
     .limit(400);
   const pool = chapters ?? [];
   const picked = [...pool].sort(() => Math.random() - 0.5).slice(0, 5);
 
   let questions: QuizQuestion[] = [];
   try {
-    questions = await aiDailyQuestions(profession, picked.map((c) => c.name));
+    questions = await aiDailyQuestions(
+      profession,
+      picked.map((c) => c.name),
+    );
   } catch {
     questions = [];
   }
@@ -88,9 +106,13 @@ export async function ensureDailyChallenge(
     const bank = await sampleFromBank(admin, profession, DAILY_COUNT);
     if (bank.length >= 5) questions = bank;
   }
-  if (questions.length === 0) throw new Error("Daily challenge unavailable right now — try again shortly.");
+  if (questions.length === 0)
+    throw new Error("Daily challenge unavailable right now — try again shortly.");
 
-  questions = questions.map((q, i) => ({ ...q, chapter_id: q.chapter_id || (picked[i % Math.max(1, picked.length)]?.id ?? "") }));
+  questions = questions.map((q, i) => ({
+    ...q,
+    chapter_id: q.chapter_id || (picked[i % Math.max(1, picked.length)]?.id ?? ""),
+  }));
 
   const { data: row, error } = await admin
     .from("daily_challenges")
@@ -100,9 +122,13 @@ export async function ensureDailyChallenge(
   if (error) {
     // Someone else created it concurrently — read it back.
     const { data: again } = await reader
-      .from("daily_challenges").select("id, questions")
-      .eq("challenge_date", date).eq("profession", profession).maybeSingle();
-    if (again) return { id: again.id as string, questions: (again.questions as QuizQuestion[]) ?? [] };
+      .from("daily_challenges")
+      .select("id, questions")
+      .eq("challenge_date", date)
+      .eq("profession", profession)
+      .maybeSingle();
+    if (again)
+      return { id: again.id as string, questions: (again.questions as QuizQuestion[]) ?? [] };
     throw error;
   }
   return { id: row.id as string, questions: (row.questions as QuizQuestion[]) ?? [] };

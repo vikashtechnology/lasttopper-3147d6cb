@@ -21,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      APP_HOST: ${{ vars.APP_HOST || 'last-topper-web-test.vercel.app' }}
+      CAPACITOR_SERVER_URL: ${{ vars.CAPACITOR_SERVER_URL || 'https://last-topper-web-test.vercel.app' }}
       # ─── APP VERSION ─── bump these two before each release build.
       # APP_VERSION_NAME: what users see (must match the "Version name" you
       # publish in Admin → App update).
@@ -31,9 +33,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: latest
+          node-version: "22.12.0"
+          cache: npm
 
       - uses: actions/setup-java@v4
         with:
@@ -43,12 +46,12 @@ jobs:
       - uses: android-actions/setup-android@v3
 
       - name: Install dependencies
-        run: bun install
+        run: npm ci
 
       - name: Build web bundle
         run: |
-          bun run build || true
-          # The native shell loads the live site (capacitor.config.ts -> server.url),
+          npm run build
+          # The native shell loads the configured site (capacitor.config.ts -> server.url),
           # so webDir only needs to exist with a fallback document.
           mkdir -p dist
           if [ ! -f dist/index.html ]; then
@@ -57,9 +60,7 @@ jobs:
 
       - name: Add Capacitor Android platform
         run: |
-          bun add -d @capacitor/cli
-          bun add @capacitor/android
-          npx cap add android || true
+          npx --yes @capacitor/cli@8.5.0 add android
           # The app targets Android 8.0+ (API 26); Capacitor scaffolds 23/24.
           python3 - <<'PY'
           import re, pathlib
@@ -69,7 +70,7 @@ jobs:
               s = re.sub(r"minSdkVersion\s*=\s*\d+", "minSdkVersion = 26", s)
               p.write_text(s)
           PY
-          npx cap sync android
+          npx --yes @capacitor/cli@8.5.0 sync android
 
       - name: Set app version
         run: |
@@ -84,15 +85,15 @@ jobs:
           p.write_text(s)
           print("versionCode", code, "versionName", name)
           PY
-          npx cap sync android
+          npx --yes @capacitor/cli@8.5.0 sync android
 
       - name: Generate app icons + splash from brand logo
         run: |
           # assets/icon.png, icon-foreground/background.png and splash*.png are
           # committed in the repo; this writes every Android density so the app
           # never falls back to the default Capacitor icon.
-          npx @capacitor/assets generate --android --iconBackgroundColor '#0B1020' --iconBackgroundColorDark '#0B1020' --splashBackgroundColor '#0B1020' --splashBackgroundColorDark '#0B1020'
-          npx cap sync android
+          npx --yes @capacitor/assets@3.0.5 generate --android --iconBackgroundColor '#0B1020' --iconBackgroundColorDark '#0B1020' --splashBackgroundColor '#0B1020' --splashBackgroundColorDark '#0B1020'
+          npx --yes @capacitor/cli@8.5.0 sync android
 
       - name: Enable FLAG_SECURE + deep links
         run: |
@@ -119,17 +120,17 @@ jobs:
 
           MANIFEST=android/app/src/main/AndroidManifest.xml
           python3 - "$MANIFEST" <<'PY'
-          import sys, re
+          import sys, re, os
           p = sys.argv[1]
           s = open(p).read()
-          if 'lasttopper.lovable.app' not in s:
-              filt = '''
+          app_host = os.environ["APP_HOST"]
+          if f'android:host="{app_host}"' not in s:
+              filt = f'''
                       <intent-filter android:autoVerify="true">
                           <action android:name="android.intent.action.VIEW" />
                           <category android:name="android.intent.category.DEFAULT" />
                           <category android:name="android.intent.category.BROWSABLE" />
-                          <data android:scheme="https" android:host="lasttopper.lovable.app" />
-                          <data android:scheme="https" android:host="lasttopper.github.io" />
+                          <data android:scheme="https" android:host="{app_host}" />
                       </intent-filter>
                       <intent-filter>
                           <action android:name="android.intent.action.VIEW" />

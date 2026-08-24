@@ -16,7 +16,10 @@ export const Route = createFileRoute("/_authenticated/battle/1v1")({
   head: () => ({
     meta: [
       { title: "1v1 Battle — Last Topper" },
-      { name: "description", content: "Head-to-head 10-question live duel. 1 minute per question." },
+      {
+        name: "description",
+        content: "Head-to-head 10-question live duel. 1 minute per question.",
+      },
       { property: "og:title", content: "1v1 Live Battle" },
       { property: "og:description", content: "10q · 60s each · beat your rival." },
       { property: "og:type", content: "website" },
@@ -27,11 +30,31 @@ export const Route = createFileRoute("/_authenticated/battle/1v1")({
 });
 
 const BOT_NAMES = [
-  "Aarav Sharma", "Vivaan Mehta", "Aditya Verma", "Ishaan Rao", "Rohan Iyer",
-  "Kabir Nair", "Arjun Patel", "Rehan Khan", "Dhruv Kapoor", "Aryan Joshi",
-  "Ananya Reddy", "Diya Kulkarni", "Saanvi Menon", "Meera Bansal", "Riya Chauhan",
-  "Kavya Pillai", "Ishita Ghosh", "Neha Dubey", "Pooja Yadav", "Sneha Malhotra",
-  "Karan Trivedi", "Yash Agarwal", "Nikhil Bhat", "Siddharth Mishra", "Manav Saxena",
+  "Aarav Sharma",
+  "Vivaan Mehta",
+  "Aditya Verma",
+  "Ishaan Rao",
+  "Rohan Iyer",
+  "Kabir Nair",
+  "Arjun Patel",
+  "Rehan Khan",
+  "Dhruv Kapoor",
+  "Aryan Joshi",
+  "Ananya Reddy",
+  "Diya Kulkarni",
+  "Saanvi Menon",
+  "Meera Bansal",
+  "Riya Chauhan",
+  "Kavya Pillai",
+  "Ishita Ghosh",
+  "Neha Dubey",
+  "Pooja Yadav",
+  "Sneha Malhotra",
+  "Karan Trivedi",
+  "Yash Agarwal",
+  "Nikhil Bhat",
+  "Siddharth Mishra",
+  "Manav Saxena",
 ];
 
 type Phase = "idle" | "matching" | "notfound" | "countdown" | "playing" | "done";
@@ -78,7 +101,9 @@ function OneVOne() {
     onSuccess: (res) => {
       setQuestions(res.questions);
       setSessionId(res.id);
-      setAnswers({}); setIdx(0); setSelected(null);
+      setAnswers({});
+      setIdx(0);
+      setSelected(null);
       const name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
       const correctCount = 5 + Math.floor(Math.random() * 4);
       const correctFlags = Array.from({ length: TOTAL }, (_, i) => i < correctCount);
@@ -91,9 +116,13 @@ function OneVOne() {
         delay: 15 + Math.floor(Math.random() * 40), // 15..55s
       }));
       setBot({ name, rank: 80 + Math.floor(Math.random() * 400), plan });
-      setBotIdx(0); setBotCorrect(0);
-      if (joinRef.current) { joinRef.current = false; setCountdown(3); setPhase("countdown"); }
-      else setPhase("matching");
+      setBotIdx(0);
+      setBotCorrect(0);
+      if (joinRef.current) {
+        joinRef.current = false;
+        setCountdown(3);
+        setPhase("countdown");
+      } else setPhase("matching");
     },
 
     onError: (e: Error) => toast.error(failMessage(e, "Failed to start")),
@@ -102,7 +131,9 @@ function OneVOne() {
   const submit = useMutation({
     mutationFn: (finalAnswers: Record<string, "A" | "B" | "C" | "D">) => {
       const elapsed = Math.max(1, Math.floor((Date.now() - startRef.current) / 1000));
-      return submitBattle({ data: { id: sessionId!, answers: finalAnswers, time_taken_seconds: elapsed } });
+      return submitBattle({
+        data: { id: sessionId!, answers: finalAnswers, time_taken_seconds: elapsed },
+      });
     },
     onSuccess: () => {
       setPhase("done");
@@ -116,7 +147,10 @@ function OneVOne() {
     if (phase !== "matching") return;
     const d = setInterval(() => setMatchDots((n) => (n + 1) % 4), 400);
     const t = setTimeout(() => setPhase("notfound"), 4200);
-    return () => { clearInterval(d); clearTimeout(t); };
+    return () => {
+      clearInterval(d);
+      clearTimeout(t);
+    };
   }, [phase]);
 
   const roomCode = useMemo(
@@ -130,13 +164,21 @@ function OneVOne() {
     const text = `Join my 1v1 Last Topper battle! Room code: ${roomCode}\n${url}`;
     try {
       if (navigator.share) await navigator.share({ title: "1v1 Battle", text, url });
-      else { await navigator.clipboard.writeText(text); toast.success("Invite link copied"); }
-    } catch { /* dismissed */ }
+      else {
+        await navigator.clipboard.writeText(text);
+        toast.success("Invite link copied");
+      }
+    } catch {
+      /* dismissed */
+    }
   }
 
   function joinRoom(code?: string) {
     const c = (code ?? joinCode).trim().toUpperCase();
-    if (c.length < 4) { toast.error("Enter a valid room code"); return; }
+    if (c.length < 4) {
+      toast.error("Enter a valid room code");
+      return;
+    }
     joinRef.current = true;
     toast.success(`Joining room ${c}…`);
     start.mutate();
@@ -150,14 +192,12 @@ function OneVOne() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
-
-
   useEffect(() => {
     if (phase !== "countdown") return;
     if (countdown <= 0) {
       startRef.current = Date.now();
-      setPhase("playing"); setTick(PER_Q_SECONDS);
+      setPhase("playing");
+      setTick(PER_Q_SECONDS);
       return;
     }
     const t = setTimeout(() => setCountdown((c) => c - 1), 800);
@@ -170,7 +210,11 @@ function OneVOne() {
     setSelected(null);
     const t = setInterval(() => {
       setTick((v) => {
-        if (v <= 1) { clearInterval(t); advance(null); return 0; }
+        if (v <= 1) {
+          clearInterval(t);
+          advance(null);
+          return 0;
+        }
         return v - 1;
       });
     }, 1000);
@@ -182,10 +226,13 @@ function OneVOne() {
     if (phase !== "playing" || !bot) return;
     if (botIdx >= TOTAL) return;
     const step = bot.plan[botIdx];
-    const t = setTimeout(() => {
-      if (step.correct) setBotCorrect((n) => n + 1);
-      setBotIdx((n) => n + 1);
-    }, Math.min(step.delay, PER_Q_SECONDS) * 1000);
+    const t = setTimeout(
+      () => {
+        if (step.correct) setBotCorrect((n) => n + 1);
+        setBotIdx((n) => n + 1);
+      },
+      Math.min(step.delay, PER_Q_SECONDS) * 1000,
+    );
     return () => clearTimeout(t);
   }, [phase, bot, botIdx]);
 
@@ -212,9 +259,13 @@ function OneVOne() {
     if (idx < questions.length - 2) return;
     fetchingRef.current = true;
     extendQuickBattle({ data: { id: sessionId } })
-      .then((r) => { if (r.questions?.length) setQuestions(r.questions); })
+      .then((r) => {
+        if (r.questions?.length) setQuestions(r.questions);
+      })
       .catch((e: Error) => toast.error(failMessage(e, "Failed to load more")))
-      .finally(() => { fetchingRef.current = false; });
+      .finally(() => {
+        fetchingRef.current = false;
+      });
   }, [idx, questions.length, phase, sessionId]);
 
   const cur = questions[idx];
@@ -229,14 +280,24 @@ function OneVOne() {
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
     if (phase !== "playing") return;
-    const t = setInterval(() => setElapsed(Math.floor((Date.now() - startRef.current) / 1000)), 1000);
+    const t = setInterval(
+      () => setElapsed(Math.floor((Date.now() - startRef.current) / 1000)),
+      1000,
+    );
     return () => clearInterval(t);
   }, [phase]);
   const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
   const ss = String(elapsed % 60).padStart(2, "0");
 
   if (start.isPending) {
-    return <ArenaShell><CenterPanel><Loader2 className="mx-auto h-8 w-8 animate-spin text-cyan-400" /><div className="mt-4 text-2xl font-bold text-white">Preparing arena…</div></CenterPanel></ArenaShell>;
+    return (
+      <ArenaShell>
+        <CenterPanel>
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-cyan-400" />
+          <div className="mt-4 text-2xl font-bold text-white">Preparing arena…</div>
+        </CenterPanel>
+      </ArenaShell>
+    );
   }
 
   if (phase === "idle") {
@@ -249,10 +310,13 @@ function OneVOne() {
               <h1 className="text-xl font-black tracking-wide">1v1 LIVE BATTLES</h1>
             </div>
             <p className="mt-3 text-sm text-white/70">
-              Challenge any student or get matched randomly. Answer questions faster and more accurately to win XP and climb ranks.
+              Challenge any student or get matched randomly. Answer questions faster and more
+              accurately to win XP and climb ranks.
             </p>
             <ul className="mt-4 space-y-1.5 text-sm text-white/60">
-              <li>• 10 NCERT questions · <span className="text-cyan-300">60 seconds each</span></li>
+              <li>
+                • 10 NCERT questions · <span className="text-cyan-300">60 seconds each</span>
+              </li>
               <li>• Live head-to-head — most correct wins</li>
               <li>• Bot rival steps in if no human is around</li>
             </ul>
@@ -263,7 +327,9 @@ function OneVOne() {
               <Users className="mr-2 inline h-4 w-4" /> Find Rival
             </button>
             <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-3">
-              <div className="text-[11px] uppercase tracking-widest text-white/50">Have a room code?</div>
+              <div className="text-[11px] uppercase tracking-widest text-white/50">
+                Have a room code?
+              </div>
               <div className="mt-2 flex items-center gap-2">
                 <input
                   value={joinCode}
@@ -275,7 +341,9 @@ function OneVOne() {
                 <button
                   onClick={() => joinRoom()}
                   className="rounded-lg bg-cyan-500/20 px-4 py-2 text-sm font-bold text-cyan-300 hover:bg-cyan-500/30"
-                >Join</button>
+                >
+                  Join
+                </button>
               </div>
             </div>
           </div>
@@ -293,7 +361,8 @@ function OneVOne() {
           </div>
           <div className="mt-4 text-2xl font-bold text-white">Player not found</div>
           <p className="mt-2 max-w-xs text-sm text-white/60">
-            No live rival is available right now. Invite a friend to a custom room, or duel a bot rival.
+            No live rival is available right now. Invite a friend to a custom room, or duel a bot
+            rival.
           </p>
           <div className="mt-4 rounded-xl border border-white/10 bg-black/40 px-4 py-2 text-sm text-white/80">
             Room code: <span className="font-black tracking-widest text-cyan-300">{roomCode}</span>
@@ -302,15 +371,24 @@ function OneVOne() {
             <button
               className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-[0_0_20px_rgba(34,211,238,0.35)]"
               onClick={invite}
-            >Invite a friend</button>
+            >
+              Invite a friend
+            </button>
             <button
               className="rounded-xl bg-gradient-to-r from-rose-500 to-fuchsia-600 px-5 py-2.5 text-sm font-bold text-white shadow-[0_0_20px_rgba(244,63,94,0.35)]"
-              onClick={() => { setPhase("countdown"); setCountdown(3); }}
-            >Play vs bot rival</button>
+              onClick={() => {
+                setPhase("countdown");
+                setCountdown(3);
+              }}
+            >
+              Play vs bot rival
+            </button>
             <button
               className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/80 hover:bg-white/5"
               onClick={() => setPhase("matching")}
-            >Search again</button>
+            >
+              Search again
+            </button>
             <div className="mt-1 flex items-center gap-2">
               <input
                 value={joinCode}
@@ -322,7 +400,9 @@ function OneVOne() {
               <button
                 onClick={() => joinRoom()}
                 className="rounded-lg bg-cyan-500/20 px-4 py-2 text-sm font-bold text-cyan-300 hover:bg-cyan-500/30"
-              >Join</button>
+              >
+                Join
+              </button>
             </div>
           </div>
         </CenterPanel>
@@ -337,7 +417,9 @@ function OneVOne() {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-400/10">
             <Users className="h-8 w-8 animate-pulse text-cyan-400" />
           </div>
-          <div className="mt-4 text-2xl font-bold text-white">Finding rival{".".repeat(matchDots)}</div>
+          <div className="mt-4 text-2xl font-bold text-white">
+            Finding rival{".".repeat(matchDots)}
+          </div>
           <p className="mt-2 text-sm text-white/50">Scanning live players across India</p>
         </CenterPanel>
       </ArenaShell>
@@ -348,7 +430,12 @@ function OneVOne() {
     return (
       <ArenaShell>
         <div className="flex min-h-[60vh] flex-col items-center justify-center">
-          <VsRow myName={myName} myRank={myRank} botName={bot?.name ?? "Rival"} botRank={bot?.rank ?? 0} />
+          <VsRow
+            myName={myName}
+            myRank={myRank}
+            botName={bot?.name ?? "Rival"}
+            botRank={bot?.rank ?? 0}
+          />
           <div className="mt-8 animate-pulse text-7xl font-black text-rose-500 drop-shadow-[0_0_20px_rgba(244,63,94,0.6)]">
             {countdown > 0 ? countdown : "FIGHT!"}
           </div>
@@ -358,11 +445,19 @@ function OneVOne() {
   }
 
   if (phase === "playing" && !cur) {
-    return <ArenaShell><CenterPanel><Loader2 className="mx-auto h-6 w-6 animate-spin text-cyan-400" /><div className="mt-3 text-sm text-white/60">Loading next questions…</div></CenterPanel></ArenaShell>;
+    return (
+      <ArenaShell>
+        <CenterPanel>
+          <Loader2 className="mx-auto h-6 w-6 animate-spin text-cyan-400" />
+          <div className="mt-3 text-sm text-white/60">Loading next questions…</div>
+        </CenterPanel>
+      </ArenaShell>
+    );
   }
 
   if (phase === "playing" && cur) {
-    const subjectLabel = ((profile?.profession ?? "").toString().toUpperCase() || "MCQ") + " • NCERT";
+    const subjectLabel =
+      ((profile?.profession ?? "").toString().toUpperCase() || "MCQ") + " • NCERT";
     return (
       <ArenaShell>
         <div className="mx-auto max-w-md space-y-4">
@@ -374,18 +469,30 @@ function OneVOne() {
                 <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-500" />
                 LIVE BATTLE
               </span>
-              <span className="tabular-nums text-white/70">{mm}:{ss}</span>
+              <span className="tabular-nums text-white/70">
+                {mm}:{ss}
+              </span>
             </div>
 
             {/* vs row */}
             <div className="mt-4">
-              <VsRow myName={myName} myRank={myRank} botName={bot?.name ?? "Rival"} botRank={bot?.rank ?? 0} compact />
+              <VsRow
+                myName={myName}
+                myRank={myRank}
+                botName={bot?.name ?? "Rival"}
+                botRank={bot?.rank ?? 0}
+                compact
+              />
             </div>
 
             {/* Question box */}
             <div className="mt-5 rounded-2xl border border-white/10 bg-black/40 p-4">
-              <div className="text-[10px] font-bold tracking-widest text-white/40">{subjectLabel}</div>
-              <div className="mt-2 text-[15px] leading-relaxed text-white"><Latex>{cur.question}</Latex></div>
+              <div className="text-[10px] font-bold tracking-widest text-white/40">
+                {subjectLabel}
+              </div>
+              <div className="mt-2 text-[15px] leading-relaxed text-white">
+                <Latex>{cur.question}</Latex>
+              </div>
             </div>
 
             {/* Options */}
@@ -403,8 +510,15 @@ function OneVOne() {
                         : "border-white/10 bg-white/[0.03] text-white/85 hover:border-white/25"
                     }`}
                   >
-                    <span className="flex-1"><span className="mr-2 font-bold text-white/60">{l})</span><Latex>{cur.options[l]}</Latex></span>
-                    {active && <span className="ml-3 text-xs font-semibold text-emerald-400">✓ Selected</span>}
+                    <span className="flex-1">
+                      <span className="mr-2 font-bold text-white/60">{l})</span>
+                      <Latex>{cur.options[l]}</Latex>
+                    </span>
+                    {active && (
+                      <span className="ml-3 text-xs font-semibold text-emerald-400">
+                        ✓ Selected
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -412,10 +526,18 @@ function OneVOne() {
 
             {/* footer stats */}
             <div className="mt-5 flex items-center justify-between text-xs">
-              <span className="text-white/60">Score: <span className="font-bold text-amber-400">{myCorrect * 100} XP</span></span>
+              <span className="text-white/60">
+                Score: <span className="font-bold text-amber-400">{myCorrect * 100} XP</span>
+              </span>
               <span className="inline-flex items-center gap-1 text-white/60">
-                <Timer className={`h-3.5 w-3.5 ${tick <= 10 ? "text-rose-400" : "text-cyan-400"}`} />
-                <span className={`tabular-nums font-bold ${tick <= 10 ? "text-rose-400" : "text-white/80"}`}>{tick}s</span>
+                <Timer
+                  className={`h-3.5 w-3.5 ${tick <= 10 ? "text-rose-400" : "text-cyan-400"}`}
+                />
+                <span
+                  className={`tabular-nums font-bold ${tick <= 10 ? "text-rose-400" : "text-white/80"}`}
+                >
+                  {tick}s
+                </span>
               </span>
               <span className="inline-flex items-center gap-1 text-white/60">
                 Streak: <Flame className="h-3.5 w-3.5 text-orange-400" />
@@ -426,8 +548,12 @@ function OneVOne() {
 
           {/* progress */}
           <div className="flex items-center justify-between px-1 text-[11px] text-white/50">
-            <span>Q {idx + 1} / {TOTAL}</span>
-            <span>Rival: {botIdx}/{TOTAL}</span>
+            <span>
+              Q {idx + 1} / {TOTAL}
+            </span>
+            <span>
+              Rival: {botIdx}/{TOTAL}
+            </span>
           </div>
         </div>
       </ArenaShell>
@@ -441,22 +567,41 @@ function OneVOne() {
     <ArenaShell>
       <div className="mx-auto max-w-md space-y-5 text-center">
         <div className="battle-glass p-6">
-          <div className={`text-3xl font-black ${won ? "text-emerald-400" : tie ? "text-amber-300" : "text-rose-400"}`}>
+          <div
+            className={`text-3xl font-black ${won ? "text-emerald-400" : tie ? "text-amber-300" : "text-rose-400"}`}
+          >
             {won ? "Victory 🏆" : tie ? "Draw 🤝" : "Defeat 💥"}
           </div>
           <div className="mt-6 grid grid-cols-2 gap-3">
-            <ResultCard name={myName} correct={myCorrect} total={TOTAL} accent="cyan" winner={won} />
-            <ResultCard name={bot?.name ?? "Rival"} correct={botCorrect} total={TOTAL} accent="rose" winner={!won && !tie} />
+            <ResultCard
+              name={myName}
+              correct={myCorrect}
+              total={TOTAL}
+              accent="cyan"
+              winner={won}
+            />
+            <ResultCard
+              name={bot?.name ?? "Rival"}
+              correct={botCorrect}
+              total={TOTAL}
+              accent="rose"
+              winner={!won && !tie}
+            />
           </div>
 
           <div className="mt-5 grid grid-cols-3 gap-2">
-            <MiniStat label="Accuracy" value={`${attemptedCount ? Math.round((myCorrect / attemptedCount) * 100) : 0}%`} />
+            <MiniStat
+              label="Accuracy"
+              value={`${attemptedCount ? Math.round((myCorrect / attemptedCount) * 100) : 0}%`}
+            />
             <MiniStat label="Attempted" value={`${attemptedCount}/${TOTAL}`} />
             <MiniStat label="Time" value={`${mm}:${ss}`} />
           </div>
 
           <div className="mt-5 text-left">
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/50">Your progress</div>
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white/50">
+              Your progress
+            </div>
             <div className="flex flex-wrap gap-1.5">
               {questions.slice(0, TOTAL).map((q, i) => {
                 const a = answers[q.id];
@@ -465,9 +610,15 @@ function OneVOne() {
                   <span
                     key={q.id}
                     className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${
-                      !a ? "bg-white/10 text-white/60" : ok ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"
+                      !a
+                        ? "bg-white/10 text-white/60"
+                        : ok
+                          ? "bg-emerald-500/20 text-emerald-300"
+                          : "bg-rose-500/20 text-rose-300"
                     }`}
-                  >{i + 1}</span>
+                  >
+                    {i + 1}
+                  </span>
                 );
               })}
             </div>
@@ -477,11 +628,15 @@ function OneVOne() {
             <button
               className="rounded-xl bg-gradient-to-r from-rose-500 to-fuchsia-600 px-5 py-2 text-sm font-bold text-white shadow-[0_0_20px_rgba(244,63,94,0.4)]"
               onClick={() => start.mutate()}
-            >Rematch</button>
+            >
+              Rematch
+            </button>
             <button
               className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/80 hover:bg-white/5"
               onClick={() => navigate({ to: "/battle" })}
-            >Back to Arena</button>
+            >
+              Back to Arena
+            </button>
           </div>
         </div>
       </div>
@@ -499,40 +654,62 @@ function ArenaShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-
 function CenterPanel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="battle-glass p-8 text-center">
-        {children}
-      </div>
+      <div className="battle-glass p-8 text-center">{children}</div>
     </div>
   );
 }
 
 function VsRow({
-  myName, myRank, botName, botRank, compact,
-}: { myName: string; myRank: number; botName: string; botRank: number; compact?: boolean }) {
+  myName,
+  myRank,
+  botName,
+  botRank,
+  compact,
+}: {
+  myName: string;
+  myRank: number;
+  botName: string;
+  botRank: number;
+  compact?: boolean;
+}) {
   const size = compact ? "h-16 w-16 text-base" : "h-20 w-20 text-lg";
   return (
     <div className="flex items-center justify-center gap-6">
       <PlayerAvatar label="YOU" name={myName} rank={myRank} color="cyan" sizeClass={size} />
-      <div className="text-3xl font-black text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.6)]">VS</div>
+      <div className="text-3xl font-black text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.6)]">
+        VS
+      </div>
       <PlayerAvatar label="OPP" name={botName} rank={botRank} color="rose" sizeClass={size} />
     </div>
   );
 }
 
 function PlayerAvatar({
-  label, name, rank, color, sizeClass,
-}: { label: string; name: string; rank: number; color: "cyan" | "rose"; sizeClass: string }) {
-  const bg = color === "cyan"
-    ? "from-sky-400 to-blue-600 shadow-[0_0_30px_rgba(56,189,248,0.5)]"
-    : "from-rose-400 to-red-600 shadow-[0_0_30px_rgba(244,63,94,0.5)]";
+  label,
+  name,
+  rank,
+  color,
+  sizeClass,
+}: {
+  label: string;
+  name: string;
+  rank: number;
+  color: "cyan" | "rose";
+  sizeClass: string;
+}) {
+  const bg =
+    color === "cyan"
+      ? "from-sky-400 to-blue-600 shadow-[0_0_30px_rgba(56,189,248,0.5)]"
+      : "from-rose-400 to-red-600 shadow-[0_0_30px_rgba(244,63,94,0.5)]";
   const short = label === "YOU" ? "YOU" : initials(name);
   return (
     <div className="flex flex-col items-center">
-      <div className={`${sizeClass} rounded-full bg-gradient-to-br ${bg} flex items-center justify-center font-black text-white`}>
+      <div
+        className={`${sizeClass} rounded-full bg-gradient-to-br ${bg} flex items-center justify-center font-black text-white`}
+      >
         {short}
       </div>
       <div className="mt-2 max-w-[110px] truncate text-sm font-semibold text-white">{name}</div>
@@ -542,17 +719,31 @@ function PlayerAvatar({
 }
 
 function ResultCard({
-  name, correct, total, winner, accent,
-}: { name: string; correct: number; total: number; winner: boolean; accent: "cyan" | "rose" }) {
+  name,
+  correct,
+  total,
+  winner,
+  accent,
+}: {
+  name: string;
+  correct: number;
+  total: number;
+  winner: boolean;
+  accent: "cyan" | "rose";
+}) {
   const border = winner
-    ? accent === "cyan" ? "border-cyan-400/70 shadow-[0_0_25px_rgba(34,211,238,0.35)]" : "border-rose-400/70 shadow-[0_0_25px_rgba(244,63,94,0.35)]"
+    ? accent === "cyan"
+      ? "border-cyan-400/70 shadow-[0_0_25px_rgba(34,211,238,0.35)]"
+      : "border-rose-400/70 shadow-[0_0_25px_rgba(244,63,94,0.35)]"
     : "border-white/10";
   const num = winner ? (accent === "cyan" ? "text-cyan-300" : "text-rose-300") : "text-white";
   return (
     <div className={`rounded-2xl border p-4 ${border} bg-black/30`}>
       <div className="truncate text-sm font-semibold text-white">{name}</div>
       <div className={`mt-1 text-3xl font-black ${num}`}>{correct * 100}</div>
-      <div className="text-xs text-white/60">{correct}/{total} correct</div>
+      <div className="text-xs text-white/60">
+        {correct}/{total} correct
+      </div>
     </div>
   );
 }

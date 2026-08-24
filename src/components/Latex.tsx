@@ -12,10 +12,7 @@ export function Latex({ children, className }: { children: string; className?: s
 }
 
 function escapeHtml(s: string) {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function renderMixed(input: string): string {
@@ -71,9 +68,13 @@ export function Formula({ children }: { children: string }) {
   return (
     <div className="space-y-1">
       {label && (
-        <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</div>
+        <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </div>
       )}
-      <Latex className="block overflow-x-auto text-[15px] leading-relaxed text-foreground">{tex}</Latex>
+      <Latex className="block overflow-x-auto text-[15px] leading-relaxed text-foreground">
+        {tex}
+      </Latex>
     </div>
   );
 }

@@ -90,7 +90,12 @@ function AnalyticsPage() {
     <main className="min-h-screen bg-background">
       <header className="border-b bg-background">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
-          <Button variant="ghost" size="icon" onClick={() => nav({ to: "/home" })} aria-label="Back">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => nav({ to: "/home" })}
+            aria-label="Back"
+          >
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div>
@@ -102,19 +107,35 @@ function AnalyticsPage() {
 
       <section className="mx-auto max-w-3xl px-5 pt-6">
         <div className="grid grid-cols-3 gap-3">
-          <KpiCard icon={<ListChecks className="h-4 w-4" />} label="Attempted" value={String(a.totalAttempted)} />
-          <KpiCard icon={<Target className="h-4 w-4" />} label="Accuracy" value={`${a.overallAccuracy.toFixed(1)}%`} />
-          <KpiCard icon={<Flame className="h-4 w-4" />} label="Streak" value={`${profile?.streak ?? 0}d`} />
+          <KpiCard
+            icon={<ListChecks className="h-4 w-4" />}
+            label="Attempted"
+            value={String(a.totalAttempted)}
+          />
+          <KpiCard
+            icon={<Target className="h-4 w-4" />}
+            label="Accuracy"
+            value={`${a.overallAccuracy.toFixed(1)}%`}
+          />
+          <KpiCard
+            icon={<Flame className="h-4 w-4" />}
+            label="Streak"
+            value={`${profile?.streak ?? 0}d`}
+          />
         </div>
       </section>
 
       <section className="mx-auto max-w-3xl px-5 pt-6">
         <div className="mb-3 flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-muted-foreground">AI weak-chapter study plan</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground">
+            AI weak-chapter study plan
+          </h2>
           <ProChip />
         </div>
         {plan.isLoading ? (
-          <div className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground">Building your plan…</div>
+          <div className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground">
+            Building your plan…
+          </div>
         ) : plan.data?.is_pro ? (
           <div className="rounded-2xl border bg-card p-5">
             {plan.data.weak.length > 0 && (
@@ -160,7 +181,9 @@ function AnalyticsPage() {
       </section>
 
       <section className="mx-auto max-w-3xl px-5 pb-6">
-        <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Chapter accuracy heatmap</h2>
+        <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
+          Chapter accuracy heatmap
+        </h2>
         <div className="rounded-2xl border bg-card p-4">
           {a.byChapter.length === 0 ? (
             <Empty />
@@ -185,19 +208,30 @@ function AnalyticsPage() {
       </section>
 
       <section className="mx-auto max-w-3xl px-5 pb-6">
-        <h2 className="mb-3 text-sm font-semibold text-muted-foreground">Study time (last 14 days)</h2>
+        <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
+          Study time (last 14 days)
+        </h2>
         <div className="rounded-2xl border bg-card p-4">
           {a.studyTimeByDay.length === 0 ? (
             <Empty />
           ) : (
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={a.studyTimeByDay} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+                <LineChart
+                  data={a.studyTimeByDay}
+                  margin={{ top: 8, right: 8, bottom: 0, left: -20 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                   <XAxis dataKey="day" fontSize={10} tickFormatter={(d) => d.slice(5)} />
                   <YAxis fontSize={11} />
                   <Tooltip formatter={(v) => `${v} min`} />
-                  <Line type="monotone" dataKey="minutes" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                  <Line
+                    type="monotone"
+                    dataKey="minutes"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                    dot={false}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -222,10 +256,15 @@ function AnalyticsPage() {
           ) : (
             <ul className="space-y-2">
               {a.weakChapters.map((w) => (
-                <li key={w.chapter_id} className="flex items-center justify-between rounded-md border p-3 text-sm">
+                <li
+                  key={w.chapter_id}
+                  className="flex items-center justify-between rounded-md border p-3 text-sm"
+                >
                   <div>
                     <div className="font-medium">{w.chapter}</div>
-                    <div className="text-xs text-muted-foreground">{w.subject} · {w.attempted} attempted</div>
+                    <div className="text-xs text-muted-foreground">
+                      {w.subject} · {w.attempted} attempted
+                    </div>
                   </div>
                   <div className="text-sm font-semibold text-red-600">{w.accuracy.toFixed(0)}%</div>
                 </li>

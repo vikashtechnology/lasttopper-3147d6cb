@@ -1,7 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { safeFileName, sendTelegramDocument, buildReport, fmtIST, fmtDate } from "@/lib/telegram-alert";
+import {
+  safeFileName,
+  sendTelegramDocument,
+  buildReport,
+  fmtIST,
+  fmtDate,
+} from "@/lib/telegram-alert";
 
 export const getMyProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -23,7 +29,6 @@ const signupSchema = z.object({
   date_of_birth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   accept_terms: z.literal(true),
 });
-
 
 export const saveSignupDetails = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -183,7 +188,11 @@ export const pingActivity = createServerFn({ method: "POST" })
     let nextStreak = streak;
     if (!last) nextStreak = 1;
     else {
-      const diffDays = Math.floor((Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) - Date.UTC(last.getUTCFullYear(), last.getUTCMonth(), last.getUTCDate())) / 86400000);
+      const diffDays = Math.floor(
+        (Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) -
+          Date.UTC(last.getUTCFullYear(), last.getUTCMonth(), last.getUTCDate())) /
+          86400000,
+      );
       if (diffDays === 0) return { streak };
       if (diffDays === 1) nextStreak = streak + 1;
       else nextStreak = 1;
@@ -218,4 +227,3 @@ export const getStreakDetails = createServerFn({ method: "GET" })
       last_active_date: (data?.last_active_date as string | null) ?? null,
     };
   });
-

@@ -183,13 +183,18 @@
   padding: 0.6rem 1rem;
   font-weight: 600;
   box-shadow: 0 8px 20px -12px color-mix(in oklab, var(--color-primary) 80%, transparent);
-  transition: transform 120ms ease, opacity 120ms ease;
+  transition:
+    transform 120ms ease,
+    opacity 120ms ease;
 }
 .battle-theme .battle-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   opacity: 0.92;
 }
-.battle-theme .battle-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.battle-theme .battle-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .battle-theme .battle-tab {
   color: var(--battle-tab-fg);
   padding: 0.45rem 0.85rem;
@@ -199,7 +204,9 @@
   transition: all 180ms;
   white-space: nowrap;
 }
-.battle-theme .battle-tab:hover { color: var(--color-foreground); }
+.battle-theme .battle-tab:hover {
+  color: var(--color-foreground);
+}
 .battle-theme .battle-tab[data-status="active"] {
   color: var(--battle-tab-active-fg);
   background: var(--battle-tab-active-bg);
@@ -209,12 +216,22 @@
   -moz-user-select: none;
   user-select: none;
 }
-@media print { .battle-theme { display: none !important; } }
+@media print {
+  .battle-theme {
+    display: none !important;
+  }
+}
 
 /* Many battle pages use hardcoded white text/borders — remap to theme. */
-html:not(.dark) .battle-theme [class*="text-white"] { color: var(--battle-fg); }
-html:not(.dark) .battle-theme [class*="border-white"] { border-color: var(--battle-border); }
-html:not(.dark) .battle-theme [class*="bg-white\\/"] { background-color: color-mix(in oklab, var(--color-foreground) 5%, transparent); }
+html:not(.dark) .battle-theme [class*="text-white"] {
+  color: var(--battle-fg);
+}
+html:not(.dark) .battle-theme [class*="border-white"] {
+  border-color: var(--battle-border);
+}
+html:not(.dark) .battle-theme [class*="bg-white\\/"] {
+  background-color: color-mix(in oklab, var(--color-foreground) 5%, transparent);
+}
 
 /* Light theme: darken low-contrast accent text (yellow / amber / pink / cyan / lime). */
 html:not(.dark) .text-yellow-200,
@@ -222,60 +239,108 @@ html:not(.dark) .text-yellow-300,
 html:not(.dark) .text-yellow-400,
 html:not(.dark) .text-amber-200,
 html:not(.dark) .text-amber-300,
-html:not(.dark) .text-amber-400 { color: oklch(0.55 0.14 75); }
+html:not(.dark) .text-amber-400 {
+  color: oklch(0.55 0.14 75);
+}
 
 html:not(.dark) .text-pink-300,
 html:not(.dark) .text-pink-400,
 html:not(.dark) .text-fuchsia-300,
-html:not(.dark) .text-fuchsia-400 { color: oklch(0.55 0.2 350); }
+html:not(.dark) .text-fuchsia-400 {
+  color: oklch(0.55 0.2 350);
+}
 
 html:not(.dark) .text-cyan-200,
 html:not(.dark) .text-cyan-300,
 html:not(.dark) .text-cyan-400,
-html:not(.dark) .text-sky-300 { color: oklch(0.55 0.12 220); }
+html:not(.dark) .text-sky-300 {
+  color: oklch(0.55 0.12 220);
+}
 
 html:not(.dark) .text-lime-300,
 html:not(.dark) .text-lime-400,
 html:not(.dark) .text-green-300,
-html:not(.dark) .text-emerald-300 { color: oklch(0.55 0.14 155); }
+html:not(.dark) .text-emerald-300 {
+  color: oklch(0.55 0.14 155);
+}
 
-html:not(.dark) .text-rose-300 { color: oklch(0.55 0.19 20); }
+html:not(.dark) .text-rose-300 {
+  color: oklch(0.55 0.19 20);
+}
 html:not(.dark) .text-violet-300,
 html:not(.dark) .text-purple-300,
-html:not(.dark) .text-indigo-300 { color: oklch(0.52 0.17 285); }
+html:not(.dark) .text-indigo-300 {
+  color: oklch(0.52 0.17 285);
+}
 
 /* Live-battle scoped: force high-contrast whites over the dark play bg. */
-.battle-live [class*="text-white"] { color: #fff !important; }
-.battle-live [class*="border-white"] { border-color: rgba(255,255,255,0.15) !important; }
-.battle-live [class*="bg-white\\/"] { background-color: rgba(255,255,255,0.06) !important; }
-.battle-live { color: #fff; }
-.battle-live .text-white\/85 { color: rgba(255,255,255,0.9) !important; }
+.battle-live [class*="text-white"] {
+  color: #fff !important;
+}
+.battle-live [class*="border-white"] {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+.battle-live [class*="bg-white\\/"] {
+  background-color: rgba(255, 255, 255, 0.06) !important;
+}
+.battle-live {
+  color: #fff;
+}
+.battle-live .text-white\/85 {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
 
 @keyframes arena-blink {
-  0%, 60%, 100% { opacity: 1; }
-  70%, 90% { opacity: .25; }
+  0%,
+  60%,
+  100% {
+    opacity: 1;
+  }
+  70%,
+  90% {
+    opacity: 0.25;
+  }
 }
-.arena-live-bg { position: relative; }
+.arena-live-bg {
+  position: relative;
+}
 .arena-live-dot {
-  display: inline-block; width: 8px; height: 8px; border-radius: 999px;
-  background: #f43f5e; box-shadow: 0 0 10px rgba(244,63,94,0.6);
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #f43f5e;
+  box-shadow: 0 0 10px rgba(244, 63, 94, 0.6);
   animation: arena-blink 1.6s ease-in-out infinite;
 }
 
-
-
-
-
 @keyframes battle-pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.12); opacity: 0.8; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 0.8;
+  }
 }
-.battle-theme .battle-pulse { animation: battle-pulse 1s ease-in-out infinite; }
+.battle-theme .battle-pulse {
+  animation: battle-pulse 1s ease-in-out infinite;
+}
 @keyframes battle-slide-up {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.battle-theme .battle-slide-up { animation: battle-slide-up 260ms ease-out; }
+.battle-theme .battle-slide-up {
+  animation: battle-slide-up 260ms ease-out;
+}
 
 /* Modal panel — solid surface with a soft glow. Works in both themes. */
 .battle-modal {
@@ -307,7 +372,9 @@ html:not(.dark) .text-indigo-300 { color: oklch(0.52 0.17 285); }
     0 1px 2px 0 rgba(15, 23, 42, 0.04),
     0 8px 24px -12px rgba(15, 23, 42, 0.12),
     0 24px 48px -24px rgba(15, 23, 42, 0.14);
-  transition: transform 200ms ease, box-shadow 200ms ease;
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease;
 }
 @utility mantis-card-hover {
   &:hover {
@@ -322,7 +389,6 @@ html:not(.dark) .text-indigo-300 { color: oklch(0.52 0.17 285); }
   @apply mantis-card mantis-card-hover;
   background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0));
 }
-
 
 /* Hide scrollbars app-wide (keep scroll functionality) */
 * {
@@ -360,22 +426,50 @@ body[data-no-ads="1"] [class*="monetag"] {
   position: absolute;
   inset: -20%;
   background:
-    radial-gradient(ellipse at 25% 18%, color-mix(in oklab, var(--primary) 16%, transparent) 0%, transparent 55%),
-    radial-gradient(ellipse at 78% 76%, color-mix(in oklab, var(--chart-2) 14%, transparent) 0%, transparent 58%),
-    radial-gradient(ellipse at 55% 45%, color-mix(in oklab, var(--chart-4) 10%, transparent) 0%, transparent 60%);
+    radial-gradient(
+      ellipse at 25% 18%,
+      color-mix(in oklab, var(--primary) 16%, transparent) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse at 78% 76%,
+      color-mix(in oklab, var(--chart-2) 14%, transparent) 0%,
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse at 55% 45%,
+      color-mix(in oklab, var(--chart-4) 10%, transparent) 0%,
+      transparent 60%
+    );
   animation: ambientDrift 22s ease-in-out infinite alternate;
 }
 
 .dark .ambient-aurora {
   background:
-    radial-gradient(ellipse at 25% 18%, color-mix(in oklab, var(--primary) 30%, transparent) 0%, transparent 55%),
-    radial-gradient(ellipse at 78% 76%, color-mix(in oklab, var(--chart-2) 26%, transparent) 0%, transparent 58%),
-    radial-gradient(ellipse at 55% 45%, color-mix(in oklab, var(--chart-4) 18%, transparent) 0%, transparent 62%);
+    radial-gradient(
+      ellipse at 25% 18%,
+      color-mix(in oklab, var(--primary) 30%, transparent) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse at 78% 76%,
+      color-mix(in oklab, var(--chart-2) 26%, transparent) 0%,
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse at 55% 45%,
+      color-mix(in oklab, var(--chart-4) 18%, transparent) 0%,
+      transparent 62%
+    );
 }
 
 @keyframes ambientDrift {
-  0% { transform: translate3d(-2%, -1%, 0) scale(1); }
-  100% { transform: translate3d(2%, 2%, 0) scale(1.08); }
+  0% {
+    transform: translate3d(-2%, -1%, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(2%, 2%, 0) scale(1.08);
+  }
 }
 
 .ambient-particle {
@@ -389,11 +483,20 @@ body[data-no-ads="1"] [class*="monetag"] {
   animation-iteration-count: infinite;
 }
 
-.dark .ambient-particle { opacity: 0.7; }
+.dark .ambient-particle {
+  opacity: 0.7;
+}
 
 @keyframes ambientFloat {
-  0%, 100% { transform: translateY(0) scale(1); opacity: 0.25; }
-  50% { transform: translateY(-26px) scale(1.25); opacity: 0.7; }
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translateY(-26px) scale(1.25);
+    opacity: 0.7;
+  }
 }
 
 .ambient-ring {
@@ -407,14 +510,22 @@ body[data-no-ads="1"] [class*="monetag"] {
 }
 
 @keyframes ambientPulse {
-  0% { transform: translate(-50%, -50%) scale(0.75); opacity: 0.55; }
-  100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+  0% {
+    transform: translate(-50%, -50%) scale(0.75);
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ambient-aurora,
   .ambient-particle,
-  .ambient-ring { animation: none; }
+  .ambient-ring {
+    animation: none;
+  }
 }
 
 /* Let the ambient layer show through opaque page shells. */
@@ -422,15 +533,4 @@ body[data-no-ads="1"] [class*="monetag"] {
 .app-surface > div.bg-background,
 .app-surface .min-h-screen.bg-background {
   background-color: color-mix(in oklab, var(--background) 80%, transparent);
-}
-
-/* Hide Lovable branding widget entirely (badge + close button) */
-#lovable-badge,
-#lovable-badge *,
-[id^="lovable-badge"],
-a[href*="lovable.dev"][target="_blank"][class*="badge"] {
-  display: none !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-  opacity: 0 !important;
 }

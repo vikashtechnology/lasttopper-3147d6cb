@@ -6,7 +6,10 @@ export const Route = createFileRoute("/_authenticated/battle")({
   head: () => ({
     meta: [
       { title: "Battle — Last Topper" },
-      { name: "description", content: "Compete live: quick quiz, Sunday Mega Test, leaderboards, and wallet." },
+      {
+        name: "description",
+        content: "Compete live: quick quiz, Sunday Mega Test, leaderboards, and wallet.",
+      },
       { property: "og:title", content: "Battle Arena — Last Topper" },
       { property: "og:description", content: "Real-time quiz battles with prizes." },
       { property: "og:type", content: "website" },
@@ -19,7 +22,9 @@ export const Route = createFileRoute("/_authenticated/battle")({
       <div className="battle-glass max-w-md p-6 text-center">
         <p className="battle-title text-lg">Arena offline</p>
         <p className="mt-2 opacity-70">{failMessage(error)}</p>
-        <button className="battle-btn mt-4" onClick={reset}>Retry</button>
+        <button className="battle-btn mt-4" onClick={reset}>
+          Retry
+        </button>
       </div>
     </div>
   ),
@@ -28,7 +33,6 @@ export const Route = createFileRoute("/_authenticated/battle")({
 
 function BattleLayout() {
   const navigate = useNavigate();
-  
 
   return (
     <div className="battle-theme battle-noselect">
@@ -59,22 +63,37 @@ function BattleLayout() {
           <TabLink to="/battle" icon={<Zap className="h-3.5 w-3.5" />} label="Quick" exact />
           <TabLink to="/battle/1v1" icon={<Users className="h-3.5 w-3.5" />} label="1v1" />
           <TabLink to="/battle/mega" icon={<Trophy className="h-3.5 w-3.5" />} label="Mega" />
-          <TabLink to="/battle/leaderboard" icon={<Trophy className="h-3.5 w-3.5" />} label="Board" />
+          <TabLink
+            to="/battle/leaderboard"
+            icon={<Trophy className="h-3.5 w-3.5" />}
+            label="Board"
+          />
           <TabLink to="/battle/wallet" icon={<Wallet className="h-3.5 w-3.5" />} label="Wallet" />
-          <TabLink to="/battle/history" icon={<History className="h-3.5 w-3.5" />} label="History" />
+          <TabLink
+            to="/battle/history"
+            icon={<History className="h-3.5 w-3.5" />}
+            label="History"
+          />
         </nav>
       </header>
       <main className="relative mx-auto max-w-4xl px-4 py-6">
         <Outlet />
       </main>
-
     </div>
   );
 }
 
 function TabLink({
-  to, icon, label, exact,
-}: { to: string; icon: React.ReactNode; label: string; exact?: boolean }) {
+  to,
+  icon,
+  label,
+  exact,
+}: {
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  exact?: boolean;
+}) {
   return (
     <Link to={to} className="battle-tab inline-flex items-center gap-1.5" activeOptions={{ exact }}>
       {icon}

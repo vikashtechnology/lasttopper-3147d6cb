@@ -56,12 +56,14 @@ export const defaultNavGroups = (opts: { profileUserId?: string; admin?: boolean
         { to: "/community", label: "Community", icon: <Users className="h-4 w-4" /> },
         { to: "/notifications", label: "Notifications", icon: <Bell className="h-4 w-4" /> },
         ...(opts.profileUserId
-          ? [{
-              to: "/profile/$userId",
-              params: { userId: opts.profileUserId },
-              label: "My profile",
-              icon: <UserIcon className="h-4 w-4" />,
-            }]
+          ? [
+              {
+                to: "/profile/$userId",
+                params: { userId: opts.profileUserId },
+                label: "My profile",
+                icon: <UserIcon className="h-4 w-4" />,
+              },
+            ]
           : []),
       ],
     },
@@ -115,7 +117,10 @@ export function AppShell({
               <div className="truncate text-xs text-muted-foreground">{header}</div>
             </div>
           </div>
-          <div className="ml-auto flex items-center gap-1"><ThemeToggle />{headerActions}</div>
+          <div className="ml-auto flex items-center gap-1">
+            <ThemeToggle />
+            {headerActions}
+          </div>
         </div>
       </header>
 
@@ -150,7 +155,6 @@ export function AppShell({
             ))}
             <SocialLinksDropdown />
           </nav>
-
         </aside>
 
         {/* Mobile drawer */}
@@ -213,7 +217,11 @@ export function AppShell({
               <ul className="space-y-1.5">
                 {g.items.map((it) => (
                   <li key={it.to + JSON.stringify(it.params ?? {})}>
-                    <Link to={it.to as never} params={it.params as never} className="hover:text-foreground">
+                    <Link
+                      to={it.to as never}
+                      params={it.params as never}
+                      className="hover:text-foreground"
+                    >
                       {it.label}
                     </Link>
                   </li>
@@ -232,11 +240,36 @@ export function AppShell({
       {/* Mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur lg:hidden">
         <div className="mx-auto grid max-w-lg grid-cols-5 gap-1 px-2 py-1.5">
-          <BottomLink to="/home" label="Home" icon={<HomeIcon className="h-5 w-5" />} active={isActive("/home")} />
-          <BottomLink to="/learning" label="Learn" icon={<BookOpen className="h-5 w-5" />} active={isActive("/learning")} />
-          <BottomLink to="/battle" label="Battle" icon={<Swords className="h-5 w-5" />} active={isActive("/battle")} />
-          <BottomLink to="/community" label="Social" icon={<Users className="h-5 w-5" />} active={isActive("/community")} />
-          <BottomLink to="/notifications" label="Alerts" icon={<Bell className="h-5 w-5" />} active={isActive("/notifications")} />
+          <BottomLink
+            to="/home"
+            label="Home"
+            icon={<HomeIcon className="h-5 w-5" />}
+            active={isActive("/home")}
+          />
+          <BottomLink
+            to="/learning"
+            label="Learn"
+            icon={<BookOpen className="h-5 w-5" />}
+            active={isActive("/learning")}
+          />
+          <BottomLink
+            to="/battle"
+            label="Battle"
+            icon={<Swords className="h-5 w-5" />}
+            active={isActive("/battle")}
+          />
+          <BottomLink
+            to="/community"
+            label="Social"
+            icon={<Users className="h-5 w-5" />}
+            active={isActive("/community")}
+          />
+          <BottomLink
+            to="/notifications"
+            label="Alerts"
+            icon={<Bell className="h-5 w-5" />}
+            active={isActive("/notifications")}
+          />
         </div>
       </nav>
     </div>

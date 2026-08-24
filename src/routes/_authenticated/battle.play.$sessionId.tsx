@@ -41,7 +41,10 @@ function MegaPlay() {
     return () => clearInterval(t);
   }, []);
 
-  const questions = useMemo(() => (sq.data?.questions as QuizQuestion[] | undefined) ?? [], [sq.data]);
+  const questions = useMemo(
+    () => (sq.data?.questions as QuizQuestion[] | undefined) ?? [],
+    [sq.data],
+  );
   const endsAt = sq.data ? new Date(sq.data.start_time).getTime() + 3 * 60 * 60 * 1000 : 0;
   const remaining = Math.max(0, endsAt - now);
   const submitted = !!sq.data?.submitted_at;
@@ -53,8 +56,9 @@ function MegaPlay() {
   const submit = useMutation({
     mutationFn: (auto: boolean) => {
       const elapsed = Math.max(1, Math.floor((Date.now() - startRef.current) / 1000));
-      return submitBattle({ data: { id: sessionId, answers, time_taken_seconds: elapsed } })
-        .then((r) => ({ ...r, auto }));
+      return submitBattle({ data: { id: sessionId, answers, time_taken_seconds: elapsed } }).then(
+        (r) => ({ ...r, auto }),
+      );
     },
     onSuccess: (res) => {
       if (!res.auto) confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
@@ -74,7 +78,9 @@ function MegaPlay() {
     return (
       <div className="battle-glass p-6 text-center">
         <p className="battle-title text-xl">Already submitted</p>
-        <button className="battle-btn mt-4" onClick={() => navigate({ to: "/battle/history" })}>See history</button>
+        <button className="battle-btn mt-4" onClick={() => navigate({ to: "/battle/history" })}>
+          See history
+        </button>
       </div>
     );
   }
@@ -85,13 +91,19 @@ function MegaPlay() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between text-sm text-white/70">
-        <span>Q {idx + 1} / {questions.length} · {answered} answered</span>
-        <span className={`inline-flex items-center gap-1.5 ${remaining < 60000 ? "text-red-400" : ""}`}>
+        <span>
+          Q {idx + 1} / {questions.length} · {answered} answered
+        </span>
+        <span
+          className={`inline-flex items-center gap-1.5 ${remaining < 60000 ? "text-red-400" : ""}`}
+        >
           <Timer className="h-4 w-4" /> {fmtHMS(remaining)}
         </span>
       </div>
       <div className="battle-glass battle-slide-up p-5">
-        <div className="text-base leading-relaxed"><Latex>{q.question}</Latex></div>
+        <div className="text-base leading-relaxed">
+          <Latex>{q.question}</Latex>
+        </div>
         <div className="mt-4 grid gap-2">
           {(["A", "B", "C", "D"] as const).map((l) => {
             const chosen = answers[q.id] === l;
@@ -100,11 +112,17 @@ function MegaPlay() {
                 key={l}
                 onClick={() => setAnswers((a) => ({ ...a, [q.id]: l }))}
                 className={`flex items-start gap-3 rounded-xl border p-3 text-left transition-colors ${
-                  chosen ? "border-cyan-400/70 bg-cyan-400/10" : "border-white/10 bg-white/[0.03] hover:border-cyan-400/40"
+                  chosen
+                    ? "border-cyan-400/70 bg-cyan-400/10"
+                    : "border-white/10 bg-white/[0.03] hover:border-cyan-400/40"
                 }`}
               >
-                <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs font-bold">{l}</span>
-                <span className="flex-1 text-sm"><Latex>{q.options[l]}</Latex></span>
+                <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs font-bold">
+                  {l}
+                </span>
+                <span className="flex-1 text-sm">
+                  <Latex>{q.options[l]}</Latex>
+                </span>
               </button>
             );
           })}
@@ -115,11 +133,22 @@ function MegaPlay() {
           className="rounded-xl border border-white/15 px-3 py-2 text-sm text-white/80"
           disabled={idx === 0}
           onClick={() => setIdx((i) => Math.max(0, i - 1))}
-        >Prev</button>
+        >
+          Prev
+        </button>
         {idx + 1 < questions.length ? (
-          <button className="battle-btn" onClick={() => setIdx((i) => Math.min(questions.length - 1, i + 1))}>Next</button>
+          <button
+            className="battle-btn"
+            onClick={() => setIdx((i) => Math.min(questions.length - 1, i + 1))}
+          >
+            Next
+          </button>
         ) : (
-          <button className="battle-btn" disabled={submit.isPending} onClick={() => submit.mutate(false)}>
+          <button
+            className="battle-btn"
+            disabled={submit.isPending}
+            onClick={() => submit.mutate(false)}
+          >
             {submit.isPending ? "Submitting…" : "Submit test"}
           </button>
         )}

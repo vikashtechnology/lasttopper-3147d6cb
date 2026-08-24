@@ -62,7 +62,11 @@ function LearningPage() {
   const { data: profile } = useSuspenseQuery(profileQuery);
   const isPro = !!profile?.is_pro;
   const dailyLimit = profile?.daily_question_limit ?? 20;
-  const usage = useQuery({ queryKey: ["today-usage"], queryFn: () => getTodayUsage(), refetchOnWindowFocus: true });
+  const usage = useQuery({
+    queryKey: ["today-usage"],
+    queryFn: () => getTodayUsage(),
+    refetchOnWindowFocus: true,
+  });
   const usedToday = usage.data?.used ?? 0;
   const remaining = Math.max(0, dailyLimit - usedToday);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -76,7 +80,9 @@ function LearningPage() {
   // Auto-trigger upgrade popup when user has hit their daily free limit.
   useEffect(() => {
     if (!isPro && !usage.isLoading && remaining === 0 && usedToday > 0) {
-      setProReason(`You've used all ${dailyLimit} free questions for today. Upgrade to keep practicing.`);
+      setProReason(
+        `You've used all ${dailyLimit} free questions for today. Upgrade to keep practicing.`,
+      );
       setProOpen(true);
     }
   }, [isPro, usage.isLoading, remaining, usedToday, dailyLimit]);
@@ -91,9 +97,6 @@ function LearningPage() {
       return n;
     });
   }
-
-
-
 
   async function handleStart() {
     if (chapterIds.length === 0) {
@@ -143,10 +146,14 @@ function LearningPage() {
 
   return (
     <main className="min-h-screen bg-background">
-
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
-          <Button variant="ghost" size="icon" onClick={() => nav({ to: "/home" })} aria-label="Back">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => nav({ to: "/home" })}
+            aria-label="Back"
+          >
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div>
@@ -171,7 +178,9 @@ function LearningPage() {
                     <div className="flex w-full items-center justify-between pr-2">
                       <span className="font-medium">{s.name}</span>
                       <span className="text-xs text-muted-foreground">
-                        {selectedIn > 0 ? `${selectedIn} selected` : `${s.chapters.length} chapters`}
+                        {selectedIn > 0
+                          ? `${selectedIn} selected`
+                          : `${s.chapters.length} chapters`}
                       </span>
                     </div>
                   </AccordionTrigger>
@@ -184,7 +193,10 @@ function LearningPage() {
                             checked={selected.has(c.id)}
                             onCheckedChange={() => toggle(c.id)}
                           />
-                          <Label htmlFor={`c-${c.id}`} className="flex-1 cursor-pointer text-sm font-normal">
+                          <Label
+                            htmlFor={`c-${c.id}`}
+                            className="flex-1 cursor-pointer text-sm font-normal"
+                          >
                             <span className="mr-2 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                               Class {c.class_level}
                             </span>
@@ -242,7 +254,6 @@ function LearningPage() {
             })}
           </RadioGroup>
 
-
           <div className="mt-5 flex items-center justify-between">
             <div>
               <div className="text-sm font-semibold">Timer mode</div>
@@ -263,8 +274,6 @@ function LearningPage() {
               <span className="text-sm text-muted-foreground">minutes</span>
             </div>
           )}
-
-
         </div>
 
         <Button className="mt-5 h-12 w-full text-base" onClick={handleStart} disabled={busy}>
@@ -295,7 +304,8 @@ function GeneratingScreen({ count, chapters }: { count: number; chapters: number
         </div>
         <h1 className="mt-5 text-xl font-semibold">Generating your quiz…</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Crafting {count} NCERT-aligned questions across {chapters} chapter{chapters === 1 ? "" : "s"}.
+          Crafting {count} NCERT-aligned questions across {chapters} chapter
+          {chapters === 1 ? "" : "s"}.
         </p>
         <div className="mt-6 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -305,4 +315,3 @@ function GeneratingScreen({ count, chapters }: { count: number; chapters: number
     </main>
   );
 }
-

@@ -19,7 +19,10 @@ export const Route = createFileRoute("/_authenticated/revise/")({
   head: () => ({
     meta: [
       { title: "Revise — Last Topper" },
-      { name: "description", content: "Quick NCERT revision notes for every chapter, with references." },
+      {
+        name: "description",
+        content: "Quick NCERT revision notes for every chapter, with references.",
+      },
       { property: "og:title", content: "Revise — Last Topper" },
       { property: "og:description", content: "Concise NCERT revision notes per chapter." },
       { property: "og:type", content: "website" },
@@ -38,7 +41,12 @@ function RevisePage() {
     <main className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
-          <Button variant="ghost" size="icon" onClick={() => nav({ to: "/home" })} aria-label="Back">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => nav({ to: "/home" })}
+            aria-label="Back"
+          >
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div>
@@ -64,7 +72,9 @@ function RevisePage() {
                 <AccordionTrigger className="text-left">
                   <div className="flex w-full items-center justify-between pr-2">
                     <span className="font-medium">{s.name}</span>
-                    <span className="text-xs text-muted-foreground">{s.chapters.length} chapters</span>
+                    <span className="text-xs text-muted-foreground">
+                      {s.chapters.length} chapters
+                    </span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -72,7 +82,9 @@ function RevisePage() {
                     {s.chapters.map((c) => (
                       <li key={c.id}>
                         <button
-                          onClick={() => nav({ to: "/revise/$chapterId", params: { chapterId: c.id } })}
+                          onClick={() =>
+                            nav({ to: "/revise/$chapterId", params: { chapterId: c.id } })
+                          }
                           className="mantis-tile flex w-full items-center justify-between gap-3 p-3 text-left"
                         >
                           <div className="flex items-center gap-2">

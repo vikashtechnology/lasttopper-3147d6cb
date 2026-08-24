@@ -1,5 +1,12 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Check } from "lucide-react";
 import { PRO_PERKS } from "@/lib/pro";
@@ -33,8 +40,15 @@ export function ProUpgradeDialog({ open, onOpenChange, title, reason }: Props) {
           ))}
         </ul>
         <DialogFooter className="mt-4 gap-2 sm:justify-center">
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Not now</Button>
-          <Button onClick={() => { onOpenChange(false); nav({ to: "/pricing" }); }}>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Not now
+          </Button>
+          <Button
+            onClick={() => {
+              onOpenChange(false);
+              nav({ to: "/pricing" });
+            }}
+          >
             <Sparkles className="mr-2 h-4 w-4" /> See Pro plans
           </Button>
         </DialogFooter>

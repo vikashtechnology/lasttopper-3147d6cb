@@ -30,11 +30,17 @@ function Profile() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const meId = useUserStore((s) => s.profile?.id);
-  const p = useQuery({ queryKey: ["profile", userId], queryFn: () => getPublicProfile({ data: { user_id: userId } }) });
+  const p = useQuery({
+    queryKey: ["profile", userId],
+    queryFn: () => getPublicProfile({ data: { user_id: userId } }),
+  });
 
   const follow = useMutation({
     mutationFn: () => followUser({ data: { user_id: userId } }),
-    onSuccess: () => { toast.success("Following"); qc.invalidateQueries({ queryKey: ["profile", userId] }); },
+    onSuccess: () => {
+      toast.success("Following");
+      qc.invalidateQueries({ queryKey: ["profile", userId] });
+    },
     onError: (e: Error) => toast.error(failMessage(e)),
   });
   const unfollow = useMutation({
@@ -59,7 +65,12 @@ function Profile() {
     <main className="min-h-screen bg-background">
       <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
-          <button onClick={() => navigate({ to: "/community" })} className="rounded-full p-2 text-muted-foreground hover:text-foreground"><ArrowLeft className="h-4 w-4" /></button>
+          <button
+            onClick={() => navigate({ to: "/community" })}
+            className="rounded-full p-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
           <h1 className="text-base font-semibold">Profile</h1>
         </div>
       </header>
@@ -71,7 +82,9 @@ function Profile() {
           </Avatar>
           <div className="flex-1">
             <div className="text-xl font-semibold">{u.full_name ?? "Anonymous"}</div>
-            <div className="text-xs text-muted-foreground">{u.profession?.toUpperCase()} · rep {u.reputation}</div>
+            <div className="text-xs text-muted-foreground">
+              {u.profession?.toUpperCase()} · rep {u.reputation}
+            </div>
             <RankBadge xp={Number(u.reputation ?? 0)} showProgress className="mt-2 max-w-[220px]" />
             {u.bio && <p className="mt-2 text-sm">{u.bio}</p>}
             <div className="mt-2 text-xs text-muted-foreground">
@@ -80,32 +93,44 @@ function Profile() {
             {!isMe ? (
               <div className="mt-3">
                 {p.data.i_follow ? (
-                  <Button size="sm" variant="outline" onClick={() => unfollow.mutate()}><UserMinus className="mr-1 h-3.5 w-3.5" />Unfollow</Button>
+                  <Button size="sm" variant="outline" onClick={() => unfollow.mutate()}>
+                    <UserMinus className="mr-1 h-3.5 w-3.5" />
+                    Unfollow
+                  </Button>
                 ) : (
-                  <Button size="sm" onClick={() => follow.mutate()}><UserPlus className="mr-1 h-3.5 w-3.5" />Follow</Button>
+                  <Button size="sm" onClick={() => follow.mutate()}>
+                    <UserPlus className="mr-1 h-3.5 w-3.5" />
+                    Follow
+                  </Button>
                 )}
               </div>
             ) : (
               <div className="mt-3">
                 <Button size="sm" variant="outline" onClick={handleSignOut}>
-                  <LogOut className="mr-1 h-3.5 w-3.5" />Sign out
+                  <LogOut className="mr-1 h-3.5 w-3.5" />
+                  Sign out
                 </Button>
               </div>
             )}
-
           </div>
         </div>
 
         <div className="mt-6 grid grid-cols-3 gap-3">
           <Stat icon={<Flame className="h-4 w-4" />} label="Streak" value={`${u.streak}d`} />
-          <Stat icon={<Target className="h-4 w-4" />} label="Accuracy" value={`${Math.round(Number(u.total_accuracy ?? 0))}%`} />
+          <Stat
+            icon={<Target className="h-4 w-4" />}
+            label="Accuracy"
+            value={`${Math.round(Number(u.total_accuracy ?? 0))}%`}
+          />
           <Stat icon={<Award className="h-4 w-4" />} label="XP" value={String(u.reputation)} />
         </div>
 
         <div className="mt-6">
           <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Badges</h2>
           {p.data.badges.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">No badges yet.</div>
+            <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              No badges yet.
+            </div>
           ) : (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {p.data.badges.map((b) => (
@@ -128,7 +153,10 @@ function Profile() {
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-3 text-center">
-      <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">{icon}{label}</div>
+      <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+        {icon}
+        {label}
+      </div>
       <div className="mt-1 text-lg font-semibold">{value}</div>
     </div>
   );

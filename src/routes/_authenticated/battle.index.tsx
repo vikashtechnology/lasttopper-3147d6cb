@@ -6,7 +6,12 @@ import { toast } from "sonner";
 import { Latex } from "@/components/Latex";
 import { useAntiCheat } from "@/hooks/useAntiCheat";
 import { useHideAds } from "@/lib/useHideAds";
-import { startQuickBattle, extendQuickBattle, submitBattle, getQuickLeaderboard } from "@/lib/battle.functions";
+import {
+  startQuickBattle,
+  extendQuickBattle,
+  submitBattle,
+  getQuickLeaderboard,
+} from "@/lib/battle.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Timer, Zap, Trophy, Loader2 } from "lucide-react";
 import type { QuizQuestion } from "@/lib/learning.functions";
@@ -52,10 +57,13 @@ function QuickBattle() {
   useEffect(() => {
     const ch = supabase
       .channel("quick-battles")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "battle_sessions" },
-        () => qc.invalidateQueries({ queryKey: ["quick-leaderboard"] }))
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "battle_sessions" }, () =>
+        qc.invalidateQueries({ queryKey: ["quick-leaderboard"] }),
+      )
       .subscribe();
-    return () => { void supabase.removeChannel(ch); };
+    return () => {
+      void supabase.removeChannel(ch);
+    };
   }, [qc]);
 
   const start = useMutation({
@@ -63,8 +71,10 @@ function QuickBattle() {
     onSuccess: (res) => {
       setQuestions(res.questions);
       setSessionId(res.id);
-      setAnswers({}); setIdx(0);
-      setPhase("countdown"); setCountdown(3);
+      setAnswers({});
+      setIdx(0);
+      setPhase("countdown");
+      setCountdown(3);
     },
     onError: (e: Error) => toast.error(failMessage(e, "Failed to start")),
   });
@@ -72,7 +82,9 @@ function QuickBattle() {
   const submit = useMutation({
     mutationFn: (finalAnswers: Record<string, "A" | "B" | "C" | "D">) => {
       const elapsed = Math.max(1, Math.floor((Date.now() - startRef.current) / 1000));
-      return submitBattle({ data: { id: sessionId!, answers: finalAnswers, time_taken_seconds: elapsed } });
+      return submitBattle({
+        data: { id: sessionId!, answers: finalAnswers, time_taken_seconds: elapsed },
+      });
     },
     onSuccess: () => {
       setPhase("done");
@@ -86,7 +98,8 @@ function QuickBattle() {
     if (phase !== "countdown") return;
     if (countdown <= 0) {
       startRef.current = Date.now();
-      setPhase("playing"); setTick(30);
+      setPhase("playing");
+      setTick(30);
       return;
     }
     const t = setTimeout(() => setCountdown((c) => c - 1), 800);
@@ -98,7 +111,11 @@ function QuickBattle() {
     setTick(30);
     const t = setInterval(() => {
       setTick((v) => {
-        if (v <= 1) { clearInterval(t); advance(null); return 0; }
+        if (v <= 1) {
+          clearInterval(t);
+          advance(null);
+          return 0;
+        }
         return v - 1;
       });
     }, 1000);
@@ -124,9 +141,13 @@ function QuickBattle() {
     if (idx < questions.length - 2) return;
     fetchingRef.current = true;
     extendQuickBattle({ data: { id: sessionId } })
-      .then((r) => { if (r.questions?.length) setQuestions(r.questions); })
+      .then((r) => {
+        if (r.questions?.length) setQuestions(r.questions);
+      })
       .catch((e: Error) => toast.error(failMessage(e, "Failed to load more")))
-      .finally(() => { fetchingRef.current = false; });
+      .finally(() => {
+        fetchingRef.current = false;
+      });
   }, [idx, questions.length, phase, sessionId]);
 
   const cur = questions[idx];
@@ -154,7 +175,9 @@ function QuickBattle() {
       <div className="space-y-6">
         <div className="battle-glass battle-slide-up p-6">
           <h1 className="battle-title text-2xl">Free Quick Quiz</h1>
-          <p className="mt-2 text-sm text-white/70">10 questions · 30 seconds each · auto-advance</p>
+          <p className="mt-2 text-sm text-white/70">
+            10 questions · 30 seconds each · auto-advance
+          </p>
           <button
             className="battle-btn mt-5 inline-flex items-center gap-2"
             onClick={() => start.mutate()}
@@ -172,7 +195,6 @@ function QuickBattle() {
       </div>
     );
   }
-
 
   if (phase === "countdown") {
     return (
@@ -202,14 +224,18 @@ function QuickBattle() {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between text-sm text-white/70">
-          <span>Q {idx + 1} / {QUICK_TOTAL}</span>
+          <span>
+            Q {idx + 1} / {QUICK_TOTAL}
+          </span>
           <span className="inline-flex items-center gap-1.5">
             <Timer className="h-4 w-4 text-cyan-300" />
             <span className={tick <= 5 ? "text-red-400" : "text-white"}>{tick}s</span>
           </span>
         </div>
         <div className="battle-glass battle-slide-up p-5">
-          <div className="text-base leading-relaxed"><Latex>{cur.question}</Latex></div>
+          <div className="text-base leading-relaxed">
+            <Latex>{cur.question}</Latex>
+          </div>
           <div className="mt-5 grid gap-2">
             {(["A", "B", "C", "D"] as const).map((l) => (
               <button
@@ -217,8 +243,12 @@ function QuickBattle() {
                 onClick={() => advance(l)}
                 className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-left transition-colors hover:border-cyan-400/60 hover:bg-cyan-400/5"
               >
-                <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs font-bold">{l}</span>
-                <span className="flex-1 text-sm"><Latex>{cur.options[l]}</Latex></span>
+                <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs font-bold">
+                  {l}
+                </span>
+                <span className="flex-1 text-sm">
+                  <Latex>{cur.options[l]}</Latex>
+                </span>
               </button>
             ))}
           </div>
@@ -236,7 +266,9 @@ function QuickBattle() {
       <div className="battle-glass battle-slide-up p-6 text-center">
         <div className="battle-title text-3xl">Quest complete</div>
         <div className="mt-3 text-5xl font-black text-cyan-300">{correctCount * 10}</div>
-        <div className="mt-1 text-sm text-white/70">{correctCount} / {QUICK_TOTAL} correct</div>
+        <div className="mt-1 text-sm text-white/70">
+          {correctCount} / {QUICK_TOTAL} correct
+        </div>
 
         <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <StatBox label="Accuracy" value={`${accuracy}%`} />
@@ -246,7 +278,9 @@ function QuickBattle() {
         </div>
 
         <div className="mt-5 text-left">
-          <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/50">Question progress</div>
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/50">
+            Question progress
+          </div>
           <div className="flex flex-wrap gap-1.5">
             {questions.slice(0, QUICK_TOTAL).map((q, i) => {
               const a = answers[q.id];
@@ -256,24 +290,37 @@ function QuickBattle() {
                   key={q.id}
                   title={`Q${i + 1}: ${!a ? "skipped" : ok ? "correct" : "wrong"}`}
                   className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${
-                    !a ? "bg-white/10 text-white/60" : ok ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"
+                    !a
+                      ? "bg-white/10 text-white/60"
+                      : ok
+                        ? "bg-emerald-500/20 text-emerald-300"
+                        : "bg-rose-500/20 text-rose-300"
                   }`}
-                >{i + 1}</span>
+                >
+                  {i + 1}
+                </span>
               );
             })}
           </div>
         </div>
 
         <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/10">
-          <div className="h-full rounded-full bg-cyan-400" style={{ width: `${(correctCount / QUICK_TOTAL) * 100}%` }} />
+          <div
+            className="h-full rounded-full bg-cyan-400"
+            style={{ width: `${(correctCount / QUICK_TOTAL) * 100}%` }}
+          />
         </div>
 
         <div className="mt-5 flex justify-center gap-2">
-          <button className="battle-btn" onClick={() => start.mutate()}>Play again</button>
+          <button className="battle-btn" onClick={() => start.mutate()}>
+            Play again
+          </button>
           <button
             className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/80"
             onClick={() => navigate({ to: "/battle/leaderboard" })}
-          >See board</button>
+          >
+            See board
+          </button>
         </div>
       </div>
     </div>
@@ -289,7 +336,6 @@ function StatBox({ label, value }: { label: string; value: string }) {
   );
 }
 
-
 function LeaderboardList({
   items,
 }: {
@@ -302,7 +348,8 @@ function LeaderboardList({
     is_me: boolean;
   }>;
 }) {
-  if (!items.length) return <p className="text-sm text-white/50">No plays yet — be first on the board.</p>;
+  if (!items.length)
+    return <p className="text-sm text-white/50">No plays yet — be first on the board.</p>;
   return (
     <ol className="space-y-1.5">
       {items.map((r) => (
@@ -312,11 +359,22 @@ function LeaderboardList({
             r.is_me ? "border-cyan-400/60 bg-cyan-400/10" : "border-white/5 bg-white/[0.02]"
           }`}
         >
-          <span className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
-            r.rank === 1 ? "bg-yellow-400 text-black" : r.rank === 2 ? "bg-slate-300 text-black" : r.rank === 3 ? "bg-orange-400 text-black" : "bg-white/10 text-white"
-          }`}>{r.rank}</span>
+          <span
+            className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+              r.rank === 1
+                ? "bg-yellow-400 text-black"
+                : r.rank === 2
+                  ? "bg-slate-300 text-black"
+                  : r.rank === 3
+                    ? "bg-orange-400 text-black"
+                    : "bg-white/10 text-white"
+            }`}
+          >
+            {r.rank}
+          </span>
           <span className="flex-1 truncate text-sm">
-            {r.user.full_name ?? r.user.email ?? "Player"}{r.is_me && <span className="ml-1 text-xs text-cyan-300">(you)</span>}
+            {r.user.full_name ?? r.user.email ?? "Player"}
+            {r.is_me && <span className="ml-1 text-xs text-cyan-300">(you)</span>}
           </span>
           <span className="text-sm font-bold text-cyan-300">{r.score}</span>
         </li>

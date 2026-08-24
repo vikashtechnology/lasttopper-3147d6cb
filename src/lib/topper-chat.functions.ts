@@ -119,11 +119,7 @@ async function maybeTitle(supabase: any, userId: string, threadId: string, first
     .maybeSingle();
   if (t?.title && t.title !== "New chat") return;
   const title = first.replace(/\s+/g, " ").trim().slice(0, 60) || "New chat";
-  await supabase
-    .from("ai_chat_threads")
-    .update({ title })
-    .eq("id", threadId)
-    .eq("user_id", userId);
+  await supabase.from("ai_chat_threads").update({ title }).eq("id", threadId).eq("user_id", userId);
 }
 
 export const saveChatTurn = createServerFn({ method: "POST" })
@@ -194,34 +190,52 @@ export const generateHandwrittenImage = createServerFn({ method: "POST" })
         body = data.text;
       }
     }
-    body = body.replace(/[*#`$]/g, "").trim().slice(0, 1200);
+    body = body
+      .replace(/[*#`$]/g, "")
+      .trim()
+      .slice(0, 1200);
 
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Failed");
+    const apiKey = (process.env.IMAGE_API_KEY ?? process.env.OPENAI_API_KEY)?.trim();
+    const endpoint =
+      process.env.IMAGE_API_URL?.trim() || "https://api.openai.com/v1/images/generations";
+    const model = process.env.IMAGE_MODEL?.trim() || "gpt-image-1";
+    if (!apiKey) throw new Error("Image generation is not configured");
 
-    let b64 = "";
+    let bytes: Uint8Array;
     try {
-      const resp = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
+      const response = await fetch(endpoint, {
         method: "POST",
-        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "openai/gpt-image-2",
+          model,
           prompt: HANDWRITING_PROMPT(body),
           quality: "low",
           size: "1024x1536",
           n: 1,
         }),
       });
-      if (!resp.ok) throw new Error(await resp.text().catch(() => "image failed"));
-      const json = (await resp.json()) as { data?: Array<{ b64_json?: string }> };
-      b64 = json?.data?.[0]?.b64_json ?? "";
-    } catch (e) {
-      console.error("[handwriting]", e instanceof Error ? e.message : String(e));
+      if (!response.ok) {
+        const detail = await response.text().catch(() => "image request failed");
+        throw new Error(`${response.status}: ${detail.slice(0, 300)}`);
+      }
+      const json = (await response.json()) as {
+        data?: Array<{ b64_json?: string; url?: string }>;
+      };
+      const image = json.data?.[0];
+      if (image?.b64_json) {
+        bytes = Uint8Array.from(atob(image.b64_json), (character) => character.charCodeAt(0));
+      } else if (image?.url) {
+        const download = await fetch(image.url);
+        if (!download.ok) throw new Error(`Image download failed: ${download.status}`);
+        bytes = new Uint8Array(await download.arrayBuffer());
+      } else {
+        throw new Error("Image provider returned no image data");
+      }
+    } catch (error) {
+      console.error("[handwriting]", error instanceof Error ? error.message : String(error));
       throw new Error("Failed");
     }
-    if (!b64) throw new Error("Failed");
 
-    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
     const path = `${context.userId}/${Date.now()}.png`;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error: upErr } = await supabaseAdmin.storage

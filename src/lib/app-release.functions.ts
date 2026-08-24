@@ -13,8 +13,14 @@ export type AppRelease = {
   created_at: string;
 };
 
-async function assertAdmin(ctx: { supabase: import("@supabase/supabase-js").SupabaseClient; userId: string }) {
-  const { data, error } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
+async function assertAdmin(ctx: {
+  supabase: import("@supabase/supabase-js").SupabaseClient;
+  userId: string;
+}) {
+  const { data, error } = await ctx.supabase.rpc("has_role", {
+    _user_id: ctx.userId,
+    _role: "admin",
+  });
   if (error) throw error;
   if (!data) throw new Error("Forbidden: admin only");
 }
@@ -63,7 +69,8 @@ export const adminSaveRelease = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => releaseSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    if (!/^https?:\/\//i.test(data.download_url)) throw new Error("Download link must start with http:// or https://");
+    if (!/^https?:\/\//i.test(data.download_url))
+      throw new Error("Download link must start with http:// or https://");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const row = {
       version: data.version,

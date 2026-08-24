@@ -8,11 +8,7 @@ type AnyClient = SupabaseClient<Database>;
 export const BOX_DAYS = [1, 1, 3, 7, 16, 35];
 
 export function questionKey(q: QuizQuestion): string {
-  return (q.question ?? "")
-    .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 180);
+  return (q.question ?? "").toLowerCase().replace(/\s+/g, " ").trim().slice(0, 180);
 }
 
 /** Add mistakes to the spaced-repetition queue (never overwrites existing progress). */
@@ -39,8 +35,9 @@ export async function upsertReviewItems(
       due_at: new Date().toISOString(),
     }));
   if (!rows.length) return 0;
-  await client
-    .from("review_items")
-    .upsert(rows as unknown as never, { onConflict: "user_id,question_key", ignoreDuplicates: true });
+  await client.from("review_items").upsert(rows as unknown as never, {
+    onConflict: "user_id,question_key",
+    ignoreDuplicates: true,
+  });
   return rows.length;
 }

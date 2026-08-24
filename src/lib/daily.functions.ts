@@ -22,7 +22,10 @@ export const getDailyChallenge = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: profile } = await context.supabase
-      .from("users").select("profession").eq("id", context.userId).maybeSingle();
+      .from("users")
+      .select("profession")
+      .eq("id", context.userId)
+      .maybeSingle();
     const profession = profile?.profession as "pcm" | "pcb" | null;
     if (!profession) throw new Error("Complete onboarding first");
 
@@ -31,7 +34,9 @@ export const getDailyChallenge = createServerFn({ method: "GET" })
 
       .from("daily_challenge_attempts")
       .select("correct_count, reward_tc, completed_at")
-      .eq("challenge_id", ch.id).eq("user_id", context.userId).maybeSingle();
+      .eq("challenge_id", ch.id)
+      .eq("user_id", context.userId)
+      .maybeSingle();
 
     const { getQuotaState } = await import("@/lib/quota.server");
     const quota = await getQuotaState(context.supabase, context.userId);
@@ -54,25 +59,37 @@ export const getDailyChallenge = createServerFn({ method: "GET" })
 export const submitDailyChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      challenge_id: z.string().uuid(),
-      answers: z.record(z.string(), z.enum(["A", "B", "C", "D"])),
-    }).parse(d),
+    z
+      .object({
+        challenge_id: z.string().uuid(),
+        answers: z.record(z.string(), z.enum(["A", "B", "C", "D"])),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const { rewardFor, creditCoins } = await import("@/lib/daily.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: ch } = await context.supabase
-      .from("daily_challenges").select("id, questions").eq("id", data.challenge_id).maybeSingle();
+      .from("daily_challenges")
+      .select("id, questions")
+      .eq("id", data.challenge_id)
+      .maybeSingle();
     if (!ch) throw new Error("Challenge not found");
 
     const { data: prior } = await context.supabase
       .from("daily_challenge_attempts")
       .select("correct_count, reward_tc, completed_at")
-      .eq("challenge_id", ch.id).eq("user_id", context.userId).maybeSingle();
+      .eq("challenge_id", ch.id)
+      .eq("user_id", context.userId)
+      .maybeSingle();
     if (prior?.completed_at) {
-      return { correct: Number(prior.correct_count), total: (ch.questions as QuizQuestion[]).length, reward: Number(prior.reward_tc), already: true };
+      return {
+        correct: Number(prior.correct_count),
+        total: (ch.questions as QuizQuestion[]).length,
+        reward: Number(prior.reward_tc),
+        already: true,
+      };
     }
 
     const questions = (ch.questions as QuizQuestion[]) ?? [];
@@ -93,7 +110,14 @@ export const submitDailyChallenge = createServerFn({ method: "POST" })
       },
       { onConflict: "challenge_id,user_id" },
     );
-    await creditCoins(supabaseAdmin, context.userId, reward, "daily_challenge", `Daily Challenge reward (${correct}/${questions.length})`, ch.id);
+    await creditCoins(
+      supabaseAdmin,
+      context.userId,
+      reward,
+      "daily_challenge",
+      `Daily Challenge reward (${correct}/${questions.length})`,
+      ch.id,
+    );
 
     // Wrong answers feed the spaced-repetition queue.
     const wrong = questions.filter((q) => data.answers[q.id] !== q.correct);

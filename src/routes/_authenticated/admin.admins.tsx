@@ -14,7 +14,10 @@ export const Route = createFileRoute("/_authenticated/admin/admins")({
       { title: "Manage Admins — Last Topper" },
       { name: "description", content: "Owner-only control to add or remove administrators." },
       { property: "og:title", content: "Manage Admins" },
-      { property: "og:description", content: "Owner-only control to add or remove administrators." },
+      {
+        property: "og:description",
+        content: "Owner-only control to add or remove administrators.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -23,7 +26,12 @@ export const Route = createFileRoute("/_authenticated/admin/admins")({
   errorComponent: ({ error, reset }) => (
     <div className="p-6 text-sm">
       <p className="text-destructive">Failed: {failMessage(error)}</p>
-      <button className="mt-3 rounded bg-primary px-3 py-1.5 text-primary-foreground" onClick={reset}>Retry</button>
+      <button
+        className="mt-3 rounded bg-primary px-3 py-1.5 text-primary-foreground"
+        onClick={reset}
+      >
+        Retry
+      </button>
     </div>
   ),
   notFoundComponent: () => <div className="p-6 text-sm">Not found.</div>,
@@ -41,7 +49,8 @@ function AdminsPage() {
   });
 
   const setAdmin = useMutation({
-    mutationFn: (vars: { email?: string; user_id?: string; make: boolean }) => ownerSetAdmin({ data: vars }),
+    mutationFn: (vars: { email?: string; user_id?: string; make: boolean }) =>
+      ownerSetAdmin({ data: vars }),
     onSuccess: (_r, vars) => {
       toast.success(vars.make ? "Admin added" : "Admin removed");
       setEmail("");
@@ -50,14 +59,17 @@ function AdminsPage() {
     onError: (e: Error) => toast.error(failMessage(e)),
   });
 
-  if (owner.isLoading) return <div className="p-6 text-sm text-muted-foreground">Checking access…</div>;
+  if (owner.isLoading)
+    return <div className="p-6 text-sm text-muted-foreground">Checking access…</div>;
 
   if (!owner.data?.owner) {
     return (
       <div className="mx-auto mt-16 max-w-md rounded-2xl border border-border bg-card p-6 text-center">
         <Crown className="mx-auto h-6 w-6 text-muted-foreground" />
         <div className="mt-2 text-base font-semibold">Owner only</div>
-        <p className="mt-1 text-sm text-muted-foreground">Only the app owner can manage administrators.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Only the app owner can manage administrators.
+        </p>
       </div>
     );
   }
@@ -113,7 +125,9 @@ function AdminsPage() {
                       </span>
                     )}
                   </div>
-                  <div className="truncate text-xs text-muted-foreground">{a.email ?? a.user_id}</div>
+                  <div className="truncate text-xs text-muted-foreground">
+                    {a.email ?? a.user_id}
+                  </div>
                 </div>
                 {!a.is_owner && (
                   <Button

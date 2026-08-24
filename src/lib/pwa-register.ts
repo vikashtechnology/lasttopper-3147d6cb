@@ -1,49 +1,36 @@
-// Guarded service worker registration. Only registers in production, on the
-// live app, outside iframes and Lovable preview hosts. Supports ?sw=off kill switch.
+// Guarded service-worker registration. It only runs in production and outside
+// embedded previews. Add ?sw=off to unregister it while troubleshooting.
 const SW_URL = "/pwa-sw.js";
-
-function isPreviewHost(host: string): boolean {
-  return (
-    host.startsWith("id-preview--") ||
-    host.startsWith("preview--") ||
-    host === "lovableproject.com" ||
-    host.endsWith(".lovableproject.com") ||
-    host === "lovableproject-dev.com" ||
-    host.endsWith(".lovableproject-dev.com") ||
-    host === "beta.lovable.dev" ||
-    host.endsWith(".beta.lovable.dev")
-  );
-}
 
 async function unregisterMatching() {
   if (!("serviceWorker" in navigator)) return;
-  const regs = await navigator.serviceWorker.getRegistrations();
+  const registrations = await navigator.serviceWorker.getRegistrations();
   await Promise.all(
-    regs
-      .filter((r) => r.active?.scriptURL.endsWith(SW_URL) || r.installing?.scriptURL.endsWith(SW_URL))
-      .map((r) => r.unregister()),
+    registrations
+      .filter(
+        (registration) =>
+          registration.active?.scriptURL.endsWith(SW_URL) ||
+          registration.installing?.scriptURL.endsWith(SW_URL),
+      )
+      .map((registration) => registration.unregister()),
   );
 }
 
 export async function registerPWA() {
-  if (typeof window === "undefined") return;
-  if (!("serviceWorker" in navigator)) return;
+  if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
   const url = new URL(window.location.href);
-  const refuse =
-    !import.meta.env.PROD ||
-    window.self !== window.top ||
-    isPreviewHost(window.location.hostname) ||
-    url.searchParams.get("sw") === "off";
+  const disabled =
+    !import.meta.env.PROD || window.self !== window.top || url.searchParams.get("sw") === "off";
 
-  if (refuse) {
+  if (disabled) {
     await unregisterMatching();
     return;
   }
 
   try {
     await navigator.serviceWorker.register(SW_URL, { scope: "/" });
-  } catch (err) {
-    console.warn("[pwa] SW registration failed", err);
+  } catch (error) {
+    console.warn("[pwa] Service-worker registration failed", error);
   }
 }

@@ -37,9 +37,7 @@ export function AiChatBubble() {
   const [penOpen, setPenOpen] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
 
-  const handwrittenUrls = messages
-    .map((m) => m.image_url)
-    .filter((u): u is string => Boolean(u));
+  const handwrittenUrls = messages.map((m) => m.image_url).filter((u): u is string => Boolean(u));
 
   const exportPdf = async (urls: string[], name = "topper-ai-notes.pdf") => {
     setPdfBusy(true);
@@ -54,7 +52,6 @@ export function AiChatBubble() {
   };
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
-
 
   const quota = useQuery({ queryKey: ["ai-chat-quota"], queryFn: () => getAiChatQuota() });
   const isPro = !!quota.data?.is_pro;

@@ -14,10 +14,19 @@ export function useAntiCheat(enabled: boolean = true) {
 
     const onKey = (e: KeyboardEvent) => {
       const k = e.key.toLowerCase();
-      if (k === "printscreen") { e.preventDefault(); return; }
+      if (k === "printscreen") {
+        e.preventDefault();
+        return;
+      }
       const mod = e.ctrlKey || e.metaKey;
-      if (mod && ["p", "s", "c", "x", "u"].includes(k)) { e.preventDefault(); return; }
-      if (mod && e.shiftKey && ["i", "j", "c"].includes(k)) { e.preventDefault(); return; }
+      if (mod && ["p", "s", "c", "x", "u"].includes(k)) {
+        e.preventDefault();
+        return;
+      }
+      if (mod && e.shiftKey && ["i", "j", "c"].includes(k)) {
+        e.preventDefault();
+        return;
+      }
       if (k === "f12") e.preventDefault();
     };
 

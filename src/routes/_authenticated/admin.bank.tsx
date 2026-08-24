@@ -73,24 +73,41 @@ function BankAdmin() {
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4">
       <section className="grid grid-cols-3 gap-3">
-        <StatCard icon={<Database className="h-4 w-4" />} label="Total in bank" value={stats.data?.total ?? 0} />
-        <StatCard icon={<FileJson className="h-4 w-4" />} label="AI-saved" value={stats.data?.ai ?? 0} />
-        <StatCard icon={<Upload className="h-4 w-4" />} label="Admin-uploaded" value={stats.data?.admin ?? 0} />
+        <StatCard
+          icon={<Database className="h-4 w-4" />}
+          label="Total in bank"
+          value={stats.data?.total ?? 0}
+        />
+        <StatCard
+          icon={<FileJson className="h-4 w-4" />}
+          label="AI-saved"
+          value={stats.data?.ai ?? 0}
+        />
+        <StatCard
+          icon={<Upload className="h-4 w-4" />}
+          label="Admin-uploaded"
+          value={stats.data?.admin ?? 0}
+        />
       </section>
 
       <section className="rounded-2xl border border-border bg-card p-4">
         <h2 className="text-base font-semibold">Bulk upload questions (JSON)</h2>
         <p className="mt-1 text-xs text-muted-foreground">
-          Root must be an array. Each item needs <code>question</code>, <code>options</code> (A/B/C/D),
-          and <code>correct</code>. Optional: <code>hint</code>, <code>explanation</code>,
-          <code>profession</code> (pcm/pcb), <code>chapter_id</code>, <code>subject_code</code>.
+          Root must be an array. Each item needs <code>question</code>, <code>options</code>{" "}
+          (A/B/C/D), and <code>correct</code>. Optional: <code>hint</code>, <code>explanation</code>
+          ,<code>profession</code> (pcm/pcb), <code>chapter_id</code>, <code>subject_code</code>.
         </p>
 
         <div className="mt-3 flex flex-wrap gap-2">
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm hover:bg-muted">
             <Upload className="h-4 w-4" />
             <span>{busy ? "Reading…" : "Choose JSON file"}</span>
-            <input type="file" accept="application/json,.json" className="hidden" onChange={onFile} />
+            <input
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={onFile}
+            />
           </label>
           <button
             type="button"
@@ -127,7 +144,10 @@ function BankAdmin() {
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">{icon}{label}</div>
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        {icon}
+        {label}
+      </div>
       <div className="mt-1 text-2xl font-bold">{value.toLocaleString()}</div>
     </div>
   );

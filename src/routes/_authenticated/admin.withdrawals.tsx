@@ -14,8 +14,12 @@ function AdminWithdrawals() {
   const qc = useQueryClient();
   const list = useQuery({ queryKey: ["admin-wd"], queryFn: () => adminListWithdrawals() });
   const setStatus = useMutation({
-    mutationFn: (v: { withdrawal_id: string; status: "processed" | "rejected" }) => adminSetWithdrawalStatus({ data: v }),
-    onSuccess: () => { toast.success("Updated"); qc.invalidateQueries({ queryKey: ["admin-wd"] }); },
+    mutationFn: (v: { withdrawal_id: string; status: "processed" | "rejected" }) =>
+      adminSetWithdrawalStatus({ data: v }),
+    onSuccess: () => {
+      toast.success("Updated");
+      qc.invalidateQueries({ queryKey: ["admin-wd"] });
+    },
     onError: (e: Error) => toast.error(failMessage(e)),
   });
 
@@ -39,24 +43,46 @@ function AdminWithdrawals() {
                 <td className="p-3 font-semibold">₹{Number(w.amount).toFixed(2)}</td>
                 <td className="p-3 text-xs uppercase">{w.method}</td>
                 <td className="p-3 text-xs text-muted-foreground">
-                  {w.upi_id ?? `${w.account_name ?? ""} · ${w.account_number ?? ""} · ${w.ifsc ?? ""}`}
+                  {w.upi_id ??
+                    `${w.account_name ?? ""} · ${w.account_number ?? ""} · ${w.ifsc ?? ""}`}
                 </td>
                 <td className="p-3">
-                  <span className={`rounded-full px-2 py-0.5 text-xs ${
-                    w.status === "processed" ? "bg-green-500/10 text-green-600"
-                    : w.status === "rejected" ? "bg-red-500/10 text-red-600"
-                    : "bg-yellow-500/10 text-yellow-600"
-                  }`}>{w.status}</span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs ${
+                      w.status === "processed"
+                        ? "bg-green-500/10 text-green-600"
+                        : w.status === "rejected"
+                          ? "bg-red-500/10 text-red-600"
+                          : "bg-yellow-500/10 text-yellow-600"
+                    }`}
+                  >
+                    {w.status}
+                  </span>
                 </td>
-                <td className="p-3 text-xs text-muted-foreground">{new Date(w.created_at).toLocaleString()}</td>
+                <td className="p-3 text-xs text-muted-foreground">
+                  {new Date(w.created_at).toLocaleString()}
+                </td>
                 <td className="p-3 text-right">
                   {w.status === "pending" && (
                     <div className="flex justify-end gap-2">
-                      <Button size="sm" onClick={() => setStatus.mutate({ withdrawal_id: w.id, status: "processed" })}>
-                        <Check className="mr-1 h-3.5 w-3.5" />Approve
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          setStatus.mutate({ withdrawal_id: w.id, status: "processed" })
+                        }
+                      >
+                        <Check className="mr-1 h-3.5 w-3.5" />
+                        Approve
                       </Button>
-                      <Button size="sm" variant="destructive" onClick={() => setStatus.mutate({ withdrawal_id: w.id, status: "rejected" })}>
-                        <X className="mr-1 h-3.5 w-3.5" />Reject
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() =>
+                          setStatus.mutate({ withdrawal_id: w.id, status: "rejected" })
+                        }
+                      >
+                        <X className="mr-1 h-3.5 w-3.5" />
+                        Reject
                       </Button>
                     </div>
                   )}
@@ -66,7 +92,9 @@ function AdminWithdrawals() {
           </tbody>
         </table>
         {list.data && list.data.length === 0 && (
-          <div className="p-8 text-center text-sm text-muted-foreground">No withdrawal requests.</div>
+          <div className="p-8 text-center text-sm text-muted-foreground">
+            No withdrawal requests.
+          </div>
         )}
       </div>
     </section>

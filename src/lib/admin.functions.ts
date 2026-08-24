@@ -3,8 +3,14 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sendTelegramAlert } from "@/lib/telegram-alert";
 
-async function assertAdmin(ctx: { supabase: import("@supabase/supabase-js").SupabaseClient; userId: string }) {
-  const { data, error } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
+async function assertAdmin(ctx: {
+  supabase: import("@supabase/supabase-js").SupabaseClient;
+  userId: string;
+}) {
+  const { data, error } = await ctx.supabase.rpc("has_role", {
+    _user_id: ctx.userId,
+    _role: "admin",
+  });
   if (error) throw error;
   if (!data) throw new Error("Forbidden: admin only");
 }
@@ -12,7 +18,10 @@ async function assertAdmin(ctx: { supabase: import("@supabase/supabase-js").Supa
 export const amIAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    const { data } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
     return { admin: !!data };
   });
 
@@ -24,9 +33,18 @@ export const adminStats = createServerFn({ method: "GET" })
       context.supabase.from("users").select("id", { count: "exact", head: true }),
       context.supabase.from("forum_posts").select("id", { count: "exact", head: true }),
       context.supabase.from("doubts").select("id", { count: "exact", head: true }),
-      context.supabase.from("post_reports").select("id", { count: "exact", head: true }).eq("status", "pending"),
-      context.supabase.from("withdrawal_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
-      context.supabase.from("battle_sessions").select("id", { count: "exact", head: true }).not("submitted_at", "is", null),
+      context.supabase
+        .from("post_reports")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending"),
+      context.supabase
+        .from("withdrawal_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending"),
+      context.supabase
+        .from("battle_sessions")
+        .select("id", { count: "exact", head: true })
+        .not("submitted_at", "is", null),
     ]);
     return {
       users: users.count ?? 0,
@@ -46,10 +64,15 @@ export const adminListUsers = createServerFn({ method: "GET" })
     // RLS on `users` limits reads to the caller's own row, so the admin list
     // must go through the service-role client (after the admin check above).
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    let q = supabaseAdmin.from("users")
-      .select("id, email, full_name, phone, profession, is_banned, balance, reputation, streak, created_at, is_pro, pro_until")
-      .order("created_at", { ascending: false }).limit(100);
-    if (data.q) q = q.or(`email.ilike.%${data.q}%,full_name.ilike.%${data.q}%,phone.ilike.%${data.q}%`);
+    let q = supabaseAdmin
+      .from("users")
+      .select(
+        "id, email, full_name, phone, profession, is_banned, balance, reputation, streak, created_at, is_pro, pro_until",
+      )
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (data.q)
+      q = q.or(`email.ilike.%${data.q}%,full_name.ilike.%${data.q}%,phone.ilike.%${data.q}%`);
     const { data: rows, error } = await q;
     if (error) throw error;
     return rows ?? [];
@@ -58,28 +81,37 @@ export const adminListUsers = createServerFn({ method: "GET" })
 export const adminGrantPro = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      user_id: z.string().uuid(),
-      plan: z.enum(["weekly", "monthly", "yearly", "revoke"]),
-    }).parse(d),
+    z
+      .object({
+        user_id: z.string().uuid(),
+        plan: z.enum(["weekly", "monthly", "yearly", "revoke"]),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     if (data.plan === "revoke") {
-      const { error } = await supabaseAdmin.from("users")
-        .update({ is_pro: false, pro_until: null }).eq("id", data.user_id);
+      const { error } = await supabaseAdmin
+        .from("users")
+        .update({ is_pro: false, pro_until: null })
+        .eq("id", data.user_id);
       if (error) throw error;
       return { ok: true };
     }
     const days = data.plan === "yearly" ? 365 : data.plan === "monthly" ? 30 : 7;
     const { data: u } = await supabaseAdmin
-      .from("users").select("pro_until").eq("id", data.user_id).maybeSingle();
-    const base = u?.pro_until && new Date(u.pro_until as string).getTime() > Date.now()
-      ? new Date(u.pro_until as string).getTime()
-      : Date.now();
+      .from("users")
+      .select("pro_until")
+      .eq("id", data.user_id)
+      .maybeSingle();
+    const base =
+      u?.pro_until && new Date(u.pro_until as string).getTime() > Date.now()
+        ? new Date(u.pro_until as string).getTime()
+        : Date.now();
     const until = new Date(base + days * 86400_000).toISOString();
-    const { error } = await supabaseAdmin.from("users")
+    const { error } = await supabaseAdmin
+      .from("users")
       .update({ is_pro: true, pro_since: new Date().toISOString(), pro_until: until })
       .eq("id", data.user_id);
     if (error) throw error;
@@ -88,12 +120,16 @@ export const adminGrantPro = createServerFn({ method: "POST" })
 
 export const adminSetBan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ user_id: z.string().uuid(), banned: z.boolean() }).parse(d))
+  .inputValidator((d: unknown) =>
+    z.object({ user_id: z.string().uuid(), banned: z.boolean() }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("users")
-      .update({ is_banned: data.banned }).eq("id", data.user_id);
+    const { error } = await supabaseAdmin
+      .from("users")
+      .update({ is_banned: data.banned })
+      .eq("id", data.user_id);
     if (error) throw error;
     return { ok: true };
   });
@@ -102,9 +138,12 @@ export const adminListReports = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { data, error } = await context.supabase.from("post_reports")
+    const { data, error } = await context.supabase
+      .from("post_reports")
       .select("id, target_type, target_id, reason, message, status, created_at, reporter_id")
-      .eq("status", "pending").order("created_at", { ascending: false }).limit(100);
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(100);
     if (error) throw error;
     return data ?? [];
   });
@@ -112,24 +151,35 @@ export const adminListReports = createServerFn({ method: "GET" })
 export const adminResolveReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      report_id: z.string().uuid(),
-      action: z.enum(["dismiss", "delete_content"]),
-    }).parse(d),
+    z
+      .object({
+        report_id: z.string().uuid(),
+        action: z.enum(["dismiss", "delete_content"]),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { data: report, error } = await context.supabase.from("post_reports")
-      .select("target_type, target_id").eq("id", data.report_id).maybeSingle();
+    const { data: report, error } = await context.supabase
+      .from("post_reports")
+      .select("target_type, target_id")
+      .eq("id", data.report_id)
+      .maybeSingle();
     if (error) throw error;
     if (!report) throw new Error("report not found");
     if (data.action === "delete_content") {
-      const table = report.target_type === "forum_post" ? "forum_posts"
-        : report.target_type === "forum_reply" ? "forum_replies"
-        : report.target_type === "doubt" ? "doubts" : "doubt_replies";
+      const table =
+        report.target_type === "forum_post"
+          ? "forum_posts"
+          : report.target_type === "forum_reply"
+            ? "forum_replies"
+            : report.target_type === "doubt"
+              ? "doubts"
+              : "doubt_replies";
       await context.supabase.from(table).delete().eq("id", report.target_id);
     }
-    await context.supabase.from("post_reports")
+    await context.supabase
+      .from("post_reports")
       .update({ status: data.action === "delete_content" ? "resolved" : "dismissed" })
       .eq("id", data.report_id);
     return { ok: true };
@@ -139,9 +189,13 @@ export const adminListWithdrawals = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { data, error } = await context.supabase.from("withdrawal_requests")
-      .select("id, user_id, amount, method, upi_id, account_name, account_number, ifsc, status, process_after, created_at")
-      .order("created_at", { ascending: false }).limit(100);
+    const { data, error } = await context.supabase
+      .from("withdrawal_requests")
+      .select(
+        "id, user_id, amount, method, upi_id, account_name, account_number, ifsc, status, process_after, created_at",
+      )
+      .order("created_at", { ascending: false })
+      .limit(100);
     if (error) throw error;
     return data ?? [];
   });
@@ -149,14 +203,17 @@ export const adminListWithdrawals = createServerFn({ method: "GET" })
 export const adminSetWithdrawalStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      withdrawal_id: z.string().uuid(),
-      status: z.enum(["processed", "rejected"]),
-    }).parse(d),
+    z
+      .object({
+        withdrawal_id: z.string().uuid(),
+        status: z.enum(["processed", "rejected"]),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { error } = await context.supabase.from("withdrawal_requests")
+    const { error } = await context.supabase
+      .from("withdrawal_requests")
       .update({ status: data.status, processed_at: new Date().toISOString() })
       .eq("id", data.withdrawal_id);
     if (error) throw error;
@@ -169,8 +226,10 @@ export const adminReportsChart = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertAdmin(context);
     // Signups per day, last 14 days
-    const { data: users } = await context.supabase.from("users")
-      .select("created_at").gte("created_at", new Date(Date.now() - 14 * 86400e3).toISOString());
+    const { data: users } = await context.supabase
+      .from("users")
+      .select("created_at")
+      .gte("created_at", new Date(Date.now() - 14 * 86400e3).toISOString());
     const byDay: Record<string, number> = {};
     for (const u of users ?? []) {
       const d = (u.created_at as string).slice(0, 10);
@@ -201,7 +260,6 @@ const bankRowSchema = z.object({
   subject_code: z.string().nullable().optional(),
   exam: z.string().max(40).nullable().optional(),
   exam_year: z.number().int().min(1980).max(2100).nullable().optional(),
-
 });
 
 const bulkUploadSchema = z.object({
@@ -249,8 +307,14 @@ export const adminBankStats = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [total, ai, admin] = await Promise.all([
       supabaseAdmin.from("question_bank").select("id", { count: "exact", head: true }),
-      supabaseAdmin.from("question_bank").select("id", { count: "exact", head: true }).eq("source", "ai"),
-      supabaseAdmin.from("question_bank").select("id", { count: "exact", head: true }).eq("source", "admin"),
+      supabaseAdmin
+        .from("question_bank")
+        .select("id", { count: "exact", head: true })
+        .eq("source", "ai"),
+      supabaseAdmin
+        .from("question_bank")
+        .select("id", { count: "exact", head: true })
+        .eq("source", "admin"),
     ]);
     return {
       total: total.count ?? 0,
@@ -258,7 +322,6 @@ export const adminBankStats = createServerFn({ method: "GET" })
       admin: admin.count ?? 0,
     };
   });
-
 
 /* ---------------- Owner-only: manage admins ---------------- */
 
@@ -283,12 +346,16 @@ export const ownerListAdmins = createServerFn({ method: "GET" })
     assertOwner(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: roles, error } = await supabaseAdmin
-      .from("user_roles").select("user_id, role, created_at").eq("role", "admin");
+      .from("user_roles")
+      .select("user_id, role, created_at")
+      .eq("role", "admin");
     if (error) throw error;
     const ids = (roles ?? []).map((r) => r.user_id as string);
     if (!ids.length) return [];
     const { data: users } = await supabaseAdmin
-      .from("users").select("id, email, full_name, avatar_url").in("id", ids);
+      .from("users")
+      .select("id, email, full_name, avatar_url")
+      .in("id", ids);
     return (roles ?? []).map((r) => {
       const u = users?.find((x) => x.id === r.user_id);
       return {
@@ -305,7 +372,12 @@ export const ownerListAdmins = createServerFn({ method: "GET" })
 export const ownerSetAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ email: z.string().email().optional(), user_id: z.string().uuid().optional(), make: z.boolean() })
+    z
+      .object({
+        email: z.string().email().optional(),
+        user_id: z.string().uuid().optional(),
+        make: z.boolean(),
+      })
       .refine((v) => v.email || v.user_id, "email or user_id required")
       .parse(d),
   )
@@ -316,23 +388,36 @@ export const ownerSetAdmin = createServerFn({ method: "POST" })
     let userId = data.user_id;
     let email = data.email?.toLowerCase();
     if (!userId && email) {
-      const { data: u } = await supabaseAdmin.from("users").select("id, email").ilike("email", email).maybeSingle();
+      const { data: u } = await supabaseAdmin
+        .from("users")
+        .select("id, email")
+        .ilike("email", email)
+        .maybeSingle();
       if (!u) throw new Error("No user found with that email. They must sign up first.");
       userId = u.id as string;
     } else if (userId && !email) {
-      const { data: u } = await supabaseAdmin.from("users").select("email").eq("id", userId).maybeSingle();
+      const { data: u } = await supabaseAdmin
+        .from("users")
+        .select("email")
+        .eq("id", userId)
+        .maybeSingle();
       email = (u?.email as string | undefined)?.toLowerCase();
     }
 
-    if (!data.make && email === OWNER_EMAIL) throw new Error("The owner account cannot be removed.");
+    if (!data.make && email === OWNER_EMAIL)
+      throw new Error("The owner account cannot be removed.");
 
     if (data.make) {
       const { error } = await supabaseAdmin
-        .from("user_roles").insert({ user_id: userId!, role: "admin" });
+        .from("user_roles")
+        .insert({ user_id: userId!, role: "admin" });
       if (error && !`${error.message}`.includes("duplicate")) throw error;
     } else {
       const { error } = await supabaseAdmin
-        .from("user_roles").delete().eq("user_id", userId!).eq("role", "admin");
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId!)
+        .eq("role", "admin");
       if (error) throw error;
     }
     return { ok: true, user_id: userId, email };
@@ -343,12 +428,14 @@ export const ownerSetAdmin = createServerFn({ method: "POST" })
 export const adminBroadcast = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({
-      title: z.string().trim().min(3).max(120),
-      body: z.string().trim().max(1000).optional().default(""),
-      link: z.string().trim().max(300).optional().default(""),
-      audience: z.enum(["all", "pro", "free"]).optional().default("all"),
-    }).parse(d),
+    z
+      .object({
+        title: z.string().trim().min(3).max(120),
+        body: z.string().trim().max(1000).optional().default(""),
+        link: z.string().trim().max(300).optional().default(""),
+        audience: z.enum(["all", "pro", "free"]).optional().default("all"),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -381,7 +468,9 @@ export const adminBroadcast = createServerFn({ method: "POST" })
       sent += chunk.length;
     }
 
-    await sendTelegramAlert(`📣 Announcement sent to ${sent} users\n<b>${data.title}</b>\n${data.body ?? ""}`);
+    await sendTelegramAlert(
+      `📣 Announcement sent to ${sent} users\n<b>${data.title}</b>\n${data.body ?? ""}`,
+    );
     return { sent };
   });
 
@@ -397,12 +486,21 @@ export const adminListAnnouncements = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(300);
     if (error) throw error;
-    const seen = new Map<string, { title: string; body: string | null; created_at: string; count: number }>();
+    const seen = new Map<
+      string,
+      { title: string; body: string | null; created_at: string; count: number }
+    >();
     for (const n of data ?? []) {
       const key = `${n.title}|${(n.created_at as string).slice(0, 16)}`;
       const cur = seen.get(key);
       if (cur) cur.count += 1;
-      else seen.set(key, { title: n.title as string, body: (n.body as string) ?? null, created_at: n.created_at as string, count: 1 });
+      else
+        seen.set(key, {
+          title: n.title as string,
+          body: (n.body as string) ?? null,
+          created_at: n.created_at as string,
+          count: 1,
+        });
     }
     return Array.from(seen.values()).slice(0, 20);
   });

@@ -11,6 +11,11 @@ node_modules
 dist
 dist-ssr
 .output
+
+# Local environment files
+.env
+.env.*
+!.env.example
 .vinxi
 .tanstack/**
 .nitro
@@ -30,3 +35,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.vercel

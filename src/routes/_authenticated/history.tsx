@@ -32,7 +32,12 @@ function HistoryPage() {
     <main className="min-h-screen bg-background">
       <header className="border-b bg-background">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4">
-          <Button variant="ghost" size="icon" onClick={() => nav({ to: "/home" })} aria-label="Back">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => nav({ to: "/home" })}
+            aria-label="Back"
+          >
             <ChevronLeft className="h-5 w-5" />
           </Button>
           <div>
@@ -76,7 +81,8 @@ function HistoryPage() {
                     <XCircle className="h-3.5 w-3.5" /> {r.incorrect_count ?? 0}
                   </span>
                   <span className="inline-flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" /> {Math.round((r.time_taken_seconds ?? 0) / 60)}m
+                    <Clock className="h-3.5 w-3.5" /> {Math.round((r.time_taken_seconds ?? 0) / 60)}
+                    m
                   </span>
                 </div>
               </li>

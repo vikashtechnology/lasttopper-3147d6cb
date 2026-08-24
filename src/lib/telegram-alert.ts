@@ -1,29 +1,30 @@
-// Server-only helper (safe to import from *.functions.ts because it only
-// reads process.env inside the function body, never at module scope).
+// Server-only Telegram Bot API helper.
 
-function creds() {
-  const chat = process.env.REPORT_TELEGRAM_CHAT_ID;
-  const gwKey = process.env.LOVABLE_API_KEY;
-  const tgKey = (process.env.TELEGRAM_API_KEY_1 ?? process.env.TELEGRAM_API_KEY);
-  if (!chat || !gwKey || !tgKey) return null;
-  return { chat, gwKey, tgKey };
+function credentials() {
+  const chatId = process.env.REPORT_TELEGRAM_CHAT_ID?.trim();
+  const botToken = (process.env.TELEGRAM_API_KEY_1 ?? process.env.TELEGRAM_API_KEY)?.trim();
+  if (!chatId || !botToken) return null;
+  return { chatId, botToken };
+}
+
+function telegramEndpoint(botToken: string, method: string) {
+  return `https://api.telegram.org/bot${botToken}/${method}`;
 }
 
 export async function sendTelegramAlert(text: string): Promise<void> {
   try {
-    const c = creds();
-    if (!c) return;
-    await fetch("https://connector-gateway.lovable.dev/telegram/sendMessage", {
+    const config = credentials();
+    if (!config) return;
+    const response = await fetch(telegramEndpoint(config.botToken, "sendMessage"), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${c.gwKey}`,
-        "X-Connection-Api-Key": c.tgKey,
-      },
-      body: JSON.stringify({ chat_id: c.chat, text, parse_mode: "HTML" }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: config.chatId, text, parse_mode: "HTML" }),
     });
-  } catch (e) {
-    console.error("[telegram] send failed", e);
+    if (!response.ok) {
+      console.error(`[telegram] sendMessage failed [${response.status}]`);
+    }
+  } catch (error) {
+    console.error("[telegram] send failed", error);
   }
 }
 
@@ -66,11 +67,7 @@ export type ReportRow = [label: string, value: unknown];
  *   Name   : Vikash Rao
  *   Email  : a@b.com
  */
-export function buildReport(
-  title: string,
-  rows: ReportRow[],
-  footer?: string[],
-): string {
+export function buildReport(title: string, rows: ReportRow[], footer?: string[]): string {
   const clean = rows.filter(([, v]) => v !== undefined && v !== null && String(v).trim() !== "");
   const width = clean.reduce((w, [l]) => Math.max(w, l.length), 0);
   const head = `── ${title.toUpperCase()} ${"─".repeat(Math.max(4, 34 - title.length))}`;
@@ -83,7 +80,12 @@ export function buildReport(
 /** Slugify a name so it is safe inside a Telegram filename. */
 export function safeFileName(parts: string[], ext: "txt" | "json"): string {
   const base = parts
-    .map((p) => String(p ?? "").trim().replace(/[^\w.-]+/g, "_").replace(/^_+|_+$/g, ""))
+    .map((p) =>
+      String(p ?? "")
+        .trim()
+        .replace(/[^\w.-]+/g, "_")
+        .replace(/^_+|_+$/g, ""),
+    )
     .filter(Boolean)
     .join("+")
     .slice(0, 80);
@@ -100,10 +102,10 @@ export async function sendTelegramDocument(
   caption?: string,
 ): Promise<void> {
   try {
-    const c = creds();
-    if (!c) return;
+    const config = credentials();
+    if (!config) return;
     const form = new FormData();
-    form.append("chat_id", c.chat);
+    form.append("chat_id", config.chatId);
     if (caption) {
       form.append("caption", caption.slice(0, 1000));
       form.append("parse_mode", "HTML");
@@ -111,20 +113,15 @@ export async function sendTelegramDocument(
     const type = fileName.endsWith(".json") ? "application/json" : "text/plain";
     form.append("document", new Blob([content], { type }), fileName);
 
-    const res = await fetch("https://connector-gateway.lovable.dev/telegram/sendDocument", {
+    const response = await fetch(telegramEndpoint(config.botToken, "sendDocument"), {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${c.gwKey}`,
-        "X-Connection-Api-Key": c.tgKey,
-      },
       body: form,
     });
-    if (!res.ok) {
-      const body = await res.text();
-      console.error(`[telegram] sendDocument failed [${res.status}]: ${body}`);
+    if (!response.ok) {
+      console.error(`[telegram] sendDocument failed [${response.status}]`);
       if (caption) await sendTelegramAlert(caption);
     }
-  } catch (e) {
-    console.error("[telegram] document send failed", e);
+  } catch (error) {
+    console.error("[telegram] document send failed", error);
   }
 }

@@ -1,5 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { getStreakDetails } from "@/lib/user.functions";
 import { Flame, Trophy, CalendarClock } from "lucide-react";
 
@@ -61,13 +67,17 @@ export function StreakDetailsDialog({ open, onOpenChange, fallbackStreak = 0 }: 
             <span className="flex items-center gap-2 text-muted-foreground">
               <CalendarClock className="h-4 w-4" /> Last streak day
             </span>
-            <span className="font-medium">{q.isLoading ? "…" : fmtDate(q.data?.last_streak_date ?? null)}</span>
+            <span className="font-medium">
+              {q.isLoading ? "…" : fmtDate(q.data?.last_streak_date ?? null)}
+            </span>
           </div>
           <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
             <span className="flex items-center gap-2 text-muted-foreground">
               <CalendarClock className="h-4 w-4" /> Last activity
             </span>
-            <span className="font-medium">{q.isLoading ? "…" : fmtDate(q.data?.last_active_date ?? null)}</span>
+            <span className="font-medium">
+              {q.isLoading ? "…" : fmtDate(q.data?.last_active_date ?? null)}
+            </span>
           </div>
         </div>
       </DialogContent>

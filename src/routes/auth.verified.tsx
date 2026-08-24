@@ -65,7 +65,6 @@ function VerifiedPage() {
     })();
   }, []);
 
-
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-6">
       <div className="w-full max-w-sm rounded-2xl border border-border bg-card/80 p-8 text-center shadow-lg backdrop-blur-md">

@@ -16,11 +16,31 @@ function AdminOverview() {
     <section className="mx-auto max-w-5xl px-4 py-6 space-y-6">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Card icon={<Users className="h-4 w-4" />} label="Users" value={stats.data?.users ?? "—"} />
-        <Card icon={<MessageSquare className="h-4 w-4" />} label="Posts" value={stats.data?.posts ?? "—"} />
-        <Card icon={<HelpCircle className="h-4 w-4" />} label="Doubts" value={stats.data?.doubts ?? "—"} />
-        <Card icon={<Flag className="h-4 w-4" />} label="Pending reports" value={stats.data?.pending_reports ?? "—"} />
-        <Card icon={<Wallet className="h-4 w-4" />} label="Pending withdrawals" value={stats.data?.pending_withdrawals ?? "—"} />
-        <Card icon={<Swords className="h-4 w-4" />} label="Battles played" value={stats.data?.completed_battles ?? "—"} />
+        <Card
+          icon={<MessageSquare className="h-4 w-4" />}
+          label="Posts"
+          value={stats.data?.posts ?? "—"}
+        />
+        <Card
+          icon={<HelpCircle className="h-4 w-4" />}
+          label="Doubts"
+          value={stats.data?.doubts ?? "—"}
+        />
+        <Card
+          icon={<Flag className="h-4 w-4" />}
+          label="Pending reports"
+          value={stats.data?.pending_reports ?? "—"}
+        />
+        <Card
+          icon={<Wallet className="h-4 w-4" />}
+          label="Pending withdrawals"
+          value={stats.data?.pending_withdrawals ?? "—"}
+        />
+        <Card
+          icon={<Swords className="h-4 w-4" />}
+          label="Battles played"
+          value={stats.data?.completed_battles ?? "—"}
+        />
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-4">
@@ -40,10 +60,21 @@ function AdminOverview() {
   );
 }
 
-function Card({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
+function Card({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+}) {
   return (
     <div className="rounded-2xl border border-border bg-card p-4">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">{icon}{label}</div>
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        {icon}
+        {label}
+      </div>
       <div className="mt-2 text-2xl font-semibold">{value}</div>
     </div>
   );

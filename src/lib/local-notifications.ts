@@ -75,7 +75,11 @@ export async function notifyNow(title: string, body: string, extraId?: number) {
       });
       return;
     }
-    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+    if (
+      typeof window !== "undefined" &&
+      "Notification" in window &&
+      Notification.permission === "granted"
+    ) {
       new Notification(title, { body, icon: "/app-icon-192.png" });
     }
   } catch {
@@ -97,7 +101,9 @@ export async function scheduleRecurringReminders() {
   try {
     const pending = await LocalNotifications.getPending();
     if (pending.notifications.length) {
-      await LocalNotifications.cancel({ notifications: pending.notifications.map((n) => ({ id: n.id })) });
+      await LocalNotifications.cancel({
+        notifications: pending.notifications.map((n) => ({ id: n.id })),
+      });
     }
 
     const notifications = [

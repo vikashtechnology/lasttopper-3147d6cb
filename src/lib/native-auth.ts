@@ -1,22 +1,35 @@
-/**
- * Google sign-in for the native Android/iOS shell.
- *
- * Google blocks OAuth inside embedded WebViews, so on native we open the
- * Lovable OAuth broker in the system browser (Chrome Custom Tab / SFSafari).
- * The broker redirects to https://<site>/auth/callback with the tokens, which
- * is an App Link / Universal Link, so Android/iOS hand it straight back to the
- * app. `__root.tsx` picks it up via `appUrlOpen`, closes the browser and sets
- * the Supabase session.
- */
+/** Google sign-in and deep-link helpers for the native Android/iOS shell. */
 export const NATIVE_CALLBACK_PATH = "/auth/callback";
 
 /** Custom URL scheme registered by the native app (lasttopper://…). */
 export const APP_SCHEME = "lasttopper";
 
-/** Public URL marker that survives the OAuth broker's own state handling. */
+/** Marks an OAuth callback that should return control to the installed app. */
 export const NATIVE_CALLBACK_MARKER = "native_app";
 
-/** Deep link that always re-opens the installed app with the OAuth tokens. */
+const configuredPublicUrl = String(import.meta.env.VITE_PUBLIC_APP_URL ?? "").trim();
+export const PUBLIC_APP_URL = (
+  configuredPublicUrl || "https://last-topper-web-test.vercel.app"
+).replace(/\/+$/, "");
+
+function hostnameOf(value: string): string | null {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return null;
+  }
+}
+
+/** HTTPS hosts permitted to open routes in the native app. */
+export const APP_DOMAINS = Array.from(
+  new Set(
+    [hostnameOf(PUBLIC_APP_URL), "last-topper-web-test.vercel.app"].filter(
+      (host): host is string => !!host,
+    ),
+  ),
+);
+
+/** Deep link that re-opens the installed app with OAuth callback parameters. */
 export function appSchemeCallbackUrl(params: Record<string, string>) {
   return `${APP_SCHEME}://auth/callback?${new URLSearchParams(params).toString()}`;
 }
@@ -30,53 +43,8 @@ export async function isNativeApp(): Promise<boolean> {
   }
 }
 
-function randomState() {
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
-  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-const STATE_KEY = "lt-oauth-state";
-
-export function readStoredOAuthState(): string | null {
-  try {
-    return window.localStorage.getItem(STATE_KEY);
-  } catch {
-    return null;
-  }
-}
-
-export function clearStoredOAuthState() {
-  try {
-    window.localStorage.removeItem(STATE_KEY);
-  } catch {
-    /* ignore */
-  }
-}
-
-/** Opens the Google consent flow in the real external browser (Chrome/Safari). */
-export async function startNativeGoogleSignIn(
-  extraParams?: Record<string, string>,
-) {
-  const state = randomState();
-  try {
-    window.localStorage.setItem(STATE_KEY, state);
-  } catch {
-    /* ignore */
-  }
-
-  const params = new URLSearchParams({
-    ...extraParams,
-    provider: "google",
-    redirect_uri: `${window.location.origin}${NATIVE_CALLBACK_PATH}?${NATIVE_CALLBACK_MARKER}=1`,
-    // The "native-" prefix tells the callback page to hand control back to the
-    // installed app (lasttopper:// deep link) if it opened in Chrome instead.
-    state: `native-${state}`,
-  });
-
-  const url = `${window.location.origin}/~oauth/initiate?${params.toString()}`;
-
-  // Preferred: hand the URL to the device's default browser app (Chrome /
-  // Safari), so Google sees a real browser and the app is fully backgrounded.
+/** Opens a provider authorization URL in the device's real browser. */
+export async function openNativeAuthUrl(url: string): Promise<void> {
   try {
     const { InAppBrowser } = await import("@capacitor/inappbrowser");
     await InAppBrowser.openInExternalBrowser({ url });
@@ -85,7 +53,6 @@ export async function startNativeGoogleSignIn(
     /* plugin unavailable — fall back below */
   }
 
-  // Fallback: Chrome Custom Tab / SFSafariViewController.
   try {
     const { Browser } = await import("@capacitor/browser");
     await Browser.open({ url, presentationStyle: "popover" });
@@ -107,13 +74,18 @@ export function nativeRouteFromUrl(href: string): string | null {
   }
 
   if (url.protocol === `${APP_SCHEME}:`) {
-    if (url.hostname === "app") return "/home";
-    if (url.hostname === "auth") return `${NATIVE_CALLBACK_PATH}${url.search}${url.hash}`;
-    const customPath = `/${url.hostname}${url.pathname}${url.search}`;
-    return customPath === "/" ? "/home" : customPath;
+    if (url.hostname === "app" || url.host === "app") {
+      const path = url.pathname === "/" ? "/home" : url.pathname;
+      return `${path}${url.search}${url.hash}`;
+    }
+    if (url.hostname === "auth" || url.host === "auth") {
+      return `${NATIVE_CALLBACK_PATH}${url.search}${url.hash}`;
+    }
+    const customPath = `/${url.hostname}${url.pathname}${url.search}${url.hash}`;
+    return customPath.startsWith("//") ? customPath.slice(1) : customPath;
   }
 
-  if (url.protocol === "https:") {
+  if (url.protocol === "https:" && APP_DOMAINS.includes(url.hostname)) {
     const path = `${url.pathname}${url.search}${url.hash}`;
     return path === "/" ? "/home" : path;
   }
@@ -136,7 +108,6 @@ export async function closeNativeBrowser() {
   }
 }
 
-
 export type OAuthCallbackTokens = {
   access_token: string;
   refresh_token: string;
@@ -154,7 +125,7 @@ export function parseOAuthCallback(href: string): OAuthCallbackTokens | null {
   }
   const fromSearch = url.searchParams;
   const fromHash = new URLSearchParams(url.hash.replace(/^#/, ""));
-  const get = (k: string) => fromSearch.get(k) ?? fromHash.get(k);
+  const get = (key: string) => fromSearch.get(key) ?? fromHash.get(key);
 
   const error = get("error_description") ?? get("error");
   const access_token = get("access_token");

@@ -32,7 +32,14 @@ export const Route = createFileRoute("/api/public/hooks/razorpay")({
         let payload: {
           event?: string;
           payload?: {
-            payment?: { entity?: { id?: string; order_id?: string; amount?: number; notes?: Record<string, string> } };
+            payment?: {
+              entity?: {
+                id?: string;
+                order_id?: string;
+                amount?: number;
+                notes?: Record<string, string>;
+              };
+            };
           };
         };
         try {
@@ -53,11 +60,15 @@ export const Route = createFileRoute("/api/public/hooks/razorpay")({
 
         if (purpose === "pro" || purpose === "pro_yearly" || purpose === "pro_weekly") {
           const { data: u } = await supabaseAdmin
-            .from("users").select("is_pro, pro_until").eq("id", userId).maybeSingle();
+            .from("users")
+            .select("is_pro, pro_until")
+            .eq("id", userId)
+            .maybeSingle();
           const days = purpose === "pro_yearly" ? 365 : purpose === "pro_weekly" ? 7 : 30;
-          const base = u?.pro_until && new Date(u.pro_until as string).getTime() > Date.now()
-            ? new Date(u.pro_until as string).getTime()
-            : Date.now();
+          const base =
+            u?.pro_until && new Date(u.pro_until as string).getTime() > Date.now()
+              ? new Date(u.pro_until as string).getTime()
+              : Date.now();
           const until = new Date(base + days * 86400_000).toISOString();
           await supabaseAdmin
             .from("users")
@@ -69,26 +80,36 @@ export const Route = createFileRoute("/api/public/hooks/razorpay")({
         if (purpose === "wallet_topup") {
           const note = `Wallet top-up via Razorpay (${paymentId})`;
           const { data: existing } = await supabaseAdmin
-            .from("wallet_transactions").select("id").eq("note", note).maybeSingle();
+            .from("wallet_transactions")
+            .select("id")
+            .eq("note", note)
+            .maybeSingle();
           if (existing) return new Response("ok");
           const inr = Math.floor((p?.amount ?? 0) / 100);
           if (inr <= 0) return new Response("ok");
           const { data: u } = await supabaseAdmin
-            .from("users").select("balance, referred_by, referral_credited").eq("id", userId).maybeSingle();
+            .from("users")
+            .select("balance, referred_by, referral_credited")
+            .eq("id", userId)
+            .maybeSingle();
           const cur = Number(u?.balance ?? 0);
           const next = cur + inr;
           await supabaseAdmin.from("users").update({ balance: next }).eq("id", userId);
           await supabaseAdmin.from("wallet_transactions").insert({
-            user_id: userId, type: "credit", category: "topup",
-            amount: inr, balance_after: next, note, reference_id: null,
+            user_id: userId,
+            type: "credit",
+            category: "topup",
+            amount: inr,
+            balance_after: next,
+            note,
+            reference_id: null,
           });
           // Referral reward on first ever top-up: a one-time Pro discount
           // voucher (15%–25% off) for the referrer.
           if (u?.referred_by && !u.referral_credited) {
             const { awardReferralVoucher } = await import("@/lib/voucher.server");
             const voucher = await awardReferralVoucher(u.referred_by);
-            await supabaseAdmin.from("users")
-              .update({ referral_credited: true }).eq("id", userId);
+            await supabaseAdmin.from("users").update({ referral_credited: true }).eq("id", userId);
             if (voucher) {
               await supabaseAdmin.from("notifications").insert({
                 user_id: u.referred_by,
