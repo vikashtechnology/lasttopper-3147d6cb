@@ -70,7 +70,8 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       },
       {
         title: "Sunday Mega Test",
-        description: "Join scheduled full-length tests and compete through score, rank, and XP.",
+        description:
+          "Complete every assigned task, join the full-length test, and compete for the first-place 7-day Pro prize.",
       },
       {
         title: "Verified Mega access tasks",

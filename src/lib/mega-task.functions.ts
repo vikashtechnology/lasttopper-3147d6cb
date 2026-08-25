@@ -13,6 +13,7 @@ export type MegaAccessTask = {
   description: string | null;
   provider: string | null;
   provider_placement_id: string | null;
+  provider_task_id: string | null;
   destination_url: string | null;
   min_score_percent: number;
   min_questions: number;
@@ -48,6 +49,15 @@ export type AdminMegaAccessTask = MegaAccessTask & {
   pending_count: number;
   configuration_ready: boolean;
   configuration_reason: string | null;
+};
+
+export type ProviderTaskCatalogItem = {
+  provider: string;
+  provider_task_id: string;
+  title: string;
+  description: string;
+  destination_url: string;
+  configuration_ready: boolean;
 };
 
 type AuthContext = {
@@ -99,8 +109,81 @@ function taskConfigurationReason(
 function parseTask(row: Record<string, unknown>): MegaAccessTask {
   return {
     ...(row as unknown as MegaAccessTask),
+    provider_task_id: typeof row.provider_task_id === "string" ? row.provider_task_id : null,
     min_score_percent: Number(row.min_score_percent ?? 0),
     min_questions: Number(row.min_questions ?? 1),
+  };
+}
+
+function requireProviderCatalogConfig() {
+  const provider = process.env.MEGA_TASK_CATALOG_PROVIDER_ID?.trim().toLowerCase() ?? "";
+  const catalogUrl = process.env.MEGA_TASK_CATALOG_URL?.trim() ?? "";
+  const bearerToken = process.env.MEGA_TASK_CATALOG_BEARER_TOKEN?.trim() ?? "";
+  if (!/^[a-z0-9][a-z0-9_-]{1,39}$/.test(provider) || provider === "admob") {
+    throw new Error("Task provider catalog is not configured with a valid partner ID");
+  }
+  if (!bearerToken) throw new Error("Task provider catalog credentials are not configured");
+
+  let url: URL;
+  try {
+    url = new URL(catalogUrl);
+  } catch {
+    throw new Error("Task provider catalog URL is not configured");
+  }
+  if (
+    url.protocol !== "https:" ||
+    url.username ||
+    url.password ||
+    url.hostname === "localhost" ||
+    url.hostname.endsWith(".local") ||
+    /^(?:127\.|10\.|192\.168\.|169\.254\.|0\.)/.test(url.hostname) ||
+    /^172\.(?:1[6-9]|2\d|3[01])\./.test(url.hostname)
+  ) {
+    throw new Error("Task provider catalog must use a public HTTPS URL");
+  }
+  return { provider, url, bearerToken };
+}
+
+const rawProviderTaskSchema = z
+  .object({
+    id: z.union([z.string(), z.number()]).optional(),
+    task_id: z.union([z.string(), z.number()]).optional(),
+    external_id: z.union([z.string(), z.number()]).optional(),
+    title: z.string().optional(),
+    name: z.string().optional(),
+    description: z.string().optional(),
+    destination_url: z.string().optional(),
+    task_url: z.string().optional(),
+    url: z.string().optional(),
+  })
+  .passthrough();
+
+function parseProviderCatalogItem(
+  input: unknown,
+  provider: string,
+): ProviderTaskCatalogItem | null {
+  const parsed = rawProviderTaskSchema.safeParse(input);
+  if (!parsed.success) return null;
+  const row = parsed.data;
+  const providerTaskId = String(row.external_id ?? row.task_id ?? row.id ?? "").trim();
+  const title = (row.title ?? row.name ?? "").trim();
+  const description = (row.description ?? "").trim();
+  const destinationUrl = (row.destination_url ?? row.task_url ?? row.url ?? "").trim();
+  if (!providerTaskId || providerTaskId.length > 200 || !title || title.length > 120) return null;
+  if (description.length > 500 || destinationUrl.length > 1000) return null;
+  try {
+    const url = new URL(destinationUrl);
+    if (url.protocol !== "https:" || !url.hostname || url.username || url.password) return null;
+  } catch {
+    return null;
+  }
+  return {
+    provider,
+    provider_task_id: providerTaskId,
+    title,
+    description,
+    destination_url: destinationUrl,
+    configuration_ready: !!getMegaTaskPartnerSecret(provider),
   };
 }
 
@@ -394,12 +477,69 @@ const taskSchema = z.object({
   description: z.string().trim().max(500).optional().default(""),
   provider: z.string().trim().toLowerCase().max(40).optional().default(""),
   provider_placement_id: z.string().trim().max(200).optional().default(""),
+  provider_task_id: z.string().trim().max(200).optional().default(""),
   destination_url: z.string().trim().max(1000).optional().default(""),
   min_score_percent: z.number().int().min(0).max(100),
   min_questions: z.number().int().min(1).max(500),
   is_active: z.boolean(),
   mega_test_ids: z.array(z.string().uuid()).max(20),
 });
+
+export const adminGetMegaProviderTasks = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<ProviderTaskCatalogItem[]> => {
+    await assertAdmin(context);
+    const { provider, url, bearerToken } = requireProviderCatalogConfig();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: "GET",
+        headers: {
+          accept: "application/json",
+          authorization: `Bearer ${bearerToken}`,
+        },
+        cache: "no-store",
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error("Task provider did not respond within 10 seconds");
+      }
+      throw new Error("Task provider could not be reached");
+    } finally {
+      clearTimeout(timeout);
+    }
+    if (!response.ok) {
+      throw new Error(`Task provider returned HTTP ${response.status}`);
+    }
+    const declaredSize = Number(response.headers.get("content-length") ?? 0);
+    if (declaredSize > 1_000_000) throw new Error("Task provider response is too large");
+    const rawBody = await response.text();
+    if (rawBody.length > 1_000_000) throw new Error("Task provider response is too large");
+
+    let payload: unknown;
+    try {
+      payload = JSON.parse(rawBody);
+    } catch {
+      throw new Error("Task provider returned invalid JSON");
+    }
+    const rawTasks = Array.isArray(payload)
+      ? payload
+      : payload && typeof payload === "object" && Array.isArray((payload as any).tasks)
+        ? (payload as any).tasks
+        : null;
+    if (!rawTasks) throw new Error("Task provider response must contain a tasks array");
+    if (rawTasks.length > 100) throw new Error("Task provider returned more than 100 tasks");
+
+    const unique = new Map<string, ProviderTaskCatalogItem>();
+    for (const rawTask of rawTasks) {
+      const item = parseProviderCatalogItem(rawTask, provider);
+      if (item) unique.set(item.provider_task_id, item);
+    }
+    return [...unique.values()];
+  });
 
 export const adminListMegaTaskTargets = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -482,7 +622,9 @@ export const adminSaveMegaAccessTask = createServerFn({ method: "POST" })
     if (data.task_type === "rewarded_ad") {
       if (data.provider !== "admob") throw new Error("Rewarded ads must use provider admob");
       if (!data.provider_placement_id) throw new Error("An AdMob ad unit ID is required");
-      if (data.destination_url) throw new Error("AdMob tasks cannot have a destination URL");
+      if (data.destination_url || data.provider_task_id) {
+        throw new Error("AdMob tasks cannot have a partner URL or catalog task ID");
+      }
       if (data.is_active && !isLiveAdUnit(data.provider_placement_id)) {
         throw new Error("Only a live AdMob rewarded ad unit can be activated");
       }
@@ -500,7 +642,12 @@ export const adminSaveMegaAccessTask = createServerFn({ method: "POST" })
         throw new Error("Destination URL must use HTTPS");
       }
       if (data.provider_placement_id) throw new Error("External links do not use an ad unit");
-    } else if (data.provider || data.provider_placement_id || data.destination_url) {
+    } else if (
+      data.provider ||
+      data.provider_placement_id ||
+      data.provider_task_id ||
+      data.destination_url
+    ) {
       throw new Error("Study tasks cannot include provider or destination fields");
     }
 
@@ -511,6 +658,7 @@ export const adminSaveMegaAccessTask = createServerFn({ method: "POST" })
       description: data.description || null,
       provider: data.provider || null,
       provider_placement_id: data.provider_placement_id || null,
+      provider_task_id: data.provider_task_id || null,
       destination_url: data.destination_url || null,
       min_score_percent: data.min_score_percent,
       min_questions: data.min_questions,
@@ -524,6 +672,17 @@ export const adminSaveMegaAccessTask = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const db = supabaseAdmin as any;
+    if (data.task_type === "external_link" && data.provider_task_id) {
+      let duplicateQuery = db
+        .from("mega_access_tasks")
+        .select("id")
+        .eq("provider", data.provider)
+        .eq("provider_task_id", data.provider_task_id);
+      if (data.id) duplicateQuery = duplicateQuery.neq("id", data.id);
+      const { data: duplicate, error: duplicateError } = await duplicateQuery.maybeSingle();
+      if (duplicateError) throw duplicateError;
+      if (duplicate) throw new Error("This provider task has already been imported");
+    }
     if (data.mega_test_ids.length) {
       const { data: tests, error: testError } = await db
         .from("mega_tests")
@@ -590,6 +749,7 @@ export const adminSaveMegaAccessTask = createServerFn({ method: "POST" })
       description: data.description || null,
       provider: ["rewarded_ad", "external_link"].includes(data.task_type) ? data.provider : null,
       provider_placement_id: data.task_type === "rewarded_ad" ? data.provider_placement_id : null,
+      provider_task_id: data.task_type === "external_link" ? data.provider_task_id || null : null,
       destination_url: data.task_type === "external_link" ? data.destination_url : null,
       min_score_percent: data.min_score_percent,
       min_questions: data.min_questions,

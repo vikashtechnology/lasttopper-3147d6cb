@@ -6,6 +6,7 @@ import {
   BookOpenCheck,
   CheckCircle2,
   Clock,
+  Crown,
   ExternalLink,
   Loader2,
   LockKeyhole,
@@ -32,12 +33,12 @@ export const Route = createFileRoute("/_authenticated/battle/mega")({
       { title: "Sunday Mega Test — Last Topper" },
       {
         name: "description",
-        content: "A task-qualified, rank-based Sunday Mega Test for JEE and NEET students.",
+        content: "Complete every assigned task and compete for the first-place 7-day Pro prize.",
       },
       { property: "og:title", content: "Sunday Mega Test" },
       {
         property: "og:description",
-        content: "Complete every assigned access task, register, and compete for rank.",
+        content: "Complete every assigned task, register, and compete for 7 days of Pro.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -167,11 +168,23 @@ function MegaTest() {
           <Trophy className="h-5 w-5" />
           <span className="text-xs uppercase tracking-widest">Sunday Mega Test</span>
         </div>
-        <h1 className="battle-title mt-2 text-2xl">Qualify. Compete. Earn your rank.</h1>
+        <h1 className="battle-title mt-2 text-2xl">Complete tasks. Compete for first place.</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {test.question_count} questions · 3-hour window · no entry payment · all assigned tasks
-          required
+          {test.question_count} questions · 3-hour window · free entry · all assigned tasks required
         </p>
+
+        <div className="mt-4 flex items-start gap-3 rounded-xl border border-yellow-400/40 bg-yellow-400/10 p-4">
+          <Crown className="mt-0.5 h-5 w-5 shrink-0 text-yellow-300" />
+          <div>
+            <div className="font-semibold text-yellow-100">
+              Only prize: 1st place gets 7-day Pro
+            </div>
+            <p className="mt-1 text-xs text-yellow-100/75">
+              The winner's current Pro time is extended by seven days automatically. There are no
+              second-place or third-place prizes.
+            </p>
+          </div>
+        </div>
 
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
           <Stat
@@ -296,11 +309,16 @@ function MegaTest() {
       </section>
 
       <section className="battle-glass p-5 text-sm">
-        <h2 className="font-semibold">Results</h2>
+        <h2 className="font-semibold">Results and prize</h2>
         <p className="mt-2 text-muted-foreground">
-          Scores and ranks are recorded from server-scored submissions. Mega Tests recognize
-          performance through score, rank, and XP only.
+          Scores and ranks are recorded from server-scored submissions. Only the final rank #1
+          receives a prize: a 7-day Pro extension awarded automatically after results are finalized.
         </p>
+        {isDone && entry?.rank === 1 && (
+          <div className="mt-3 rounded-xl border border-yellow-400/40 bg-yellow-400/10 p-3 text-yellow-100">
+            You finished #1. Your 7-day Pro prize has been added to your account.
+          </div>
+        )}
       </section>
     </div>
   );

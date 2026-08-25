@@ -757,6 +757,7 @@ export type Database = {
           min_score_percent: number;
           provider: string | null;
           provider_placement_id: string | null;
+          provider_task_id: string | null;
           task_type: string;
           title: string;
           updated_at: string;
@@ -772,6 +773,7 @@ export type Database = {
           min_score_percent?: number;
           provider?: string | null;
           provider_placement_id?: string | null;
+          provider_task_id?: string | null;
           task_type: string;
           title: string;
           updated_at?: string;
@@ -787,6 +789,7 @@ export type Database = {
           min_score_percent?: number;
           provider?: string | null;
           provider_placement_id?: string | null;
+          provider_task_id?: string | null;
           task_type?: string;
           title?: string;
           updated_at?: string;
@@ -800,6 +803,7 @@ export type Database = {
           created_at: string;
           id: string;
           mega_test_id: string;
+          pro_prize_awarded_at: string | null;
           rank: number | null;
           score: number | null;
           session_id: string | null;
@@ -811,6 +815,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           mega_test_id: string;
+          pro_prize_awarded_at?: string | null;
           rank?: number | null;
           score?: number | null;
           session_id?: string | null;
@@ -822,6 +827,7 @@ export type Database = {
           created_at?: string;
           id?: string;
           mega_test_id?: string;
+          pro_prize_awarded_at?: string | null;
           rank?: number | null;
           score?: number | null;
           session_id?: string | null;

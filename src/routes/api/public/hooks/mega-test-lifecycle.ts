@@ -99,6 +99,7 @@ async function generateMegaQuestionSet(): Promise<MegaQuestion[]> {
 /**
  * Called periodically by pg_cron to:
  *  - persist deterministic ranks for eligible submitted entries
+ *  - atomically award the rank #1 winner a seven-day Pro extension
  *  - mark tests as completed
  * Auth: private INTERNAL_HOOK_SECRET via Bearer or X-Internal-Hook-Secret.
  */
@@ -144,7 +145,8 @@ export const Route = createFileRoute("/api/public/hooks/mega-test-lifecycle")({
           for (let i = 0; i < ranked.length; i += 1) {
             const rank = i + 1;
             const entry = ranked[i];
-            // The service-only RPC validates the entry and persists rank atomically.
+            // The service-only RPC persists rank atomically and awards the only
+            // prize (seven days of Pro) when rank is exactly #1.
             const { error: rankError } = await (supabaseAdmin as any).rpc("record_mega_test_rank", {
               p_entry_id: entry.id,
               p_rank: rank,

@@ -60,7 +60,11 @@ function TermsPage() {
         <h2 className="text-lg font-semibold">4. Battles and Sunday Mega Test</h2>
         <ul className="list-disc pl-5">
           <li>Quick Battles, 1v1 Battles, and Sunday Mega Test registration are free.</li>
-          <li>Competition outcomes use score, rank, XP, streaks, and recognition.</li>
+          <li>Competition outcomes use server-scored answers and deterministic final ranks.</li>
+          <li>
+            The Sunday Mega Test has one prize only: final rank #1 receives a 7-day Pro extension.
+            There are no second-place or third-place prizes.
+          </li>
           <li>
             A Mega Test can be joined only after every active access task assigned to that specific
             test is completed. Registration is unavailable when no task has been assigned.

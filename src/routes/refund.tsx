@@ -76,6 +76,10 @@ function RefundPage() {
             purchase and does not create a refundable entitlement.
           </li>
           <li>Scores, ranks, XP, streaks, and recognition are not purchases or payment methods.</li>
+          <li>
+            The 7-day Pro extension awarded to the Sunday Mega Test's final rank #1 is a
+            non-purchased competition prize and has no refundable cash value.
+          </li>
         </ul>
 
         <h2 className="text-lg font-semibold">5. How to request help</h2>

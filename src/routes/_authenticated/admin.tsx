@@ -76,7 +76,7 @@ function AdminLayout() {
     { to: "/admin", icon: LayoutDashboard, label: "Overview" },
     { to: "/admin/users", icon: Users, label: "Users" },
     { to: "/admin/moderation", icon: Flag, label: "Moderation" },
-    { to: "/admin/tasks", icon: Gift, label: "Mega access tasks" },
+    { to: "/admin/tasks", icon: Gift, label: "Mega Tasks / Get Task" },
     { to: "/admin/bank", icon: Database, label: "Question Bank" },
     { to: "/admin/announcements", icon: Megaphone, label: "Announcements" },
     { to: "/admin/social", icon: Share2, label: "Social links" },

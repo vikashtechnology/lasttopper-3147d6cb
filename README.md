@@ -2,7 +2,7 @@
 
 Last Topper is an IIT-JEE and NEET learning platform with quizzes, AI coaching, revision, analytics, community, task-gated Mega Tests, one-time Pro passes, an installable PWA, and direct Android distribution.
 
-The product does not use wallets, deposits, withdrawals, transferable balances, or coin-based entry/rewards. Mega Test access is free and requires fresh completion of every admin-assigned task.
+The product does not use wallets, deposits, withdrawals, transferable balances, or coin-based entry/rewards. Mega Test access is free and requires fresh completion of every admin-assigned task. The Sunday Mega Test has exactly one prize: final rank #1 receives a 7-day Pro extension.
 
 ## Stack
 
@@ -59,4 +59,10 @@ For native builds, set the GitHub Actions repository variables `CAPACITOR_SERVER
 - Values beginning with `VITE_` are browser-visible and must never contain privileged credentials.
 - Google login credentials are configured in Google Cloud and Supabase Auth, not in this repository.
 
-The task-gating migrations and matching application must be deployed in one coordinated production window. Do not deploy the new application against an old database schema.
+### Mega Test task provider
+
+Admins can create tasks manually or use **Get Task** to import an external provider catalog. Catalog access is server-only and requires `MEGA_TASK_CATALOG_PROVIDER_ID`, `MEGA_TASK_CATALOG_URL`, and `MEGA_TASK_CATALOG_BEARER_TOKEN`.
+
+The catalog endpoint must be public HTTPS, accept `GET` with a Bearer token, and return either a root array or `{ "tasks": [...] }`. Each task needs an ID (`id`, `task_id`, or `external_id`), a title (`title` or `name`), and an HTTPS URL (`destination_url`, `task_url`, or `url`). Imported tasks are kept inactive unless the same provider also has a trusted callback secret in `MEGA_TASK_PARTNER_SECRETS` (or the single-provider variables). Opening or importing a provider task never marks it complete.
+
+The task-gating migrations and matching application must be deployed together. Validate them first on an isolated staging Supabase project connected only to Vercel Preview. Do not deploy this application against an old schema, and never apply untested task/prize migrations to the production-shared database.

@@ -5,6 +5,7 @@ import {
   BadgeCheck,
   BookOpenCheck,
   CircleOff,
+  Download,
   ExternalLink,
   Loader2,
   Play,
@@ -16,11 +17,13 @@ import { showAdMobIntegrationTest } from "@/lib/admob-task-client";
 import { failMessage } from "@/lib/friendly-error";
 import {
   adminDeleteMegaAccessTask,
+  adminGetMegaProviderTasks,
   adminListMegaAccessTasks,
   adminListMegaTaskTargets,
   adminSaveMegaAccessTask,
   type MegaAccessTask,
   type MegaTaskType,
+  type ProviderTaskCatalogItem,
 } from "@/lib/mega-task.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/tasks")({
@@ -34,6 +37,7 @@ type FormState = {
   description: string;
   provider: string;
   provider_placement_id: string;
+  provider_task_id: string;
   destination_url: string;
   min_score_percent: number;
   min_questions: number;
@@ -47,6 +51,7 @@ const emptyForm: FormState = {
   description: "Finish a fresh Daily Challenge after this task is assigned.",
   provider: "",
   provider_placement_id: "",
+  provider_task_id: "",
   destination_url: "",
   min_score_percent: 0,
   min_questions: 10,
@@ -66,6 +71,18 @@ function AdminMegaTasksPage() {
   });
   const [form, setForm] = useState<FormState>(emptyForm);
   const [showForm, setShowForm] = useState(false);
+  const [providerTasks, setProviderTasks] = useState<ProviderTaskCatalogItem[]>([]);
+  const [showProviderTasks, setShowProviderTasks] = useState(false);
+
+  const getProviderTasks = useMutation({
+    mutationFn: () => adminGetMegaProviderTasks(),
+    onSuccess: (items) => {
+      setProviderTasks(items);
+      setShowProviderTasks(true);
+      if (!items.length) toast.info("The provider has no available tasks right now");
+    },
+    onError: (error) => toast.error(failMessage(error, "Provider tasks could not be fetched")),
+  });
 
   const save = useMutation({
     mutationFn: () => adminSaveMegaAccessTask({ data: form }),
@@ -96,12 +113,28 @@ function AdminMegaTasksPage() {
       description: task.description ?? "",
       provider: task.provider ?? "",
       provider_placement_id: task.provider_placement_id ?? "",
+      provider_task_id: task.provider_task_id ?? "",
       destination_url: task.destination_url ?? "",
       min_score_percent: task.min_score_percent,
       min_questions: task.min_questions,
       is_active: task.is_active,
       mega_test_ids: task.assigned_mega_test_ids ?? [],
     });
+    setShowForm(true);
+  };
+
+  const importProviderTask = (task: ProviderTaskCatalogItem) => {
+    setForm({
+      ...emptyForm,
+      task_type: "external_link",
+      title: task.title,
+      description: task.description,
+      provider: task.provider,
+      provider_task_id: task.provider_task_id,
+      destination_url: task.destination_url,
+      is_active: task.configuration_ready,
+    });
+    setShowProviderTasks(false);
     setShowForm(true);
   };
 
@@ -118,15 +151,27 @@ function AdminMegaTasksPage() {
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Mega Test access tasks</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Mega Test tasks</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Create provider-verified or server-verified study requirements and assign them to future
-            Mega Tests. Students must finish every assigned task before registration.
+            Create tasks manually or use Get Task to import provider tasks, then assign them to
+            future Mega Tests. Students must finish every assigned task before registration.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button className="rounded-xl border border-border px-3 py-2 text-sm" onClick={runTestAd}>
             <Play className="mr-1.5 inline h-4 w-4" /> Test AdMob
+          </button>
+          <button
+            className="rounded-xl border border-border px-3 py-2 text-sm"
+            disabled={getProviderTasks.isPending}
+            onClick={() => getProviderTasks.mutate()}
+          >
+            {getProviderTasks.isPending ? (
+              <Loader2 className="mr-1.5 inline h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-1.5 inline h-4 w-4" />
+            )}
+            Get Task
           </button>
           <button
             className="battle-btn inline-flex items-center gap-2 px-4"
@@ -263,6 +308,71 @@ function AdminMegaTasksPage() {
         </div>
       )}
 
+      {showProviderTasks && (
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/70 p-4 backdrop-blur-sm"
+          onClick={() => setShowProviderTasks(false)}
+        >
+          <div
+            className="mx-auto my-6 w-full max-w-2xl rounded-2xl border border-border bg-background p-5 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">Get Task from provider</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Choose a task to import as a draft, then assign it to a future Sunday Mega Test.
+                </p>
+              </div>
+              <button
+                className="rounded-lg border border-border px-2 py-1 text-sm"
+                onClick={() => setShowProviderTasks(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="mt-5 space-y-3">
+              {providerTasks.length ? (
+                providerTasks.map((task) => (
+                  <article
+                    key={task.provider_task_id}
+                    className="rounded-xl border border-border p-4"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                          {task.provider} · {task.provider_task_id}
+                        </div>
+                        <h3 className="mt-1 font-semibold">{task.title}</h3>
+                        {task.description && (
+                          <p className="mt-1 text-sm text-muted-foreground">{task.description}</p>
+                        )}
+                        {!task.configuration_ready && (
+                          <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                            The task will be imported inactive until this provider's signed callback
+                            secret is configured.
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        className="battle-btn shrink-0 px-3 py-2 text-xs"
+                        onClick={() => importProviderTask(task)}
+                      >
+                        Import
+                      </button>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                  No provider tasks are currently available.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {showForm && (
         <div
           className="fixed inset-0 z-50 overflow-y-auto bg-black/70 p-4 backdrop-blur-sm"
@@ -295,6 +405,7 @@ function AdminMegaTasksPage() {
                       task_type,
                       provider: task_type === "rewarded_ad" ? "admob" : "",
                       provider_placement_id: "",
+                      provider_task_id: "",
                       destination_url: "",
                       min_score_percent: 0,
                       min_questions: task_type === "daily_challenge" ? 10 : 1,
@@ -365,7 +476,18 @@ function AdminMegaTasksPage() {
                       }
                     />
                   </Field>
-                  <Field label="HTTPS destination URL">
+                  <Field label="Provider task ID (optional)">
+                    <input
+                      className="admin-input"
+                      maxLength={200}
+                      placeholder="Filled by Get Task"
+                      value={form.provider_task_id}
+                      onChange={(event) =>
+                        setForm({ ...form, provider_task_id: event.target.value })
+                      }
+                    />
+                  </Field>
+                  <Field label="HTTPS destination URL" wide>
                     <div className="relative">
                       <ExternalLink className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                       <input
