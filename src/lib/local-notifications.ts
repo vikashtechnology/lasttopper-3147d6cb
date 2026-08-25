@@ -69,7 +69,7 @@ export async function notifyNow(title: string, body: string, extraId?: number): 
             title,
             body,
             schedule: { at: new Date(Date.now() + 1000) },
-            smallIcon: "ic_stat_icon_config_sample",
+            smallIcon: "ic_stat_last_topper",
           },
         ],
       });

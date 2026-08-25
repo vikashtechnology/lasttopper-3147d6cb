@@ -71,9 +71,11 @@ Android permissions added by the build:
 <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 ```
 
-Users can open the in-app **Notifications** page and select **Test device**. This requests permission from a user gesture, sends an immediate test, and reschedules native reminders.
+The workflow also installs `assets/android/ic_stat_last_topper.xml` as the monochrome Android status-bar notification icon.
 
-On the website/PWA, immediate browser alerts work only while Last Topper is open and permission has been granted. Closed-app remote notifications require a future FCM integration; local native reminders do not require FCM.
+Users can open the in-app **Notifications** page and select **Test device**. This requests permission from a user gesture, sends an immediate test, and reschedules native reminders. If Android has disabled exact alarms, Capacitor still schedules reminders non-exactly, so delivery time may be less precise.
+
+On the website/PWA, immediate browser alerts use the registered service worker and work only while Last Topper is open and permission has been granted. Closed-app remote notifications require a future FCM integration; local native reminders do not require FCM.
 
 A real Android-device test remains required before calling the APK notification behavior production-verified.
 

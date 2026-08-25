@@ -101,6 +101,8 @@ jobs:
           # committed in the repo; this writes every Android density so the app
           # never falls back to the default Capacitor icon.
           npx --yes @capacitor/assets@3.0.5 generate --android --iconBackgroundColor '#0B1020' --iconBackgroundColorDark '#0B1020' --splashBackgroundColor '#0B1020' --splashBackgroundColorDark '#0B1020'
+          mkdir -p android/app/src/main/res/drawable
+          cp assets/android/ic_stat_last_topper.xml android/app/src/main/res/drawable/
           npx --yes @capacitor/cli@8.5.0 sync android
 
       - name: Configure native security, App Links, and AdMob
