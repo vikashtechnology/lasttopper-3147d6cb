@@ -45,13 +45,17 @@ function Notifications() {
         return;
       }
       if (isNative()) await scheduleRecurringReminders();
-      await notifyNow(
+      const sent = await notifyNow(
         "Last Topper notifications are ready ✅",
         isNative()
           ? "Device reminders have been scheduled."
           : "Browser alerts work while Last Topper is open.",
         1901,
       );
+      if (!sent) {
+        toast.error("The device accepted permission, but the test alert could not be displayed.");
+        return;
+      }
       toast.success("Test notification sent.");
     } catch (error) {
       toast.error(failMessage(error, "Could not send the test notification."));

@@ -3,8 +3,9 @@ import { LocalNotifications } from "@capacitor/local-notifications";
 
 /**
  * Local (device-side) notifications.
- * On a native Android/iOS build these fire even when the app is fully closed.
- * On the web we degrade gracefully to the browser Notification API (tab must be open).
+ * On a native Android build these can fire even when the app is fully closed.
+ * On the web we degrade gracefully to the browser Notification API (the app
+ * must be open to trigger an alert; this is not remote background push).
  */
 
 export const isNative = () => Capacitor.isNativePlatform();
@@ -58,7 +59,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 /** Fire a notification immediately (community replies, battle events, etc). */
-export async function notifyNow(title: string, body: string, extraId?: number) {
+export async function notifyNow(title: string, body: string, extraId?: number): Promise<boolean> {
   try {
     if (isNative()) {
       await LocalNotifications.schedule({
@@ -72,17 +73,40 @@ export async function notifyNow(title: string, body: string, extraId?: number) {
           },
         ],
       });
-      return;
+      return true;
     }
+
     if (
-      typeof window !== "undefined" &&
-      "Notification" in window &&
-      Notification.permission === "granted"
+      typeof window === "undefined" ||
+      !("Notification" in window) ||
+      Notification.permission !== "granted"
     ) {
-      new Notification(title, { body, icon: "/app-icon-192.png" });
+      return false;
     }
+
+    const options: NotificationOptions = {
+      body,
+      icon: "/app-icon-192.png",
+      tag: extraId === undefined ? undefined : `last-topper-${extraId}`,
+    };
+
+    // Mobile browsers commonly reject the Notification constructor. A
+    // registered PWA service worker is the supported cross-device path.
+    if ("serviceWorker" in navigator) {
+      const registration = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise<never>((_, reject) =>
+          window.setTimeout(() => reject(new Error("Service worker was not ready.")), 3000),
+        ),
+      ]);
+      await registration.showNotification(title, options);
+      return true;
+    }
+
+    new Notification(title, options);
+    return true;
   } catch {
-    /* ignore */
+    return false;
   }
 }
 
