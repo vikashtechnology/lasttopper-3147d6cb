@@ -123,7 +123,7 @@ function AdminAppUpdate() {
           />
         </div>
         <Input
-          placeholder="Download URL (Play Store or APK link)"
+          placeholder="Direct signed APK download URL"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
         />

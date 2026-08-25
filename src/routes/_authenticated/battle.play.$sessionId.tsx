@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import confetti from "canvas-confetti";
@@ -7,7 +7,7 @@ import { Timer } from "lucide-react";
 import { Latex } from "@/components/Latex";
 import { useAntiCheat } from "@/hooks/useAntiCheat";
 import { getBattleSession, submitBattle } from "@/lib/battle.functions";
-import type { QuizQuestion } from "@/lib/learning.functions";
+import type { BattleQuestion } from "@/lib/battle.functions";
 import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/battle/play/$sessionId")({
@@ -34,7 +34,6 @@ function MegaPlay() {
   });
   const [answers, setAnswers] = useState<Record<string, "A" | "B" | "C" | "D">>({});
   const [idx, setIdx] = useState(0);
-  const startRef = useRef<number>(Date.now());
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -42,24 +41,16 @@ function MegaPlay() {
   }, []);
 
   const questions = useMemo(
-    () => (sq.data?.questions as QuizQuestion[] | undefined) ?? [],
+    () => (sq.data?.questions as BattleQuestion[] | undefined) ?? [],
     [sq.data],
   );
-  const endsAt = sq.data ? new Date(sq.data.start_time).getTime() + 3 * 60 * 60 * 1000 : 0;
+  const endsAt = sq.data ? new Date(sq.data.ends_at).getTime() : 0;
   const remaining = Math.max(0, endsAt - now);
   const submitted = !!sq.data?.submitted_at;
 
-  useEffect(() => {
-    if (sq.data && !submitted) startRef.current = new Date(sq.data.start_time).getTime();
-  }, [sq.data, submitted]);
-
   const submit = useMutation({
-    mutationFn: (auto: boolean) => {
-      const elapsed = Math.max(1, Math.floor((Date.now() - startRef.current) / 1000));
-      return submitBattle({ data: { id: sessionId, answers, time_taken_seconds: elapsed } }).then(
-        (r) => ({ ...r, auto }),
-      );
-    },
+    mutationFn: (auto: boolean) =>
+      submitBattle({ data: { id: sessionId, answers } }).then((r) => ({ ...r, auto })),
     onSuccess: (res) => {
       if (!res.auto) confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
       toast.success(res.auto ? "Time's up — auto-submitted" : "Submitted!");

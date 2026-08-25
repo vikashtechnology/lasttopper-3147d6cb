@@ -35,9 +35,10 @@ export async function upsertReviewItems(
       due_at: new Date().toISOString(),
     }));
   if (!rows.length) return 0;
-  await client.from("review_items").upsert(rows as unknown as never, {
+  const { error } = await client.from("review_items").upsert(rows as unknown as never, {
     onConflict: "user_id,question_key",
     ignoreDuplicates: true,
   });
+  if (error) throw error;
   return rows.length;
 }

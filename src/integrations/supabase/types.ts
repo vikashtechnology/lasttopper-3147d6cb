@@ -250,7 +250,6 @@ export type Database = {
           correct_count: number;
           created_at: string;
           id: string;
-          reward_tc: number;
           session_id: string | null;
           total_count: number;
           user_id: string;
@@ -261,7 +260,6 @@ export type Database = {
           correct_count?: number;
           created_at?: string;
           id?: string;
-          reward_tc?: number;
           session_id?: string | null;
           total_count?: number;
           user_id: string;
@@ -272,7 +270,6 @@ export type Database = {
           correct_count?: number;
           created_at?: string;
           id?: string;
-          reward_tc?: number;
           session_id?: string | null;
           total_count?: number;
           user_id?: string;
@@ -641,42 +638,191 @@ export type Database = {
         };
         Relationships: [];
       };
+      mega_access_task_assignments: {
+        Row: {
+          assigned_at: string;
+          assigned_by: string;
+          id: string;
+          mega_test_id: string;
+          task_id: string;
+        };
+        Insert: {
+          assigned_at?: string;
+          assigned_by: string;
+          id?: string;
+          mega_test_id: string;
+          task_id: string;
+        };
+        Update: {
+          assigned_at?: string;
+          assigned_by?: string;
+          id?: string;
+          mega_test_id?: string;
+          task_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mega_access_task_assignments_mega_test_id_fkey";
+            columns: ["mega_test_id"];
+            isOneToOne: false;
+            referencedRelation: "mega_tests";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "mega_access_task_assignments_task_id_fkey";
+            columns: ["task_id"];
+            isOneToOne: false;
+            referencedRelation: "mega_access_tasks";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      mega_access_task_attempts: {
+        Row: {
+          assignment_id: string;
+          callback_payload: Json | null;
+          completed_at: string | null;
+          created_at: string;
+          expires_at: string;
+          id: string;
+          nonce: string;
+          provider: string | null;
+          provider_timestamp: string | null;
+          provider_transaction_id: string | null;
+          rejection_reason: string | null;
+          source_id: string | null;
+          source_type: string | null;
+          status: string;
+          updated_at: string;
+          user_id: string;
+          verified_at: string | null;
+        };
+        Insert: {
+          assignment_id: string;
+          callback_payload?: Json | null;
+          completed_at?: string | null;
+          created_at?: string;
+          expires_at: string;
+          id?: string;
+          nonce?: string;
+          provider?: string | null;
+          provider_timestamp?: string | null;
+          provider_transaction_id?: string | null;
+          rejection_reason?: string | null;
+          source_id?: string | null;
+          source_type?: string | null;
+          status?: string;
+          updated_at?: string;
+          user_id: string;
+          verified_at?: string | null;
+        };
+        Update: {
+          assignment_id?: string;
+          callback_payload?: Json | null;
+          completed_at?: string | null;
+          created_at?: string;
+          expires_at?: string;
+          id?: string;
+          nonce?: string;
+          provider?: string | null;
+          provider_timestamp?: string | null;
+          provider_transaction_id?: string | null;
+          rejection_reason?: string | null;
+          source_id?: string | null;
+          source_type?: string | null;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+          verified_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mega_access_task_attempts_assignment_id_fkey";
+            columns: ["assignment_id"];
+            isOneToOne: false;
+            referencedRelation: "mega_access_task_assignments";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      mega_access_tasks: {
+        Row: {
+          created_at: string;
+          created_by: string;
+          description: string | null;
+          destination_url: string | null;
+          id: string;
+          is_active: boolean;
+          min_questions: number;
+          min_score_percent: number;
+          provider: string | null;
+          provider_placement_id: string | null;
+          task_type: string;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          created_by: string;
+          description?: string | null;
+          destination_url?: string | null;
+          id?: string;
+          is_active?: boolean;
+          min_questions?: number;
+          min_score_percent?: number;
+          provider?: string | null;
+          provider_placement_id?: string | null;
+          task_type: string;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string;
+          description?: string | null;
+          destination_url?: string | null;
+          id?: string;
+          is_active?: boolean;
+          min_questions?: number;
+          min_score_percent?: number;
+          provider?: string | null;
+          provider_placement_id?: string | null;
+          task_type?: string;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       mega_test_entries: {
         Row: {
+          access_verified_at: string | null;
           correct_count: number | null;
           created_at: string;
           id: string;
           mega_test_id: string;
-          paid: boolean;
-          prize: number;
           rank: number | null;
-          refunded: boolean;
           score: number | null;
           session_id: string | null;
           user_id: string;
         };
         Insert: {
+          access_verified_at?: string | null;
           correct_count?: number | null;
           created_at?: string;
           id?: string;
           mega_test_id: string;
-          paid?: boolean;
-          prize?: number;
           rank?: number | null;
-          refunded?: boolean;
           score?: number | null;
           session_id?: string | null;
           user_id: string;
         };
         Update: {
+          access_verified_at?: string | null;
           correct_count?: number | null;
           created_at?: string;
           id?: string;
           mega_test_id?: string;
-          paid?: boolean;
-          prize?: number;
           rank?: number | null;
-          refunded?: boolean;
           score?: number | null;
           session_id?: string | null;
           user_id?: string;
@@ -694,7 +840,6 @@ export type Database = {
       mega_tests: {
         Row: {
           created_at: string;
-          entry_fee: number;
           id: string;
           min_participants: number;
           profession: Database["public"]["Enums"]["profession"];
@@ -706,7 +851,6 @@ export type Database = {
         };
         Insert: {
           created_at?: string;
-          entry_fee?: number;
           id?: string;
           min_participants?: number;
           profession: Database["public"]["Enums"]["profession"];
@@ -718,7 +862,6 @@ export type Database = {
         };
         Update: {
           created_at?: string;
-          entry_fee?: number;
           id?: string;
           min_participants?: number;
           profession?: Database["public"]["Enums"]["profession"];
@@ -912,6 +1055,41 @@ export type Database = {
         };
         Relationships: [];
       };
+      pro_payment_fulfillments: {
+        Row: {
+          amount_paise: number;
+          fulfilled_at: string;
+          order_id: string;
+          payment_id: string;
+          purpose: string;
+          user_id: string;
+        };
+        Insert: {
+          amount_paise: number;
+          fulfilled_at?: string;
+          order_id: string;
+          payment_id: string;
+          purpose: string;
+          user_id: string;
+        };
+        Update: {
+          amount_paise?: number;
+          fulfilled_at?: string;
+          order_id?: string;
+          payment_id?: string;
+          purpose?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pro_payment_fulfillments_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       question_bank: {
         Row: {
           chapter_id: string | null;
@@ -1004,6 +1182,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      question_xp_awards: {
+        Row: {
+          correct_count: number;
+          created_at: string;
+          id: string;
+          source_id: string;
+          source_type: string;
+          source_version: number;
+          user_id: string;
+          xp_after: number;
+          xp_gained: number;
+        };
+        Insert: {
+          correct_count: number;
+          created_at?: string;
+          id?: string;
+          source_id: string;
+          source_type: string;
+          source_version?: number;
+          user_id: string;
+          xp_after: number;
+          xp_gained: number;
+        };
+        Update: {
+          correct_count?: number;
+          created_at?: string;
+          id?: string;
+          source_id?: string;
+          source_type?: string;
+          source_version?: number;
+          user_id?: string;
+          xp_after?: number;
+          xp_gained?: number;
+        };
+        Relationships: [];
+      };
       quiz_sessions: {
         Row: {
           accuracy: number | null;
@@ -1024,6 +1238,7 @@ export type Database = {
           timer_enabled: boolean;
           user_id: string;
           was_auto_submitted: boolean;
+          xp_eligible: boolean;
         };
         Insert: {
           accuracy?: number | null;
@@ -1044,6 +1259,7 @@ export type Database = {
           timer_enabled?: boolean;
           user_id: string;
           was_auto_submitted?: boolean;
+          xp_eligible?: boolean;
         };
         Update: {
           accuracy?: number | null;
@@ -1064,6 +1280,7 @@ export type Database = {
           timer_enabled?: boolean;
           user_id?: string;
           was_auto_submitted?: boolean;
+          xp_eligible?: boolean;
         };
         Relationships: [];
       };
@@ -1375,7 +1592,6 @@ export type Database = {
       users: {
         Row: {
           avatar_url: string | null;
-          balance: number;
           best_streak: number;
           bio: string | null;
           country_code: string;
@@ -1407,7 +1623,6 @@ export type Database = {
         };
         Insert: {
           avatar_url?: string | null;
-          balance?: number;
           best_streak?: number;
           bio?: string | null;
           country_code?: string;
@@ -1439,7 +1654,6 @@ export type Database = {
         };
         Update: {
           avatar_url?: string | null;
-          balance?: number;
           best_streak?: number;
           bio?: string | null;
           country_code?: string;
@@ -1486,93 +1700,6 @@ export type Database = {
           },
         ];
       };
-      wallet_transactions: {
-        Row: {
-          amount: number;
-          balance_after: number;
-          category: string;
-          created_at: string;
-          id: string;
-          note: string | null;
-          reference_id: string | null;
-          type: string;
-          user_id: string;
-        };
-        Insert: {
-          amount: number;
-          balance_after: number;
-          category: string;
-          created_at?: string;
-          id?: string;
-          note?: string | null;
-          reference_id?: string | null;
-          type: string;
-          user_id: string;
-        };
-        Update: {
-          amount?: number;
-          balance_after?: number;
-          category?: string;
-          created_at?: string;
-          id?: string;
-          note?: string | null;
-          reference_id?: string | null;
-          type?: string;
-          user_id?: string;
-        };
-        Relationships: [];
-      };
-      withdrawal_requests: {
-        Row: {
-          account_name: string | null;
-          account_number: string | null;
-          amount: number;
-          bank_name: string | null;
-          created_at: string;
-          id: string;
-          ifsc: string | null;
-          method: string;
-          process_after: string;
-          processed_at: string | null;
-          short_code: number;
-          status: string;
-          upi_id: string | null;
-          user_id: string;
-        };
-        Insert: {
-          account_name?: string | null;
-          account_number?: string | null;
-          amount: number;
-          bank_name?: string | null;
-          created_at?: string;
-          id?: string;
-          ifsc?: string | null;
-          method: string;
-          process_after?: string;
-          processed_at?: string | null;
-          short_code?: number;
-          status?: string;
-          upi_id?: string | null;
-          user_id: string;
-        };
-        Update: {
-          account_name?: string | null;
-          account_number?: string | null;
-          amount?: number;
-          bank_name?: string | null;
-          created_at?: string;
-          id?: string;
-          ifsc?: string | null;
-          method?: string;
-          process_after?: string;
-          processed_at?: string | null;
-          short_code?: number;
-          status?: string;
-          upi_id?: string | null;
-          user_id?: string;
-        };
-        Relationships: [];
-      };
     };
     Views: {
       public_profiles: {
@@ -1616,6 +1743,75 @@ export type Database = {
       };
     };
     Functions: {
+      award_question_xp: {
+        Args: {
+          p_correct_count: number;
+          p_source_id: string;
+          p_source_type: string;
+          p_source_version?: number;
+          p_user_id: string;
+        };
+        Returns: {
+          awarded: boolean;
+          boost: number;
+          gained: number;
+          tier: string;
+          tier_up: boolean;
+          xp: number;
+        }[];
+      };
+      complete_daily_challenge: {
+        Args: { p_answers: Json; p_challenge_id: string; p_user_id: string };
+        Returns: {
+          already_submitted: boolean;
+          correct_count: number;
+          submitted: boolean;
+          total: number;
+        }[];
+      };
+      complete_mega_access_task_attempt: {
+        Args: {
+          p_attempt_id: string;
+          p_callback_payload?: Json;
+          p_nonce: string;
+          p_provider: string;
+          p_provider_placement_id?: string;
+          p_provider_timestamp: string;
+          p_provider_user_id?: string;
+          p_transaction_id: string;
+        };
+        Returns: {
+          already_completed: boolean;
+          completed: boolean;
+          mega_test_id: string;
+          task_id: string;
+          user_id: string;
+        }[];
+      };
+      fulfill_pro_payment: {
+        Args: {
+          p_amount_paise: number;
+          p_order_id: string;
+          p_payment_id: string;
+          p_purpose: string;
+          p_user_id: string;
+        };
+        Returns: {
+          already_fulfilled: boolean;
+          fulfilled: boolean;
+          pro_until: string;
+        }[];
+      };
+      grade_review_item: {
+        Args: { p_correct: boolean; p_item_id: string; p_user_id: string };
+        Returns: {
+          box: number;
+          due_at: string;
+          retired: boolean;
+          xp_gained: number;
+          xp_total: number;
+        }[];
+      };
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"];
@@ -1626,6 +1822,57 @@ export type Database = {
       is_group_member: {
         Args: { _group: string; _user: string };
         Returns: boolean;
+      };
+      record_mega_study_task_completion: {
+        Args: { p_assignment_id: string; p_user_id: string };
+        Returns: {
+          already_completed: boolean;
+          completed: boolean;
+          source_id: string;
+          source_type: string;
+        }[];
+      };
+      record_mega_test_rank: {
+        Args: { p_entry_id: string; p_rank: number };
+        Returns: { duplicate: boolean; recorded: boolean }[];
+      };
+      register_free_mega_test: {
+        Args: { p_mega_test_id: string; p_user_id: string };
+        Returns: { already_registered: boolean; registered: boolean }[];
+      };
+      start_mega_battle_session: {
+        Args: { p_mega_test_id: string; p_user_id: string };
+        Returns: { existing: boolean; session_id: string }[];
+      };
+      submit_battle_result: {
+        Args: { p_answers: Json; p_session_id: string; p_user_id: string };
+        Returns: {
+          already_submitted: boolean;
+          correct_count: number;
+          score: number;
+          submitted: boolean;
+          time_taken_seconds: number;
+          total: number;
+        }[];
+      };
+      submit_quiz_session: {
+        Args: {
+          p_allow_late?: boolean;
+          p_answers: Json;
+          p_session_id: string;
+          p_user_id: string;
+        };
+        Returns: {
+          accuracy: number;
+          correct_count: number;
+          elapsed_seconds: number;
+          incorrect_count: number;
+          submitted: boolean;
+          total: number;
+          xp_eligible: boolean;
+          xp_gained: number;
+          xp_total: number;
+        }[];
       };
     };
     Enums: {

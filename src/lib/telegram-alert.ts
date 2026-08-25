@@ -92,10 +92,7 @@ export function safeFileName(parts: string[], ext: "txt" | "json"): string {
   return `${base || "alert"}.${ext}`;
 }
 
-/**
- * Sends the alert as an attached document (e.g. "Vikash+withdrawal_793624.txt")
- * with a short caption, instead of a long chat message.
- */
+/** Sends an operational alert as an attached document with a short caption. */
 export async function sendTelegramDocument(
   fileName: string,
   content: string,

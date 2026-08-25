@@ -1,13 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery, useQueryClient, useQuery } from "@tanstack/react-query";
-import { Check, Sparkles, ChevronLeft, Loader2, Gift } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, Sparkles, ChevronLeft, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { getMyProfile } from "@/lib/user.functions";
-import { getMyVouchers } from "@/lib/referral.functions";
-import { checkPromoCode } from "@/lib/promo.functions";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { payWithRazorpay } from "@/lib/razorpay-client";
 import { failMessage } from "@/lib/friendly-error";
 
@@ -19,10 +16,11 @@ export const Route = createFileRoute("/_authenticated/pricing")({
       { title: "Pricing — Last Topper" },
       {
         name: "description",
-        content: "Upgrade to Pro for unlimited AI question sets, priority battles, and more.",
+        content:
+          "Buy a one-time Pro pass for unlimited AI question sets, priority battles, and more.",
       },
       { property: "og:title", content: "Pricing — Last Topper" },
-      { property: "og:description", content: "Simple pricing. Practice more, rank higher." },
+      { property: "og:description", content: "Simple one-time Pro passes. No auto-renewal." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -53,45 +51,7 @@ function PricingPage() {
   const isPro = !!p?.is_pro;
   const [plan, setPlan] = useState<Plan>("yearly");
   const [loading, setLoading] = useState(false);
-  const [promo, setPromo] = useState("");
-  const [promoPercent, setPromoPercent] = useState(0);
-  const [promoChecking, setPromoChecking] = useState(false);
-  const [promoError, setPromoError] = useState<string | null>(null);
-
-  const vouchers = useQuery({ queryKey: ["my-vouchers"], queryFn: () => getMyVouchers() });
-  const best = vouchers.data?.best ?? null;
-
-  const voucherPercent = best?.percent ?? 0;
-  const percentOff = Math.max(voucherPercent, promoPercent);
-  const useVoucher = voucherPercent > 0 && voucherPercent >= promoPercent;
-
   const planKey = plan === "yearly" ? "pro_yearly" : plan === "weekly" ? "pro_weekly" : "pro";
-
-  useEffect(() => {
-    setPromoPercent(0);
-    setPromoError(null);
-  }, [plan]);
-
-  const applyPromo = async () => {
-    if (!promo.trim()) return;
-    setPromoChecking(true);
-    setPromoError(null);
-    try {
-      const r = await checkPromoCode({ data: { code: promo.trim().toUpperCase(), plan: planKey } });
-      if (r.valid) {
-        setPromoPercent(r.percent);
-        toast.success(`Promo applied — ${r.percent}% off`);
-      } else {
-        setPromoPercent(0);
-        setPromoError("This promo code is not valid for this plan");
-      }
-    } catch (e) {
-      setPromoPercent(0);
-      setPromoError(failMessage(e, "Could not check promo code"));
-    } finally {
-      setPromoChecking(false);
-    }
-  };
 
   const subscribe = async () => {
     setLoading(true);
@@ -100,13 +60,9 @@ function PricingPage() {
         purpose: planKey,
         name: p?.full_name,
         email: p?.email,
-        voucher_code: useVoucher && best?.code ? best.code.toUpperCase() : undefined,
-        promo_code:
-          !useVoucher && promoPercent && promo.trim() ? promo.trim().toUpperCase() : undefined,
       });
       toast.success("Welcome to Pro! 🎉");
       qc.invalidateQueries({ queryKey: ["my-profile"] });
-      qc.invalidateQueries({ queryKey: ["my-vouchers"] });
     } catch (e) {
       const msg = failMessage(e, "Payment failed");
       if (msg !== "Payment cancelled") toast.error(msg);
@@ -116,12 +72,12 @@ function PricingPage() {
   };
 
   const base = plan === "yearly" ? 1499 : plan === "weekly" ? 49 : 149;
-  const payable = percentOff ? Math.max(1, Math.round((base * (100 - percentOff)) / 100)) : base;
+  const payable = base;
   const price = `₹${payable}`;
-  const period = plan === "yearly" ? "/ year" : plan === "weekly" ? "/ week" : "/ month";
-  const unit = plan === "yearly" ? "yr" : plan === "weekly" ? "wk" : "mo";
-  const cta = `Subscribe ₹${payable}/${unit}`;
-  const strike = percentOff ? `₹${base}` : undefined;
+  const durationDays = plan === "yearly" ? 365 : plan === "weekly" ? 7 : 30;
+  const period = `for ${durationDays} days`;
+  const cta = `Buy ${durationDays}-day pass · ₹${payable}`;
+  const strike = undefined;
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -156,7 +112,7 @@ function PricingPage() {
                 plan === "weekly" ? "bg-background shadow-sm" : "text-muted-foreground"
               }`}
             >
-              Weekly
+              7 days
             </button>
             <button
               type="button"
@@ -165,7 +121,7 @@ function PricingPage() {
                 plan === "monthly" ? "bg-background shadow-sm" : "text-muted-foreground"
               }`}
             >
-              Monthly
+              30 days
             </button>
             <button
               type="button"
@@ -174,72 +130,13 @@ function PricingPage() {
                 plan === "yearly" ? "bg-background shadow-sm" : "text-muted-foreground"
               }`}
             >
-              Yearly
+              365 days
               <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
                 Save 16%
               </span>
             </button>
           </div>
         </div>
-
-        {!isPro && (
-          <div className="mx-auto mt-6 max-w-md rounded-2xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <Gift className="h-4 w-4 text-primary" /> Discounts
-              </div>
-              {percentOff > 0 && (
-                <span className="whitespace-nowrap rounded-full bg-emerald-500/15 px-2 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                  Best price · {percentOff}% off
-                </span>
-              )}
-            </div>
-            {best ? (
-              <p className="mt-2 text-xs text-muted-foreground">
-                Your {best.percent}% referral voucher is ready and expires{" "}
-                {new Date(best.expires_at as string).toLocaleDateString()}.
-              </p>
-            ) : (
-              <p className="mt-2 text-xs text-muted-foreground">
-                Invite friends to earn referral vouchers, or apply a promotional code below.
-              </p>
-            )}
-            <div className="mt-3 flex items-center gap-2">
-              <Input
-                value={promo}
-                onChange={(e) => {
-                  setPromo(e.target.value.toUpperCase());
-                  setPromoPercent(0);
-                  setPromoError(null);
-                }}
-                placeholder="Promo code"
-                aria-label="Promo code"
-                className="h-9"
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={applyPromo}
-                disabled={promoChecking || !promo.trim()}
-              >
-                {promoChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
-              </Button>
-            </div>
-            {promoPercent > 0 && (
-              <p className="mt-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                Promo verified: {promoPercent}% off. The larger available discount will be used.
-              </p>
-            )}
-            {promoError && <p className="mt-2 text-xs text-destructive">{promoError}</p>}
-            {voucherPercent > 0 && promoPercent > 0 && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                {useVoucher
-                  ? "Your referral voucher gives the best price."
-                  : "Your promo code gives the best price."}
-              </p>
-            )}
-          </div>
-        )}
 
         <div className="mt-6 grid gap-5 md:grid-cols-2">
           <PlanCard
@@ -282,7 +179,7 @@ function PricingPage() {
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Cancel anytime. Prices in INR. Taxes may apply.
+          One-time payment · no subscription · no auto-renewal. Prices in INR; taxes may apply.
         </p>
       </section>
     </main>

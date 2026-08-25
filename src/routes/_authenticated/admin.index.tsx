@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { adminStats, adminReportsChart } from "@/lib/admin.functions";
-import { Users, MessageSquare, HelpCircle, Flag, Wallet, Swords } from "lucide-react";
+import { Users, MessageSquare, HelpCircle, Flag, Swords } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
@@ -30,11 +30,6 @@ function AdminOverview() {
           icon={<Flag className="h-4 w-4" />}
           label="Pending reports"
           value={stats.data?.pending_reports ?? "—"}
-        />
-        <Card
-          icon={<Wallet className="h-4 w-4" />}
-          label="Pending withdrawals"
-          value={stats.data?.pending_withdrawals ?? "—"}
         />
         <Card
           icon={<Swords className="h-4 w-4" />}

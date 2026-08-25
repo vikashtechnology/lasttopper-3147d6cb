@@ -8,7 +8,6 @@ import {
   History,
   Swords,
   Trophy,
-  Wallet,
   Users,
   Bell,
   User as UserIcon,
@@ -75,7 +74,6 @@ export const defaultNavGroups = (opts: { profileUserId?: string; admin?: boolean
           exact: true,
         },
         { to: "/battle/mega", label: "Sunday Mega", icon: <Trophy className="h-4 w-4" /> },
-        { to: "/battle/wallet", label: "Wallet", icon: <Wallet className="h-4 w-4" /> },
       ],
     },
     {

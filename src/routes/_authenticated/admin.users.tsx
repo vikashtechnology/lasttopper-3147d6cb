@@ -62,7 +62,6 @@ function AdminUsers() {
               <th className="p-3">Prof.</th>
               <th className="p-3">Rep</th>
               <th className="p-3">Streak</th>
-              <th className="p-3">Balance</th>
               <th className="p-3">Plan</th>
               <th className="p-3">Status</th>
               <th className="p-3"></th>
@@ -82,7 +81,6 @@ function AdminUsers() {
                   <td className="p-3 text-xs uppercase">{u.profession ?? "—"}</td>
                   <td className="p-3">{u.reputation}</td>
                   <td className="p-3">{u.streak}</td>
-                  <td className="p-3">₹{Number(u.balance).toFixed(2)}</td>
                   <td className="p-3">
                     {proActive ? (
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">

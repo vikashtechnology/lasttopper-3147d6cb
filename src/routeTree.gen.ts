@@ -38,14 +38,13 @@ import { Route as AuthenticatedAdminBankRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminModerationRouteImport } from './routes/_authenticated/admin.moderation'
 import { Route as AuthenticatedAdminPromosRouteImport } from './routes/_authenticated/admin.promos'
 import { Route as AuthenticatedAdminSocialRouteImport } from './routes/_authenticated/admin.social'
+import { Route as AuthenticatedAdminTasksRouteImport } from './routes/_authenticated/admin.tasks'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
-import { Route as AuthenticatedAdminWithdrawalsRouteImport } from './routes/_authenticated/admin.withdrawals'
 import { Route as AuthenticatedBattleIndexRouteImport } from './routes/_authenticated/battle.index'
 import { Route as AuthenticatedBattle1v1RouteImport } from './routes/_authenticated/battle.1v1'
 import { Route as AuthenticatedBattleHistoryRouteImport } from './routes/_authenticated/battle.history'
 import { Route as AuthenticatedBattleLeaderboardRouteImport } from './routes/_authenticated/battle.leaderboard'
 import { Route as AuthenticatedBattleMegaRouteImport } from './routes/_authenticated/battle.mega'
-import { Route as AuthenticatedBattleWalletRouteImport } from './routes/_authenticated/battle.wallet'
 import { Route as AuthenticatedCommunityIndexRouteImport } from './routes/_authenticated/community.index'
 import { Route as AuthenticatedCommunityDoubtsRouteImport } from './routes/_authenticated/community.doubts'
 import { Route as AuthenticatedCommunityFeedRouteImport } from './routes/_authenticated/community.feed'
@@ -61,10 +60,10 @@ import { Route as AuthenticatedCommunityDoubtDoubtIdRouteImport } from './routes
 import { Route as AuthenticatedCommunityForumCategoryIdRouteImport } from './routes/_authenticated/community.forum.$categoryId'
 import { Route as AuthenticatedCommunityGroupGroupIdRouteImport } from './routes/_authenticated/community.group.$groupId'
 import { Route as AuthenticatedCommunityPostPostIdRouteImport } from './routes/_authenticated/community.post.$postId'
+import { Route as ApiPublicHooksAdmobSsvRouteImport } from './routes/api/public/hooks/admob-ssv'
+import { Route as ApiPublicHooksMegaTaskPartnerRouteImport } from './routes/api/public/hooks/mega-task-partner'
 import { Route as ApiPublicHooksMegaTestLifecycleRouteImport } from './routes/api/public/hooks/mega-test-lifecycle'
-import { Route as ApiPublicHooksProcessWithdrawalsRouteImport } from './routes/api/public/hooks/process-withdrawals'
 import { Route as ApiPublicHooksRazorpayRouteImport } from './routes/api/public/hooks/razorpay'
-import { Route as ApiPublicHooksTelegramWithdrawalRouteImport } from './routes/api/public/hooks/telegram-withdrawal'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -217,17 +216,16 @@ const AuthenticatedAdminSocialRoute =
     path: '/social',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminTasksRoute = AuthenticatedAdminTasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const AuthenticatedAdminWithdrawalsRoute =
-  AuthenticatedAdminWithdrawalsRouteImport.update({
-    id: '/withdrawals',
-    path: '/withdrawals',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
 const AuthenticatedBattleIndexRoute =
   AuthenticatedBattleIndexRouteImport.update({
     id: '/',
@@ -256,12 +254,6 @@ const AuthenticatedBattleMegaRoute = AuthenticatedBattleMegaRouteImport.update({
   path: '/mega',
   getParentRoute: () => AuthenticatedBattleRoute,
 } as any)
-const AuthenticatedBattleWalletRoute =
-  AuthenticatedBattleWalletRouteImport.update({
-    id: '/wallet',
-    path: '/wallet',
-    getParentRoute: () => AuthenticatedBattleRoute,
-  } as any)
 const AuthenticatedCommunityIndexRoute =
   AuthenticatedCommunityIndexRouteImport.update({
     id: '/',
@@ -352,16 +344,21 @@ const AuthenticatedCommunityPostPostIdRoute =
     path: '/post/$postId',
     getParentRoute: () => AuthenticatedCommunityRoute,
   } as any)
+const ApiPublicHooksAdmobSsvRoute = ApiPublicHooksAdmobSsvRouteImport.update({
+  id: '/api/public/hooks/admob-ssv',
+  path: '/api/public/hooks/admob-ssv',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksMegaTaskPartnerRoute =
+  ApiPublicHooksMegaTaskPartnerRouteImport.update({
+    id: '/api/public/hooks/mega-task-partner',
+    path: '/api/public/hooks/mega-task-partner',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksMegaTestLifecycleRoute =
   ApiPublicHooksMegaTestLifecycleRouteImport.update({
     id: '/api/public/hooks/mega-test-lifecycle',
     path: '/api/public/hooks/mega-test-lifecycle',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksProcessWithdrawalsRoute =
-  ApiPublicHooksProcessWithdrawalsRouteImport.update({
-    id: '/api/public/hooks/process-withdrawals',
-    path: '/api/public/hooks/process-withdrawals',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksRazorpayRoute = ApiPublicHooksRazorpayRouteImport.update({
@@ -369,12 +366,6 @@ const ApiPublicHooksRazorpayRoute = ApiPublicHooksRazorpayRouteImport.update({
   path: '/api/public/hooks/razorpay',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksTelegramWithdrawalRoute =
-  ApiPublicHooksTelegramWithdrawalRouteImport.update({
-    id: '/api/public/hooks/telegram-withdrawal',
-    path: '/api/public/hooks/telegram-withdrawal',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -404,13 +395,12 @@ export interface FileRoutesByFullPath {
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/admin/social': typeof AuthenticatedAdminSocialRoute
+  '/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
-  '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/battle/1v1': typeof AuthenticatedBattle1v1Route
   '/battle/history': typeof AuthenticatedBattleHistoryRoute
   '/battle/leaderboard': typeof AuthenticatedBattleLeaderboardRoute
   '/battle/mega': typeof AuthenticatedBattleMegaRoute
-  '/battle/wallet': typeof AuthenticatedBattleWalletRoute
   '/community/doubts': typeof AuthenticatedCommunityDoubtsRoute
   '/community/feed': typeof AuthenticatedCommunityFeedRoute
   '/community/groups': typeof AuthenticatedCommunityGroupsRoute
@@ -428,10 +418,10 @@ export interface FileRoutesByFullPath {
   '/community/forum/$categoryId': typeof AuthenticatedCommunityForumCategoryIdRoute
   '/community/group/$groupId': typeof AuthenticatedCommunityGroupGroupIdRoute
   '/community/post/$postId': typeof AuthenticatedCommunityPostPostIdRoute
+  '/api/public/hooks/admob-ssv': typeof ApiPublicHooksAdmobSsvRoute
+  '/api/public/hooks/mega-task-partner': typeof ApiPublicHooksMegaTaskPartnerRoute
   '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
-  '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
   '/api/public/hooks/razorpay': typeof ApiPublicHooksRazorpayRoute
-  '/api/public/hooks/telegram-withdrawal': typeof ApiPublicHooksTelegramWithdrawalRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -458,13 +448,12 @@ export interface FileRoutesByTo {
   '/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/admin/social': typeof AuthenticatedAdminSocialRoute
+  '/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
-  '/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/battle/1v1': typeof AuthenticatedBattle1v1Route
   '/battle/history': typeof AuthenticatedBattleHistoryRoute
   '/battle/leaderboard': typeof AuthenticatedBattleLeaderboardRoute
   '/battle/mega': typeof AuthenticatedBattleMegaRoute
-  '/battle/wallet': typeof AuthenticatedBattleWalletRoute
   '/community/doubts': typeof AuthenticatedCommunityDoubtsRoute
   '/community/feed': typeof AuthenticatedCommunityFeedRoute
   '/community/groups': typeof AuthenticatedCommunityGroupsRoute
@@ -482,10 +471,10 @@ export interface FileRoutesByTo {
   '/community/forum/$categoryId': typeof AuthenticatedCommunityForumCategoryIdRoute
   '/community/group/$groupId': typeof AuthenticatedCommunityGroupGroupIdRoute
   '/community/post/$postId': typeof AuthenticatedCommunityPostPostIdRoute
+  '/api/public/hooks/admob-ssv': typeof ApiPublicHooksAdmobSsvRoute
+  '/api/public/hooks/mega-task-partner': typeof ApiPublicHooksMegaTaskPartnerRoute
   '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
-  '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
   '/api/public/hooks/razorpay': typeof ApiPublicHooksRazorpayRoute
-  '/api/public/hooks/telegram-withdrawal': typeof ApiPublicHooksTelegramWithdrawalRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -517,13 +506,12 @@ export interface FileRoutesById {
   '/_authenticated/admin/moderation': typeof AuthenticatedAdminModerationRoute
   '/_authenticated/admin/promos': typeof AuthenticatedAdminPromosRoute
   '/_authenticated/admin/social': typeof AuthenticatedAdminSocialRoute
+  '/_authenticated/admin/tasks': typeof AuthenticatedAdminTasksRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
-  '/_authenticated/admin/withdrawals': typeof AuthenticatedAdminWithdrawalsRoute
   '/_authenticated/battle/1v1': typeof AuthenticatedBattle1v1Route
   '/_authenticated/battle/history': typeof AuthenticatedBattleHistoryRoute
   '/_authenticated/battle/leaderboard': typeof AuthenticatedBattleLeaderboardRoute
   '/_authenticated/battle/mega': typeof AuthenticatedBattleMegaRoute
-  '/_authenticated/battle/wallet': typeof AuthenticatedBattleWalletRoute
   '/_authenticated/community/doubts': typeof AuthenticatedCommunityDoubtsRoute
   '/_authenticated/community/feed': typeof AuthenticatedCommunityFeedRoute
   '/_authenticated/community/groups': typeof AuthenticatedCommunityGroupsRoute
@@ -541,10 +529,10 @@ export interface FileRoutesById {
   '/_authenticated/community/forum/$categoryId': typeof AuthenticatedCommunityForumCategoryIdRoute
   '/_authenticated/community/group/$groupId': typeof AuthenticatedCommunityGroupGroupIdRoute
   '/_authenticated/community/post/$postId': typeof AuthenticatedCommunityPostPostIdRoute
+  '/api/public/hooks/admob-ssv': typeof ApiPublicHooksAdmobSsvRoute
+  '/api/public/hooks/mega-task-partner': typeof ApiPublicHooksMegaTaskPartnerRoute
   '/api/public/hooks/mega-test-lifecycle': typeof ApiPublicHooksMegaTestLifecycleRoute
-  '/api/public/hooks/process-withdrawals': typeof ApiPublicHooksProcessWithdrawalsRoute
   '/api/public/hooks/razorpay': typeof ApiPublicHooksRazorpayRoute
-  '/api/public/hooks/telegram-withdrawal': typeof ApiPublicHooksTelegramWithdrawalRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -576,13 +564,12 @@ export interface FileRouteTypes {
     | '/admin/moderation'
     | '/admin/promos'
     | '/admin/social'
+    | '/admin/tasks'
     | '/admin/users'
-    | '/admin/withdrawals'
     | '/battle/1v1'
     | '/battle/history'
     | '/battle/leaderboard'
     | '/battle/mega'
-    | '/battle/wallet'
     | '/community/doubts'
     | '/community/feed'
     | '/community/groups'
@@ -600,10 +587,10 @@ export interface FileRouteTypes {
     | '/community/forum/$categoryId'
     | '/community/group/$groupId'
     | '/community/post/$postId'
+    | '/api/public/hooks/admob-ssv'
+    | '/api/public/hooks/mega-task-partner'
     | '/api/public/hooks/mega-test-lifecycle'
-    | '/api/public/hooks/process-withdrawals'
     | '/api/public/hooks/razorpay'
-    | '/api/public/hooks/telegram-withdrawal'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -630,13 +617,12 @@ export interface FileRouteTypes {
     | '/admin/moderation'
     | '/admin/promos'
     | '/admin/social'
+    | '/admin/tasks'
     | '/admin/users'
-    | '/admin/withdrawals'
     | '/battle/1v1'
     | '/battle/history'
     | '/battle/leaderboard'
     | '/battle/mega'
-    | '/battle/wallet'
     | '/community/doubts'
     | '/community/feed'
     | '/community/groups'
@@ -654,10 +640,10 @@ export interface FileRouteTypes {
     | '/community/forum/$categoryId'
     | '/community/group/$groupId'
     | '/community/post/$postId'
+    | '/api/public/hooks/admob-ssv'
+    | '/api/public/hooks/mega-task-partner'
     | '/api/public/hooks/mega-test-lifecycle'
-    | '/api/public/hooks/process-withdrawals'
     | '/api/public/hooks/razorpay'
-    | '/api/public/hooks/telegram-withdrawal'
   id:
     | '__root__'
     | '/'
@@ -688,13 +674,12 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/moderation'
     | '/_authenticated/admin/promos'
     | '/_authenticated/admin/social'
+    | '/_authenticated/admin/tasks'
     | '/_authenticated/admin/users'
-    | '/_authenticated/admin/withdrawals'
     | '/_authenticated/battle/1v1'
     | '/_authenticated/battle/history'
     | '/_authenticated/battle/leaderboard'
     | '/_authenticated/battle/mega'
-    | '/_authenticated/battle/wallet'
     | '/_authenticated/community/doubts'
     | '/_authenticated/community/feed'
     | '/_authenticated/community/groups'
@@ -712,10 +697,10 @@ export interface FileRouteTypes {
     | '/_authenticated/community/forum/$categoryId'
     | '/_authenticated/community/group/$groupId'
     | '/_authenticated/community/post/$postId'
+    | '/api/public/hooks/admob-ssv'
+    | '/api/public/hooks/mega-task-partner'
     | '/api/public/hooks/mega-test-lifecycle'
-    | '/api/public/hooks/process-withdrawals'
     | '/api/public/hooks/razorpay'
-    | '/api/public/hooks/telegram-withdrawal'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -725,10 +710,10 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   RefundRoute: typeof RefundRoute
   TermsRoute: typeof TermsRoute
+  ApiPublicHooksAdmobSsvRoute: typeof ApiPublicHooksAdmobSsvRoute
+  ApiPublicHooksMegaTaskPartnerRoute: typeof ApiPublicHooksMegaTaskPartnerRoute
   ApiPublicHooksMegaTestLifecycleRoute: typeof ApiPublicHooksMegaTestLifecycleRoute
-  ApiPublicHooksProcessWithdrawalsRoute: typeof ApiPublicHooksProcessWithdrawalsRoute
   ApiPublicHooksRazorpayRoute: typeof ApiPublicHooksRazorpayRoute
-  ApiPublicHooksTelegramWithdrawalRoute: typeof ApiPublicHooksTelegramWithdrawalRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -936,18 +921,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSocialRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/tasks': {
+      id: '/_authenticated/admin/tasks'
+      path: '/tasks'
+      fullPath: '/admin/tasks'
+      preLoaderRoute: typeof AuthenticatedAdminTasksRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/users': {
       id: '/_authenticated/admin/users'
       path: '/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/withdrawals': {
-      id: '/_authenticated/admin/withdrawals'
-      path: '/withdrawals'
-      fullPath: '/admin/withdrawals'
-      preLoaderRoute: typeof AuthenticatedAdminWithdrawalsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/battle/': {
@@ -983,13 +968,6 @@ declare module '@tanstack/react-router' {
       path: '/mega'
       fullPath: '/battle/mega'
       preLoaderRoute: typeof AuthenticatedBattleMegaRouteImport
-      parentRoute: typeof AuthenticatedBattleRoute
-    }
-    '/_authenticated/battle/wallet': {
-      id: '/_authenticated/battle/wallet'
-      path: '/wallet'
-      fullPath: '/battle/wallet'
-      preLoaderRoute: typeof AuthenticatedBattleWalletRouteImport
       parentRoute: typeof AuthenticatedBattleRoute
     }
     '/_authenticated/community/': {
@@ -1097,6 +1075,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCommunityPostPostIdRouteImport
       parentRoute: typeof AuthenticatedCommunityRoute
     }
+    '/api/public/hooks/admob-ssv': {
+      id: '/api/public/hooks/admob-ssv'
+      path: '/api/public/hooks/admob-ssv'
+      fullPath: '/api/public/hooks/admob-ssv'
+      preLoaderRoute: typeof ApiPublicHooksAdmobSsvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/mega-task-partner': {
+      id: '/api/public/hooks/mega-task-partner'
+      path: '/api/public/hooks/mega-task-partner'
+      fullPath: '/api/public/hooks/mega-task-partner'
+      preLoaderRoute: typeof ApiPublicHooksMegaTaskPartnerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/mega-test-lifecycle': {
       id: '/api/public/hooks/mega-test-lifecycle'
       path: '/api/public/hooks/mega-test-lifecycle'
@@ -1104,25 +1096,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksMegaTestLifecycleRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/process-withdrawals': {
-      id: '/api/public/hooks/process-withdrawals'
-      path: '/api/public/hooks/process-withdrawals'
-      fullPath: '/api/public/hooks/process-withdrawals'
-      preLoaderRoute: typeof ApiPublicHooksProcessWithdrawalsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/hooks/razorpay': {
       id: '/api/public/hooks/razorpay'
       path: '/api/public/hooks/razorpay'
       fullPath: '/api/public/hooks/razorpay'
       preLoaderRoute: typeof ApiPublicHooksRazorpayRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/telegram-withdrawal': {
-      id: '/api/public/hooks/telegram-withdrawal'
-      path: '/api/public/hooks/telegram-withdrawal'
-      fullPath: '/api/public/hooks/telegram-withdrawal'
-      preLoaderRoute: typeof ApiPublicHooksTelegramWithdrawalRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -1136,8 +1114,8 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminModerationRoute: typeof AuthenticatedAdminModerationRoute
   AuthenticatedAdminPromosRoute: typeof AuthenticatedAdminPromosRoute
   AuthenticatedAdminSocialRoute: typeof AuthenticatedAdminSocialRoute
+  AuthenticatedAdminTasksRoute: typeof AuthenticatedAdminTasksRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
-  AuthenticatedAdminWithdrawalsRoute: typeof AuthenticatedAdminWithdrawalsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
@@ -1149,8 +1127,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminModerationRoute: AuthenticatedAdminModerationRoute,
   AuthenticatedAdminPromosRoute: AuthenticatedAdminPromosRoute,
   AuthenticatedAdminSocialRoute: AuthenticatedAdminSocialRoute,
+  AuthenticatedAdminTasksRoute: AuthenticatedAdminTasksRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
-  AuthenticatedAdminWithdrawalsRoute: AuthenticatedAdminWithdrawalsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
@@ -1162,7 +1140,6 @@ interface AuthenticatedBattleRouteChildren {
   AuthenticatedBattleHistoryRoute: typeof AuthenticatedBattleHistoryRoute
   AuthenticatedBattleLeaderboardRoute: typeof AuthenticatedBattleLeaderboardRoute
   AuthenticatedBattleMegaRoute: typeof AuthenticatedBattleMegaRoute
-  AuthenticatedBattleWalletRoute: typeof AuthenticatedBattleWalletRoute
   AuthenticatedBattleIndexRoute: typeof AuthenticatedBattleIndexRoute
   AuthenticatedBattlePlaySessionIdRoute: typeof AuthenticatedBattlePlaySessionIdRoute
 }
@@ -1172,7 +1149,6 @@ const AuthenticatedBattleRouteChildren: AuthenticatedBattleRouteChildren = {
   AuthenticatedBattleHistoryRoute: AuthenticatedBattleHistoryRoute,
   AuthenticatedBattleLeaderboardRoute: AuthenticatedBattleLeaderboardRoute,
   AuthenticatedBattleMegaRoute: AuthenticatedBattleMegaRoute,
-  AuthenticatedBattleWalletRoute: AuthenticatedBattleWalletRoute,
   AuthenticatedBattleIndexRoute: AuthenticatedBattleIndexRoute,
   AuthenticatedBattlePlaySessionIdRoute: AuthenticatedBattlePlaySessionIdRoute,
 }
@@ -1278,10 +1254,10 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   RefundRoute: RefundRoute,
   TermsRoute: TermsRoute,
+  ApiPublicHooksAdmobSsvRoute: ApiPublicHooksAdmobSsvRoute,
+  ApiPublicHooksMegaTaskPartnerRoute: ApiPublicHooksMegaTaskPartnerRoute,
   ApiPublicHooksMegaTestLifecycleRoute: ApiPublicHooksMegaTestLifecycleRoute,
-  ApiPublicHooksProcessWithdrawalsRoute: ApiPublicHooksProcessWithdrawalsRoute,
   ApiPublicHooksRazorpayRoute: ApiPublicHooksRazorpayRoute,
-  ApiPublicHooksTelegramWithdrawalRoute: ApiPublicHooksTelegramWithdrawalRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

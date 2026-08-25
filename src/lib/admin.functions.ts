@@ -91,19 +91,16 @@ export const adminStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const [users, posts, doubts, reports, withdrawals, battles] = await Promise.all([
-      context.supabase.from("users").select("id", { count: "exact", head: true }),
-      context.supabase.from("forum_posts").select("id", { count: "exact", head: true }),
-      context.supabase.from("doubts").select("id", { count: "exact", head: true }),
-      context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [users, posts, doubts, reports, battles] = await Promise.all([
+      supabaseAdmin.from("users").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("forum_posts").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("doubts").select("id", { count: "exact", head: true }),
+      supabaseAdmin
         .from("post_reports")
         .select("id", { count: "exact", head: true })
         .eq("status", "pending"),
-      context.supabase
-        .from("withdrawal_requests")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "pending"),
-      context.supabase
+      supabaseAdmin
         .from("battle_sessions")
         .select("id", { count: "exact", head: true })
         .not("submitted_at", "is", null),
@@ -113,7 +110,6 @@ export const adminStats = createServerFn({ method: "GET" })
       posts: posts.count ?? 0,
       doubts: doubts.count ?? 0,
       pending_reports: reports.count ?? 0,
-      pending_withdrawals: withdrawals.count ?? 0,
       completed_battles: battles.count ?? 0,
     };
   });
@@ -129,7 +125,7 @@ export const adminListUsers = createServerFn({ method: "GET" })
     let q = supabaseAdmin
       .from("users")
       .select(
-        "id, email, full_name, phone, profession, is_banned, balance, reputation, streak, created_at, is_pro, pro_until",
+        "id, email, full_name, phone, profession, is_banned, reputation, streak, created_at, is_pro, pro_until",
       )
       .order("created_at", { ascending: false })
       .limit(100);
@@ -251,48 +247,13 @@ export const adminResolveReport = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const adminListWithdrawals = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context);
-    const { data, error } = await context.supabase
-      .from("withdrawal_requests")
-      .select(
-        "id, user_id, amount, method, upi_id, account_name, account_number, ifsc, status, process_after, created_at",
-      )
-      .order("created_at", { ascending: false })
-      .limit(100);
-    if (error) throw error;
-    return data ?? [];
-  });
-
-export const adminSetWithdrawalStatus = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z
-      .object({
-        withdrawal_id: z.string().uuid(),
-        status: z.enum(["processed", "rejected"]),
-      })
-      .parse(d),
-  )
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context);
-    const { error } = await context.supabase
-      .from("withdrawal_requests")
-      .update({ status: data.status, processed_at: new Date().toISOString() })
-      .eq("id", data.withdrawal_id);
-    if (error) throw error;
-    await sendTelegramAlert(`💼 Withdrawal ${data.status} by admin\nID: ${data.withdrawal_id}`);
-    return { ok: true };
-  });
-
 export const adminReportsChart = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Signups per day, last 14 days
-    const { data: users } = await context.supabase
+    const { data: users } = await supabaseAdmin
       .from("users")
       .select("created_at")
       .gte("created_at", new Date(Date.now() - 14 * 86400e3).toISOString());

@@ -27,9 +27,8 @@ export class DailyLimitError extends Error {
 }
 
 function startOfTodayIso(): string {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d.toISOString();
+  const dayKey = new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return new Date(`${dayKey}T00:00:00+05:30`).toISOString();
 }
 
 export type QuotaState = {
@@ -40,29 +39,33 @@ export type QuotaState = {
 };
 
 /** Counts every question the user actually attempted today (PYQ + battles excluded). */
-export async function getQuotaState(supabase: Sb, userId: string): Promise<QuotaState> {
+export async function getQuotaState(_supabase: Sb, userId: string): Promise<QuotaState> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const supabase = supabaseAdmin;
   const start = startOfTodayIso();
 
-  const [{ data: profile }, { data: sessions }, { data: daily }, { data: reviews }] =
-    await Promise.all([
-      supabase.from("users").select("is_pro, daily_question_limit").eq("id", userId).maybeSingle(),
-      supabase
-        .from("quiz_sessions")
-        .select("answers")
-        .eq("user_id", userId)
-        .gte("created_at", start),
-      supabase
-        .from("daily_challenge_attempts")
-        .select("total_count")
-        .eq("user_id", userId)
-        .gte("created_at", start),
-      supabase
-        .from("review_items")
-        .select("id")
-        .eq("user_id", userId)
-        .gte("updated_at", start)
-        .not("last_result", "is", null),
-    ]);
+  const [profileResult, sessionsResult, dailyResult, reviewsResult] = await Promise.all([
+    supabase.from("users").select("is_pro, daily_question_limit").eq("id", userId).maybeSingle(),
+    supabase.from("quiz_sessions").select("answers").eq("user_id", userId).gte("created_at", start),
+    supabase
+      .from("daily_challenge_attempts")
+      .select("total_count")
+      .eq("user_id", userId)
+      .gte("created_at", start),
+    supabase
+      .from("review_items")
+      .select("id")
+      .eq("user_id", userId)
+      .gte("updated_at", start)
+      .not("last_result", "is", null),
+  ]);
+  const firstError =
+    profileResult.error ?? sessionsResult.error ?? dailyResult.error ?? reviewsResult.error;
+  if (firstError) throw firstError;
+  const profile = profileResult.data;
+  const sessions = sessionsResult.data;
+  const daily = dailyResult.data;
+  const reviews = reviewsResult.data;
 
   let used = 0;
   for (const row of sessions ?? []) {

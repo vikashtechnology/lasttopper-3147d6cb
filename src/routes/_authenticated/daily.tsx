@@ -8,7 +8,6 @@ import { getDailyChallenge, submitDailyChallenge } from "@/lib/daily.functions";
 import { Button } from "@/components/ui/button";
 import { Latex } from "@/components/Latex";
 import { ChevronLeft, CalendarCheck, Loader2, Trophy, Lock } from "lucide-react";
-import { TopperCoin } from "@/components/TopperCoin";
 import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/daily")({
@@ -18,10 +17,10 @@ export const Route = createFileRoute("/_authenticated/daily")({
       {
         name: "description",
         content:
-          "One curated 10-question NCERT set every day. Earn Topper Coins and keep your streak alive.",
+          "One curated 10-question NCERT set every day. Build XP and keep your streak alive.",
       },
       { property: "og:title", content: "Daily Challenge — Last Topper" },
-      { property: "og:description", content: "10 fresh NCERT questions daily with coin rewards." },
+      { property: "og:description", content: "10 fresh NCERT questions daily with score and XP." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -39,7 +38,6 @@ function DailyPage() {
   const [result, setResult] = useState<{
     correct: number;
     total: number;
-    reward: number;
     xp_gained?: number;
   } | null>(null);
 
@@ -55,12 +53,10 @@ function DailyPage() {
       setResult({
         correct: r.correct,
         total: r.total,
-        reward: r.reward,
         xp_gained: "xp_gained" in r ? r.xp_gained : 0,
       });
       if (!r.already) confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 } });
       qc.invalidateQueries({ queryKey: ["my-profile"] });
-      qc.invalidateQueries({ queryKey: ["wallet"] });
     },
     onError: (e: Error) => toast.error(failMessage(e)),
   });
@@ -153,17 +149,11 @@ function DailyPage() {
             <h2 className="mt-3 text-lg font-semibold">
               {result ? `${result.correct} / ${result.total} correct` : "Already completed today"}
             </h2>
-            {result ? (
-              <p className="mt-1 flex items-center justify-center gap-1 text-sm text-muted-foreground">
-                Reward: <TopperCoin className="h-4 w-4" /> <b>{result.reward} TC</b> added to your
-                wallet
-              </p>
-            ) : (
-              <p className="mt-1 text-sm text-muted-foreground">
-                You scored {challenge.data.correct_count} and earned {challenge.data.reward_tc} TC.
-                Come back tomorrow!
-              </p>
-            )}
+            <p className="mt-1 text-sm text-muted-foreground">
+              {result
+                ? `Great work — ${result.xp_gained ?? 0} XP recorded.`
+                : `You scored ${challenge.data.correct_count}. Come back tomorrow!`}
+            </p>
             <XpProgress className="mt-4 text-left" gained={result?.xp_gained} />
             <div className="mt-4 flex justify-center gap-2">
               <Button variant="outline" onClick={() => nav({ to: "/review" })}>

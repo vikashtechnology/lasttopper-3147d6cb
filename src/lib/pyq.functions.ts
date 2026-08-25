@@ -8,6 +8,7 @@ export type PyqOption = { exam: string; year: number | null; count: number };
 export const getPyqOptions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<PyqOption[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profile } = await context.supabase
       .from("users")
       .select("profession")
@@ -15,7 +16,7 @@ export const getPyqOptions = createServerFn({ method: "GET" })
       .maybeSingle();
     const profession = profile?.profession ?? null;
 
-    let q = context.supabase
+    let q = supabaseAdmin
       .from("question_bank")
       .select("exam, exam_year")
       .not("exam", "is", null)
@@ -50,6 +51,7 @@ export const startPyqQuiz = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profile } = await context.supabase
       .from("users")
       .select("profession, is_pro")
@@ -58,7 +60,7 @@ export const startPyqQuiz = createServerFn({ method: "POST" })
     if (data.count > 20 && !profile?.is_pro) throw new Error("PRO_REQUIRED");
     const profession = profile?.profession ?? null;
 
-    let q = context.supabase
+    let q = supabaseAdmin
       .from("question_bank")
       .select("id, chapter_id, question, options, correct, hint, explanation")
       .ilike("exam", data.exam)
@@ -102,7 +104,7 @@ export const startPyqQuiz = createServerFn({ method: "POST" })
     }
 
     const nowIso = new Date().toISOString();
-    const { data: row, error: iErr } = await context.supabase
+    const { data: row, error: iErr } = await supabaseAdmin
       .from("quiz_sessions")
       .insert({
         user_id: context.userId,

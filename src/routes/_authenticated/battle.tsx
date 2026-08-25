@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Swords, Trophy, Wallet, History, Zap, Users } from "lucide-react";
+import { ArrowLeft, Swords, Trophy, History, Zap, Users } from "lucide-react";
 import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/battle")({
@@ -8,10 +8,10 @@ export const Route = createFileRoute("/_authenticated/battle")({
       { title: "Battle — Last Topper" },
       {
         name: "description",
-        content: "Compete live: quick quiz, Sunday Mega Test, leaderboards, and wallet.",
+        content: "Compete live in quick quizzes, 1v1 rooms, Sunday Mega Tests, and leaderboards.",
       },
       { property: "og:title", content: "Battle Arena — Last Topper" },
-      { property: "og:description", content: "Real-time quiz battles with prizes." },
+      { property: "og:description", content: "Real-time quiz battles with score, rank, and XP." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -68,7 +68,6 @@ function BattleLayout() {
             icon={<Trophy className="h-3.5 w-3.5" />}
             label="Board"
           />
-          <TabLink to="/battle/wallet" icon={<Wallet className="h-3.5 w-3.5" />} label="Wallet" />
           <TabLink
             to="/battle/history"
             icon={<History className="h-3.5 w-3.5" />}

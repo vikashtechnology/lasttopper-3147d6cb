@@ -13,12 +13,6 @@ export function todayKey(): string {
   return now.toISOString().slice(0, 10);
 }
 
-export function rewardFor(correct: number): number {
-  if (correct >= 8) return 10;
-  if (correct >= 5) return 5;
-  return 2;
-}
-
 async function aiDailyQuestions(
   profession: string,
   chapterNames: string[],
@@ -132,27 +126,4 @@ export async function ensureDailyChallenge(
     throw error;
   }
   return { id: row.id as string, questions: (row.questions as QuizQuestion[]) ?? [] };
-}
-
-export async function creditCoins(
-  admin: AnyClient,
-  userId: string,
-  amount: number,
-  category: string,
-  note: string,
-  referenceId?: string | null,
-): Promise<number> {
-  const { data: u } = await admin.from("users").select("balance").eq("id", userId).maybeSingle();
-  const next = Number(u?.balance ?? 0) + amount;
-  await admin.from("users").update({ balance: next }).eq("id", userId);
-  await admin.from("wallet_transactions").insert({
-    user_id: userId,
-    type: "credit",
-    category,
-    amount,
-    balance_after: next,
-    note,
-    reference_id: referenceId ?? null,
-  });
-  return next;
 }

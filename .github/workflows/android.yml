@@ -16,6 +16,9 @@ on:
         type: boolean
         default: true
 
+permissions:
+  contents: write
+
 jobs:
   android:
     runs-on: ubuntu-latest
@@ -23,13 +26,16 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       APP_HOST: ${{ vars.APP_HOST || 'last-topper-web-test.vercel.app' }}
       CAPACITOR_SERVER_URL: ${{ vars.CAPACITOR_SERVER_URL || 'https://last-topper-web-test.vercel.app' }}
+      # Official Google Android sample app ID is the safe default until an
+      # approved Last Topper AdMob app exists. Override with a GitHub variable.
+      ADMOB_ANDROID_APP_ID: ${{ vars.ADMOB_ANDROID_APP_ID || 'ca-app-pub-3940256099942544~3347511713' }}
       # ─── APP VERSION ─── bump these two before each release build.
       # APP_VERSION_NAME: what users see (must match the "Version name" you
       # publish in Admin → App update).
       # APP_VERSION_CODE: integer, must increase every release (must match the
       # "Version code" in Admin → App update).
-      APP_VERSION_NAME: "1.0.1"
-      APP_VERSION_CODE: "2"
+      APP_VERSION_NAME: ${{ vars.APP_VERSION_NAME || '1.0.1' }}
+      APP_VERSION_CODE: ${{ vars.APP_VERSION_CODE || github.run_number }}
     steps:
       - uses: actions/checkout@v4
 
@@ -77,6 +83,8 @@ jobs:
           python3 - <<'PY'
           import re, pathlib, os
           name = os.environ["APP_VERSION_NAME"]
+          if os.environ.get("GITHUB_REF", "").startswith("refs/tags/v"):
+              name = os.environ["GITHUB_REF_NAME"][1:]
           code = os.environ["APP_VERSION_CODE"]
           p = pathlib.Path("android/app/build.gradle")
           s = p.read_text()
@@ -95,8 +103,20 @@ jobs:
           npx --yes @capacitor/assets@3.0.5 generate --android --iconBackgroundColor '#0B1020' --iconBackgroundColorDark '#0B1020' --splashBackgroundColor '#0B1020' --splashBackgroundColorDark '#0B1020'
           npx --yes @capacitor/cli@8.5.0 sync android
 
-      - name: Enable FLAG_SECURE + deep links
+      - name: Configure native security, App Links, and AdMob
         run: |
+          if ! [[ "$ADMOB_ANDROID_APP_ID" =~ ^ca-app-pub-[0-9]+~[0-9]+$ ]]; then
+            echo "ADMOB_ANDROID_APP_ID is not a valid Android AdMob application ID" >&2
+            exit 1
+          fi
+          mkdir -p android/app/src/main/res/values
+          cat > android/app/src/main/res/values/admob.xml <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="admob_app_id" translatable="false">${ADMOB_ANDROID_APP_ID}</string>
+          </resources>
+          EOF
+
           MAIN=android/app/src/main/java/com/lasttopper/app/MainActivity.java
           mkdir -p "$(dirname "$MAIN")"
           cat > "$MAIN" <<'JAVA'
@@ -147,6 +167,14 @@ jobs:
           '''
               s = s.replace('</activity>', filt + '        </activity>', 1)
 
+          admob_name = 'com.google.android.gms.ads.APPLICATION_ID'
+          if admob_name not in s:
+              metadata = '''        <meta-data
+                      android:name="com.google.android.gms.ads.APPLICATION_ID"
+                      android:value="@string/admob_app_id" />
+          '''
+              s = s.replace('</application>', metadata + '    </application>', 1)
+
           for perm in ("android.permission.POST_NOTIFICATIONS", "android.permission.SCHEDULE_EXACT_ALARM"):
               if perm not in s:
                   s = s.replace('</manifest>', f'    <uses-permission android:name="{perm}" />\n</manifest>')
@@ -172,8 +200,12 @@ jobs:
             echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.jks
             echo "signed=true" >> "$GITHUB_OUTPUT"
           else
-            echo "No ANDROID_KEYSTORE_BASE64 secret — building unsigned release."
+            echo "No ANDROID_KEYSTORE_BASE64 secret — building an unsigned internal artifact only."
             echo "signed=false" >> "$GITHUB_OUTPUT"
+            if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+              echo "Tagged releases require the stable release-signing secrets." >&2
+              exit 1
+            fi
           fi
 
       - name: Configure release signing
@@ -221,7 +253,41 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         run: cd android && ./gradlew bundleRelease assembleRelease --no-daemon
 
-      - name: Upload release artifacts
+      - name: Verify signed APK and App Link certificate
+        if: steps.keystore.outputs.signed == 'true'
+        run: |
+          APK=$(find android/app/build/outputs/apk/release -name '*.apk' -print -quit)
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
+          test -n "$APK" && test -n "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+          APK_DIGEST=$(
+            "$APKSIGNER" verify --print-certs "$APK" |
+              sed -n 's/^Signer #1 certificate SHA-256 digest: //p' |
+              head -1 | tr -d ':' | tr '[:lower:]' '[:upper:]'
+          )
+          LINK_DIGEST=$(python3 - <<'PY'
+          import json
+          value = json.load(open('public/.well-known/assetlinks.json'))[0]['target']['sha256_cert_fingerprints'][0]
+          print(value.replace(':', '').upper())
+          PY
+          )
+          if [ -z "$APK_DIGEST" ] || [ "$APK_DIGEST" != "$LINK_DIGEST" ]; then
+            echo "assetlinks.json does not match the signed APK certificate." >&2
+            echo "APK: $APK_DIGEST" >&2
+            echo "assetlinks.json: $LINK_DIGEST" >&2
+            exit 1
+          fi
+
+      - name: Package public APK and secret-free source archive
+        if: steps.keystore.outputs.signed == 'true'
+        run: |
+          mkdir -p release
+          APK=$(find android/app/build/outputs/apk/release -name '*.apk' -print -quit)
+          cp "$APK" release/last-topper.apk
+          git archive --format=zip --output=release/last-topper-source.zip HEAD
+          sha256sum release/last-topper.apk release/last-topper-source.zip > release/SHA256SUMS.txt
+
+      - name: Upload release build artifacts
         if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
@@ -229,3 +295,14 @@ jobs:
           path: |
             android/app/build/outputs/bundle/release/*.aab
             android/app/build/outputs/apk/release/*.apk
+            release/*
+
+      - name: Publish direct-download release
+        if: startsWith(github.ref, 'refs/tags/v') && steps.keystore.outputs.signed == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            release/last-topper.apk
+            release/last-topper-source.zip
+            release/SHA256SUMS.txt

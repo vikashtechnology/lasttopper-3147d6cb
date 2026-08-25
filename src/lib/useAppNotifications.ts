@@ -1,15 +1,15 @@
 import { useEffect, useRef } from "react";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  notifyNow,
-  scheduleRecurringReminders,
-  requestNotificationPermission,
-} from "@/lib/local-notifications";
+import { isNative, notifyNow, scheduleRecurringReminders } from "@/lib/local-notifications";
 
 /**
  * Mounts device notifications:
- *  - schedules the recurring streak / motivation / mega-test reminders (native only)
- *  - live-pushes community activity and personal alerts while the app is running
+ *  - schedules recurring reminders in an installed native app
+ *  - shows live community/personal alerts while the application is running
+ *
+ * Web notification permission is requested only from the explicit test/enable
+ * button on the Notifications page because browsers require a user gesture.
  */
 export function useAppNotifications() {
   const started = useRef(false);
@@ -18,12 +18,13 @@ export function useAppNotifications() {
     if (started.current) return;
     started.current = true;
 
-    void (async () => {
-      await requestNotificationPermission();
-      await scheduleRecurringReminders();
-    })();
+    if (isNative()) {
+      void scheduleRecurringReminders();
+    }
 
     let userId: string | null = null;
+    let personalChannel: RealtimeChannel | null = null;
+    let disposed = false;
 
     const channel = supabase
       .channel("app-notifications")
@@ -54,9 +55,10 @@ export function useAppNotifications() {
       .subscribe();
 
     void supabase.auth.getUser().then(({ data }) => {
+      if (disposed) return;
       userId = data.user?.id ?? null;
       if (!userId) return;
-      supabase
+      personalChannel = supabase
         .channel(`personal-notifications-${userId}`)
         .on(
           "postgres_changes",
@@ -75,7 +77,9 @@ export function useAppNotifications() {
     });
 
     return () => {
-      supabase.removeChannel(channel);
+      disposed = true;
+      void supabase.removeChannel(channel);
+      if (personalChannel) void supabase.removeChannel(personalChannel);
     };
   }, []);
 }

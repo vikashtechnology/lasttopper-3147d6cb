@@ -15,7 +15,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { getAnalytics, generateQuestions, createQuizSession } from "@/lib/learning.functions";
+import { getAnalytics, startProgressiveQuiz } from "@/lib/learning.functions";
 import { getMyProfile } from "@/lib/user.functions";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Flame, Target, ListChecks, Sparkles } from "lucide-react";
@@ -62,18 +62,10 @@ function AnalyticsPage() {
     if (chapterIds.length === 0) return;
     setStarting(true);
     try {
-      const res = await generateQuestions({
-        data: { chapter_ids: chapterIds, question_count: 20 },
-      });
-      if (res.error || res.questions.length === 0) {
-        toast.error(res.error ?? "Could not generate questions");
-        return;
-      }
-      const s = await createQuizSession({
+      const s = await startProgressiveQuiz({
         data: {
           chapter_ids: chapterIds,
-          question_count: res.questions.length,
-          questions: res.questions,
+          target_count: 20,
           timer_enabled: false,
           duration_seconds: null,
         },

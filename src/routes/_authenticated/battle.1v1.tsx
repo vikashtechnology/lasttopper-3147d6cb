@@ -5,10 +5,9 @@ import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { Latex } from "@/components/Latex";
 import { useAntiCheat } from "@/hooks/useAntiCheat";
-import { useHideAds } from "@/lib/useHideAds";
 import { start1v1Battle, extendQuickBattle, submitBattle } from "@/lib/battle.functions";
 import { Timer, Users, Loader2, Swords, Flame } from "lucide-react";
-import type { QuizQuestion } from "@/lib/learning.functions";
+import type { BattleQuestion } from "@/lib/battle.functions";
 import { useUserStore } from "@/store/user";
 import { failMessage } from "@/lib/friendly-error";
 
@@ -68,15 +67,17 @@ function initials(name: string) {
 
 function OneVOne() {
   useAntiCheat(true);
-  useHideAds();
   const navigate = useNavigate();
   const profile = useUserStore((s) => s.profile);
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [countdown, setCountdown] = useState(3);
   const [matchDots, setMatchDots] = useState(0);
-  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [questions, setQuestions] = useState<BattleQuestion[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [result, setResult] = useState<{ correct: number; total: number; score: number } | null>(
+    null,
+  );
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, "A" | "B" | "C" | "D">>({});
   const [selected, setSelected] = useState<"A" | "B" | "C" | "D" | null>(null);
@@ -102,6 +103,7 @@ function OneVOne() {
       setQuestions(res.questions);
       setSessionId(res.id);
       setAnswers({});
+      setResult(null);
       setIdx(0);
       setSelected(null);
       const name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
@@ -129,16 +131,13 @@ function OneVOne() {
   });
 
   const submit = useMutation({
-    mutationFn: (finalAnswers: Record<string, "A" | "B" | "C" | "D">) => {
-      const elapsed = Math.max(1, Math.floor((Date.now() - startRef.current) / 1000));
-      return submitBattle({
-        data: { id: sessionId!, answers: finalAnswers, time_taken_seconds: elapsed },
-      });
-    },
-    onSuccess: () => {
+    mutationFn: (finalAnswers: Record<string, "A" | "B" | "C" | "D">) =>
+      submitBattle({ data: { id: sessionId!, answers: finalAnswers } }),
+    onSuccess: (res) => {
+      setResult({ correct: res.correct, total: res.total, score: res.score });
       setPhase("done");
-      const myCorrect = questions.reduce((n, q) => (answers[q.id] === q.correct ? n + 1 : n), 0);
-      if (myCorrect > botCorrect) confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } });
+      if (res.correct > botCorrect)
+        confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } });
     },
     onError: (e: Error) => toast.error(failMessage(e)),
   });
@@ -268,10 +267,8 @@ function OneVOne() {
   }, [idx, questions.length, phase, sessionId]);
 
   const cur = questions[idx];
-  const myCorrect = useMemo(
-    () => questions.reduce((n, q) => (answers[q.id] === q.correct ? n + 1 : n), 0),
-    [answers, questions],
-  );
+  const myCorrect = result?.correct ?? 0;
+  const answeredCount = Object.keys(answers).length;
   const myName = profile?.full_name?.split(" ").slice(0, 2).join(" ") ?? "You";
   const streak = Number(profile?.streak ?? 0);
 
@@ -526,7 +523,10 @@ function OneVOne() {
             {/* footer stats */}
             <div className="mt-5 flex items-center justify-between text-xs">
               <span className="text-white/60">
-                Score: <span className="font-bold text-amber-400">{myCorrect * 100} XP</span>
+                Answered:{" "}
+                <span className="font-bold text-amber-400">
+                  {answeredCount}/{TOTAL}
+                </span>
               </span>
               <span className="inline-flex items-center gap-1 text-white/60">
                 <Timer
@@ -559,7 +559,7 @@ function OneVOne() {
     );
   }
 
-  const attemptedCount = questions.slice(0, TOTAL).filter((q) => answers[q.id]).length;
+  const attemptedCount = answeredCount;
   const won = myCorrect > botCorrect;
   const tie = myCorrect === botCorrect;
   return (
@@ -603,17 +603,13 @@ function OneVOne() {
             </div>
             <div className="flex flex-wrap gap-1.5">
               {questions.slice(0, TOTAL).map((q, i) => {
-                const a = answers[q.id];
-                const ok = a === q.correct;
+                const answered = !!answers[q.id];
                 return (
                   <span
                     key={q.id}
+                    title={`Q${i + 1}: ${answered ? "answered" : "skipped"}`}
                     className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${
-                      !a
-                        ? "bg-white/10 text-white/60"
-                        : ok
-                          ? "bg-emerald-500/20 text-emerald-300"
-                          : "bg-rose-500/20 text-rose-300"
+                      answered ? "bg-cyan-500/20 text-cyan-300" : "bg-white/10 text-white/60"
                     }`}
                   >
                     {i + 1}

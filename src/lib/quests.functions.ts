@@ -15,34 +15,43 @@ export const pushPendingQuestReminders = createServerFn({ method: "POST" })
     const userId = context.userId;
 
     const now = new Date();
-    const startOfDay = new Date(now);
-    startOfDay.setHours(0, 0, 0, 0);
-    const since = startOfDay.toISOString();
-    const dayKey = startOfDay.toISOString().slice(0, 10);
+    const dayKey = new Date(now.getTime() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const since = new Date(`${dayKey}T00:00:00+05:30`).toISOString();
 
     const pending: Quest[] = [];
 
     // 1) Daily challenge
-    const { data: todaysChallenge } = await context.supabase
-      .from("daily_challenges")
-      .select("id")
-      .eq("challenge_date", dayKey)
+    const { data: profile, error: profileError } = await context.supabase
+      .from("users")
+      .select("profession")
+      .eq("id", userId)
       .maybeSingle();
+    if (profileError) throw profileError;
+    const { data: todaysChallenge, error: challengeError } = profile?.profession
+      ? await supabaseAdmin
+          .from("daily_challenges")
+          .select("id")
+          .eq("challenge_date", dayKey)
+          .eq("profession", profile.profession)
+          .maybeSingle()
+      : { data: null, error: null };
+    if (challengeError) throw challengeError;
     let challengeDone = false;
     if (todaysChallenge?.id) {
-      const { data: attempt } = await context.supabase
+      const { data: attempt, error: attemptError } = await context.supabase
         .from("daily_challenge_attempts")
         .select("completed_at")
         .eq("challenge_id", todaysChallenge.id)
         .eq("user_id", userId)
         .maybeSingle();
+      if (attemptError) throw attemptError;
       challengeDone = !!attempt?.completed_at;
     }
     if (!challengeDone) {
       pending.push({
         kind: "quest_daily",
         title: "Daily Challenge pending 🎯",
-        body: "10 quick NCERT questions are waiting — finish them and earn Topper Coins 🪙",
+        body: "10 quick NCERT questions are waiting — finish them to build your score, XP, and streak.",
         link: "/daily",
       });
     }
@@ -63,11 +72,12 @@ export const pushPendingQuestReminders = createServerFn({ method: "POST" })
     }
 
     // 3) Practice (learning)
-    const { count: quizToday } = await context.supabase
+    const { count: quizToday, error: quizError } = await supabaseAdmin
       .from("quiz_sessions")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
       .gte("created_at", since);
+    if (quizError) throw quizError;
     if ((quizToday ?? 0) === 0) {
       pending.push({
         kind: "quest_learning",

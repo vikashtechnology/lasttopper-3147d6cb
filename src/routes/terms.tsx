@@ -6,12 +6,14 @@ export const Route = createFileRoute("/terms")({
       { title: "Terms & Conditions — Last Topper" },
       {
         name: "description",
-        content: "The rules for using Last Topper quizzes, battles, wallet, and community.",
+        content:
+          "The rules for using Last Topper learning, competition, Mega access tasks, and community features.",
       },
       { property: "og:title", content: "Terms & Conditions — Last Topper" },
       {
         property: "og:description",
-        content: "The rules for using Last Topper quizzes, battles, wallet, and community.",
+        content:
+          "The rules for using Last Topper learning, competition, Mega access tasks, and community features.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -27,103 +29,133 @@ function TermsPage() {
         ← Home
       </Link>
       <h1 className="mt-4 text-3xl font-semibold">Terms &amp; Conditions</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Last updated: July 24, 2026</p>
+      <p className="mt-1 text-sm text-muted-foreground">Last updated: August 25, 2026</p>
 
       <section className="prose prose-slate mt-8 max-w-none space-y-6 text-sm leading-6 text-foreground">
         <p>
-          These Terms govern your use of Last Topper (the "Service"). By signing in you agree to
-          these Terms and our Privacy Policy.
+          These Terms govern your use of Last Topper (the "Service"). By signing in or using the
+          Service, you agree to these Terms and our Privacy Policy.
         </p>
 
         <h2 className="text-lg font-semibold">1. Eligibility</h2>
-        <p>You must be at least 13 years old. Users under 18 need parent/guardian consent.</p>
+        <p>You must be at least 13 years old. Users under 18 need parent or guardian consent.</p>
 
         <h2 className="text-lg font-semibold">2. Your account</h2>
         <ul className="list-disc pl-5">
+          <li>Sign in with Google and keep that account secure.</li>
+          <li>Provide accurate profile and study-track information.</li>
           <li>
-            Sign in with Google. Keep your account secure — you're responsible for activity on it.
+            One account per person. Multi-accounting, automation, or manipulation of task or test
+            verification is prohibited.
           </li>
-          <li>
-            Provide accurate onboarding information, including your profile details and study track.
-          </li>
-          <li>One account per person. Multi-accounting to farm rewards is prohibited.</li>
         </ul>
 
-        <h2 className="text-lg font-semibold">3. Learning content &amp; AI</h2>
+        <h2 className="text-lg font-semibold">3. Learning content and AI</h2>
         <p>
-          Questions are AI-generated from NCERT Class 11 &amp; 12 content. Explanations and hints
-          are provided for study; errors may occur. Report incorrect items via the in-app "Report"
-          button. Do not rely on the Service for final exam answers.
+          Questions, hints, and explanations may be generated with AI using NCERT Class 11 and 12
+          subject context. Errors may occur. The Service is a study aid and does not guarantee exam
+          results or replace official textbooks. Please report incorrect content in the app.
         </p>
 
-        <h2 className="text-lg font-semibold">4. Quiz Battles &amp; Mega Test</h2>
+        <h2 className="text-lg font-semibold">4. Battles and Sunday Mega Test</h2>
         <ul className="list-disc pl-5">
+          <li>Quick Battles, 1v1 Battles, and Sunday Mega Test registration are free.</li>
+          <li>Competition outcomes use score, rank, XP, streaks, and recognition.</li>
           <li>
-            Quick Battle is free. Sunday Mega Test has an entry fee of ₹10 paid from your in-app
-            wallet.
+            A Mega Test can be joined only after every active access task assigned to that specific
+            test is completed. Registration is unavailable when no task has been assigned.
           </li>
           <li>
-            Mega Test runs Sunday 10:00 AM – 1:00 PM IST. Late joiners cannot enter after start.
+            Published schedules, question counts, access tasks, eligibility rules, and
+            minimum-participant rules may be updated before the test begins.
           </li>
-          <li>If minimum participants are not met, the entry fee is refunded to your wallet.</li>
-          <li>Prizes are credited to your wallet after results are finalized.</li>
           <li>
-            Cheating (screenshots, copying, scripts, multi-device, external help) results in
-            disqualification and possible ban.
+            Cheating, scripts, multi-accounting, question leaks, or unauthorized external help may
+            result in disqualification or account suspension.
           </li>
         </ul>
 
-        <h2 className="text-lg font-semibold">5. Wallet &amp; withdrawals</h2>
+        <h2 className="text-lg font-semibold">5. Mega Test access tasks</h2>
         <ul className="list-disc pl-5">
-          <li>Wallet balance reflects your in-app credits earned from Mega Test prizes.</li>
           <li>
-            Withdrawals require valid UPI ID or bank details. You are responsible for the accuracy
-            of details you submit.
+            Access tasks establish eligibility for one specific Mega Test. They do not create value
+            that can be reused for another test or exchanged for anything else.
           </li>
           <li>
-            Withdrawals are typically processed after a short review window. We may delay, decline,
-            or reverse withdrawals for suspected fraud, abuse, or policy violations.
+            Tasks may include qualifying Last Topper study activity, a rewarded video, or an
+            admin-published external-partner activity. Availability and configuration may change.
           </li>
-          <li>Applicable taxes are your responsibility.</li>
+          <li>
+            Qualifying study activity must be confirmed from Last Topper's authoritative attempt or
+            session records after assignment and before the applicable Mega Test begins.
+          </li>
+          <li>
+            Opening a link, waiting for a timer, or receiving a client-side event does not prove
+            provider-task completion. A trusted signed callback must verify the completion.
+          </li>
+          <li>
+            Official test ads do not complete an access task. Duplicate, replayed, manipulated,
+            incomplete, stale, or unverifiable events are rejected.
+          </li>
+          <li>
+            Each completion must be fresh and linked to its assignment. A study or provider event
+            already claimed for one Mega Test cannot unlock another.
+          </li>
         </ul>
 
-        <h2 className="text-lg font-semibold">6. Community rules</h2>
+        <h2 className="text-lg font-semibold">6. One-time Pro passes</h2>
+        <ul className="list-disc pl-5">
+          <li>Pro is sold as a one-time 7-day, 30-day, or 365-day pass.</li>
+          <li>Pro passes are not subscriptions and do not renew automatically.</li>
+          <li>
+            A successfully verified purchase activates or extends access for the purchased duration.
+            Prices and valid discounts are shown before payment.
+          </li>
+          <li>Refund requests are handled under our Refund Policy and applicable law.</li>
+        </ul>
+
+        <h2 className="text-lg font-semibold">7. Community rules</h2>
         <ul className="list-disc pl-5">
           <li>Be respectful. No harassment, hate speech, spam, or sexually explicit content.</li>
-          <li>No sharing of copyrighted material you don't own.</li>
-          <li>No leaking of Mega Test questions during a live session.</li>
+          <li>Do not share copyrighted material that you do not have permission to use.</li>
+          <li>Do not disclose live test questions or use the community to facilitate cheating.</li>
           <li>Moderators may remove content or restrict accounts that violate these rules.</li>
         </ul>
 
-        <h2 className="text-lg font-semibold">7. Intellectual property</h2>
+        <h2 className="text-lg font-semibold">8. App distribution and updates</h2>
         <p>
-          The Service, brand, and UI are owned by Last Topper. Content you post remains yours, but
-          you grant us a non-exclusive license to display it within the Service.
+          The installable web app and Android APK are distributed through our official website, not
+          through Google Play or the Apple App Store. Install APK files only from the official Last
+          Topper download link and keep the app updated. We are not responsible for modified copies
+          obtained elsewhere.
         </p>
 
-        <h2 className="text-lg font-semibold">8. Termination</h2>
+        <h2 className="text-lg font-semibold">9. Intellectual property</h2>
         <p>
-          We may suspend or terminate accounts that violate these Terms. You may stop using the
-          Service at any time.
+          The Service, brand, and interface are owned by Last Topper or its licensors. Content you
+          post remains yours, but you grant us a non-exclusive license to host and display it as
+          needed to operate the Service.
         </p>
 
-        <h2 className="text-lg font-semibold">9. Disclaimers</h2>
+        <h2 className="text-lg font-semibold">10. Termination</h2>
         <p>
-          The Service is provided "as is" without warranties. We do not guarantee exam results,
-          uninterrupted availability, or that AI-generated content is error-free.
+          We may suspend or terminate accounts that violate these Terms or threaten the Service. You
+          may stop using the Service at any time.
         </p>
 
-        <h2 className="text-lg font-semibold">10. Limitation of liability</h2>
+        <h2 className="text-lg font-semibold">11. Disclaimers and liability</h2>
         <p>
-          To the maximum extent permitted by law, Last Topper is not liable for indirect,
-          incidental, or consequential damages arising from your use of the Service.
+          The Service is provided "as is" to the extent permitted by law. We do not guarantee exam
+          results, uninterrupted availability, ad or task availability, or error-free AI content. To
+          the maximum extent permitted by law, Last Topper is not liable for indirect, incidental,
+          or consequential damages arising from use of the Service.
         </p>
 
-        <h2 className="text-lg font-semibold">11. Changes</h2>
-        <p>We may update these Terms. Continued use after changes means you accept them.</p>
-
-        <h2 className="text-lg font-semibold">12. Governing law</h2>
-        <p>These Terms are governed by the laws of India.</p>
+        <h2 className="text-lg font-semibold">12. Changes and governing law</h2>
+        <p>
+          We may update these Terms and will publish the revised date. These Terms are governed by
+          the laws of India, subject to any mandatory rights that apply to you.
+        </p>
       </section>
     </main>
   );

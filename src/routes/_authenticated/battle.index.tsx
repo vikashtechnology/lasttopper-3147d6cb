@@ -1,11 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { Latex } from "@/components/Latex";
 import { useAntiCheat } from "@/hooks/useAntiCheat";
-import { useHideAds } from "@/lib/useHideAds";
 import {
   startQuickBattle,
   extendQuickBattle,
@@ -14,7 +13,7 @@ import {
 } from "@/lib/battle.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Timer, Zap, Trophy, Loader2 } from "lucide-react";
-import type { QuizQuestion } from "@/lib/learning.functions";
+import type { BattleQuestion } from "@/lib/battle.functions";
 import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/battle/")({
@@ -35,14 +34,16 @@ type Phase = "idle" | "countdown" | "playing" | "done";
 
 function QuickBattle() {
   useAntiCheat(true);
-  useHideAds();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const QUICK_TOTAL = 10;
   const [phase, setPhase] = useState<Phase>("idle");
   const [countdown, setCountdown] = useState(3);
-  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [questions, setQuestions] = useState<BattleQuestion[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [result, setResult] = useState<{ correct: number; total: number; score: number } | null>(
+    null,
+  );
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, "A" | "B" | "C" | "D">>({});
   const [tick, setTick] = useState(30);
@@ -72,6 +73,7 @@ function QuickBattle() {
       setQuestions(res.questions);
       setSessionId(res.id);
       setAnswers({});
+      setResult(null);
       setIdx(0);
       setPhase("countdown");
       setCountdown(3);
@@ -80,13 +82,10 @@ function QuickBattle() {
   });
 
   const submit = useMutation({
-    mutationFn: (finalAnswers: Record<string, "A" | "B" | "C" | "D">) => {
-      const elapsed = Math.max(1, Math.floor((Date.now() - startRef.current) / 1000));
-      return submitBattle({
-        data: { id: sessionId!, answers: finalAnswers, time_taken_seconds: elapsed },
-      });
-    },
-    onSuccess: () => {
+    mutationFn: (finalAnswers: Record<string, "A" | "B" | "C" | "D">) =>
+      submitBattle({ data: { id: sessionId!, answers: finalAnswers } }),
+    onSuccess: (res) => {
+      setResult({ correct: res.correct, total: res.total, score: res.score });
       setPhase("done");
       confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 } });
       qc.invalidateQueries({ queryKey: ["quick-leaderboard"] });
@@ -151,10 +150,7 @@ function QuickBattle() {
   }, [idx, questions.length, phase, sessionId]);
 
   const cur = questions[idx];
-  const correctCount = useMemo(
-    () => questions.reduce((n, q) => (answers[q.id] === q.correct ? n + 1 : n), 0),
-    [answers, questions],
-  );
+  const correctCount = result?.correct ?? 0;
 
   if (start.isPending) {
     return (
@@ -283,18 +279,13 @@ function QuickBattle() {
           </div>
           <div className="flex flex-wrap gap-1.5">
             {questions.slice(0, QUICK_TOTAL).map((q, i) => {
-              const a = answers[q.id];
-              const ok = a === q.correct;
+              const answered = !!answers[q.id];
               return (
                 <span
                   key={q.id}
-                  title={`Q${i + 1}: ${!a ? "skipped" : ok ? "correct" : "wrong"}`}
+                  title={`Q${i + 1}: ${answered ? "answered" : "skipped"}`}
                   className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold ${
-                    !a
-                      ? "bg-white/10 text-white/60"
-                      : ok
-                        ? "bg-emerald-500/20 text-emerald-300"
-                        : "bg-rose-500/20 text-rose-300"
+                    answered ? "bg-cyan-500/20 text-cyan-300" : "bg-white/10 text-white/60"
                   }`}
                 >
                   {i + 1}

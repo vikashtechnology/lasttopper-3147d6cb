@@ -1,7 +1,4 @@
-/**
- * Razorpay Checkout loader + opener.
- * Client-side helper used by Pricing & Wallet pages.
- */
+/** Razorpay Checkout loader for one-time, non-renewing Pro passes only. */
 import { createRazorpayOrder, verifyRazorpayPayment } from "@/lib/razorpay.functions";
 
 type RazorpayCheckoutOptions = {
@@ -13,7 +10,7 @@ type RazorpayCheckoutOptions = {
   description?: string;
   prefill?: { name?: string; email?: string; contact?: string };
   theme?: { color?: string };
-  handler: (r: {
+  handler: (response: {
     razorpay_order_id: string;
     razorpay_payment_id: string;
     razorpay_signature: string;
@@ -23,75 +20,46 @@ type RazorpayCheckoutOptions = {
 
 declare global {
   interface Window {
-    Razorpay?: new (opts: RazorpayCheckoutOptions) => { open: () => void };
+    Razorpay?: new (options: RazorpayCheckoutOptions) => { open: () => void };
   }
 }
 
 let loading: Promise<void> | null = null;
-function loadCheckout(): Promise<void> {
-  if (typeof window === "undefined") return Promise.reject(new Error("SSR"));
+function loadCheckout() {
+  if (typeof window === "undefined")
+    return Promise.reject(new Error("Checkout requires a browser"));
   if (window.Razorpay) return Promise.resolve();
   if (loading) return loading;
   loading = new Promise<void>((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = "https://checkout.razorpay.com/v1/checkout.js";
-    s.async = true;
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error("Failed to load Razorpay"));
-    document.head.appendChild(s);
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load Razorpay"));
+    document.head.appendChild(script);
   });
   return loading;
 }
 
-export type PayArgs =
-  | {
-      purpose: "pro";
-      name?: string | null;
-      email?: string | null;
-      description?: string;
-      voucher_code?: string;
-      promo_code?: string;
-    }
-  | {
-      purpose: "pro_yearly";
-      name?: string | null;
-      email?: string | null;
-      description?: string;
-      voucher_code?: string;
-      promo_code?: string;
-    }
-  | {
-      purpose: "pro_weekly";
-      name?: string | null;
-      email?: string | null;
-      description?: string;
-      voucher_code?: string;
-      promo_code?: string;
-    }
-  | {
-      purpose: "wallet_topup";
-      amount_inr: number;
-      name?: string | null;
-      email?: string | null;
-      description?: string;
-    };
+export type PayArgs = {
+  purpose: "pro_weekly" | "pro" | "pro_yearly";
+  name?: string | null;
+  email?: string | null;
+  description?: string;
+};
 
 export async function payWithRazorpay(args: PayArgs): Promise<{
-  purpose: "pro" | "pro_yearly" | "pro_weekly" | "wallet_topup";
-  balance?: number;
+  ok: true;
+  purpose: PayArgs["purpose"];
+  pro_until: string;
 }> {
   await loadCheckout();
-  const voucherCode = args.purpose === "wallet_topup" ? undefined : args.voucher_code;
-  const promoCode = args.purpose === "wallet_topup" ? undefined : args.promo_code;
   const order = await createRazorpayOrder({
-    data:
-      args.purpose === "wallet_topup"
-        ? { purpose: "wallet_topup", amount_inr: args.amount_inr }
-        : { purpose: args.purpose, voucher_code: voucherCode, promo_code: promoCode },
+    data: { purpose: args.purpose },
   });
 
   return new Promise((resolve, reject) => {
-    const rzp = new window.Razorpay!({
+    const checkout = new window.Razorpay!({
       key: order.key_id,
       order_id: order.order_id,
       amount: order.amount,
@@ -99,35 +67,30 @@ export async function payWithRazorpay(args: PayArgs): Promise<{
       name: "Last Topper",
       description:
         args.description ??
-        (args.purpose === "wallet_topup"
-          ? "Wallet top-up"
-          : args.purpose === "pro_yearly"
-            ? "Pro yearly subscription"
-            : args.purpose === "pro_weekly"
-              ? "Pro weekly subscription"
-              : "Pro monthly subscription"),
+        (args.purpose === "pro_yearly"
+          ? "365-day Pro pass"
+          : args.purpose === "pro_weekly"
+            ? "7-day Pro pass"
+            : "30-day Pro pass"),
       prefill: { name: args.name ?? undefined, email: args.email ?? undefined },
       theme: { color: "#4f46e5" },
-      handler: async (r) => {
+      handler: async (response) => {
         try {
-          const res = await verifyRazorpayPayment({
+          const result = await verifyRazorpayPayment({
             data: {
-              razorpay_order_id: r.razorpay_order_id,
-              razorpay_payment_id: r.razorpay_payment_id,
-              razorpay_signature: r.razorpay_signature,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
               purpose: args.purpose,
-              amount_inr: args.purpose === "wallet_topup" ? args.amount_inr : undefined,
-              voucher_code: voucherCode,
-              promo_code: promoCode,
             },
           });
-          resolve(res);
-        } catch (e) {
-          reject(e);
+          resolve(result);
+        } catch (error) {
+          reject(error);
         }
       },
       modal: { ondismiss: () => reject(new Error("Payment cancelled")) },
     });
-    rzp.open();
+    checkout.open();
   });
 }

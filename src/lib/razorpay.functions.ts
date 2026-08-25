@@ -1,211 +1,173 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-/**
- * Razorpay integration:
- * - Pro subscription (₹149 one-time / month)
- * - Wallet top-up (used to join Mega Test etc.)
- *
- * Flow:
- *   1. Client calls createRazorpayOrder -> returns { order_id, key_id, amount }
- *   2. Client opens Razorpay checkout with those params
- *   3. On success handler, client calls verifyRazorpayPayment with signature
- *      -> server verifies HMAC(order_id|payment_id, KEY_SECRET) and applies the effect
- *   4. Webhook /api/public/hooks/razorpay is a redundant safety net
- */
+/** One-time, non-renewing Pro passes with fixed server-side pricing. */
+type Purpose = "pro_weekly" | "pro" | "pro_yearly";
+const purposeSchema = z.enum(["pro_weekly", "pro", "pro_yearly"]);
 
-type Purpose = "pro" | "pro_yearly" | "pro_weekly" | "wallet_topup";
-
-function amountFor(purpose: Purpose, requested?: number): number {
-  if (purpose === "pro_weekly") return 4900; // ₹49 / week
-  if (purpose === "pro") return 14900; // ₹149 / month
-  if (purpose === "pro_yearly") return 149900; // ₹1499 / year
-  if (purpose === "wallet_topup") {
-    const amt = Math.floor((requested ?? 0) * 100);
-    if (amt < 1000) throw new Error("Minimum top-up is ₹10");
-    if (amt > 5_00_000) throw new Error("Maximum top-up is ₹5000");
-    return amt;
-  }
-  throw new Error("Unknown purpose");
+function amountFor(purpose: Purpose): number {
+  if (purpose === "pro_weekly") return 4_900; // ₹49 / 7 days
+  if (purpose === "pro") return 14_900; // ₹149 / 30 days
+  return 149_900; // ₹1,499 / 365 days
 }
 
-export const getRazorpayKeyId = createServerFn({ method: "GET" }).handler(async () => {
-  const id = process.env.RAZORPAY_KEY_ID;
-  if (!id) throw new Error("Razorpay not configured");
-  return { key_id: id };
-});
+function razorpayAuth() {
+  const key = process.env.RAZORPAY_KEY_ID;
+  const secret = process.env.RAZORPAY_KEY_SECRET;
+  if (!key || !secret) throw new Error("Razorpay not configured");
+  return { key, secret, basic: Buffer.from(`${key}:${secret}`).toString("base64") };
+}
 
-const createOrderSchema = z.object({
-  purpose: z.enum(["pro", "pro_yearly", "pro_weekly", "wallet_topup"]),
-  amount_inr: z.number().positive().optional(),
-  voucher_code: z.string().trim().min(4).max(24).optional(),
-  promo_code: z.string().trim().min(2).max(32).optional(),
-});
+const createOrderSchema = z.object({ purpose: purposeSchema });
 
 export const createRazorpayOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => createOrderSchema.parse(d))
+  .inputValidator((input: unknown) => createOrderSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const key = process.env.RAZORPAY_KEY_ID;
-    const secret = process.env.RAZORPAY_KEY_SECRET;
-    if (!key || !secret) throw new Error("Razorpay not configured");
-
-    let amount = amountFor(data.purpose, data.amount_inr);
-    let discountPercent = 0;
-    if (data.voucher_code && data.purpose !== "wallet_topup") {
-      const { findRedeemableVoucher } = await import("@/lib/voucher.server");
-      const v = await findRedeemableVoucher(context.userId, data.voucher_code);
-      if (!v) throw new Error("This discount code is not valid or already used");
-      discountPercent = v.percent;
-      amount = Math.max(100, Math.round((amount * (100 - discountPercent)) / 100));
-    }
-    if (data.promo_code && data.purpose !== "wallet_topup" && discountPercent === 0) {
-      const { findValidPromo } = await import("@/lib/promo.server");
-      const promo = await findValidPromo(data.promo_code, data.purpose, context.userId);
-      if (!promo) throw new Error("This promo code is not valid for this plan");
-      discountPercent = promo.percent;
-      amount = Math.max(100, Math.round((amount * (100 - discountPercent)) / 100));
-    }
-    const auth = Buffer.from(`${key}:${secret}`).toString("base64");
+    const { key, basic } = razorpayAuth();
+    const amount = amountFor(data.purpose);
     const receipt = `${data.purpose}_${context.userId.slice(0, 8)}_${Date.now()}`;
-
-    const res = await fetch("https://api.razorpay.com/v1/orders", {
+    const response = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Basic ${auth}` },
+      headers: { "Content-Type": "application/json", Authorization: `Basic ${basic}` },
       body: JSON.stringify({
         amount,
         currency: "INR",
         receipt,
-        notes: { user_id: context.userId, purpose: data.purpose },
+        notes: {
+          user_id: context.userId,
+          purpose: data.purpose,
+          expected_amount_paise: String(amount),
+          billing_model: "one_time_non_renewing",
+        },
       }),
+      signal: AbortSignal.timeout(10_000),
     });
-    if (!res.ok) {
-      const t = await res.text();
-      console.error("[razorpay] order create failed", res.status, t);
-      if (res.status === 401) {
-        throw new Error(
-          "Payment gateway not configured correctly. Please contact support (invalid Razorpay keys).",
-        );
-      }
-      throw new Error(`Failed to create order: ${res.status}`);
+    if (!response.ok) {
+      const body = await response.text();
+      console.error("[razorpay] order create failed", response.status, body);
+      throw new Error(
+        response.status === 401
+          ? "Payment gateway is not configured correctly"
+          : `Failed to create payment order (${response.status})`,
+      );
     }
-    const order = (await res.json()) as { id: string; amount: number; currency: string };
+    const order = (await response.json()) as { id: string; amount: number; currency: string };
+    if (!order.id || order.amount !== amount || order.currency !== "INR") {
+      throw new Error("Payment order mismatch");
+    }
     return {
       order_id: order.id,
       amount: order.amount,
       currency: order.currency,
       key_id: key,
-      discount_percent: discountPercent,
     };
   });
 
 const verifySchema = z.object({
-  razorpay_order_id: z.string().min(1),
-  razorpay_payment_id: z.string().min(1),
-  razorpay_signature: z.string().min(1),
-  purpose: z.enum(["pro", "pro_yearly", "pro_weekly", "wallet_topup"]),
-  amount_inr: z.number().positive().optional(),
-  voucher_code: z.string().trim().min(4).max(24).optional(),
-  promo_code: z.string().trim().min(2).max(32).optional(),
+  razorpay_order_id: z.string().min(1).max(100),
+  razorpay_payment_id: z.string().min(1).max(100),
+  razorpay_signature: z.string().regex(/^[a-fA-F0-9]{64}$/),
+  purpose: purposeSchema,
 });
 
-function verifySignature(orderId: string, paymentId: string, signature: string): boolean {
-  const secret = process.env.RAZORPAY_KEY_SECRET;
-  if (!secret) return false;
-  const expected = createHmac("sha256", secret).update(`${orderId}|${paymentId}`).digest("hex");
-  const a = Buffer.from(expected);
-  const b = Buffer.from(signature);
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
+function verifyCheckoutSignature(orderId: string, paymentId: string, signature: string) {
+  const { secret } = razorpayAuth();
+  const expected = createHmac("sha256", secret).update(`${orderId}|${paymentId}`).digest();
+  const received = Buffer.from(signature, "hex");
+  return received.length === expected.length && timingSafeEqual(received, expected);
+}
+
+type RazorpayOrder = {
+  id: string;
+  amount: number;
+  amount_paid: number;
+  amount_due: number;
+  currency: string;
+  status: string;
+  notes?: Record<string, string>;
+};
+type RazorpayPayment = {
+  id: string;
+  order_id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  captured?: boolean;
+};
+
+async function fetchRazorpayEntity<T>(path: string): Promise<T> {
+  const { basic } = razorpayAuth();
+  const response = await fetch(`https://api.razorpay.com/v1/${path}`, {
+    headers: { Authorization: `Basic ${basic}`, Accept: "application/json" },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!response.ok) throw new Error(`Could not verify payment with Razorpay (${response.status})`);
+  return (await response.json()) as T;
 }
 
 export const verifyRazorpayPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => verifySchema.parse(d))
+  .inputValidator((input: unknown) => verifySchema.parse(input))
   .handler(async ({ data, context }) => {
     if (
-      !verifySignature(data.razorpay_order_id, data.razorpay_payment_id, data.razorpay_signature)
+      !verifyCheckoutSignature(
+        data.razorpay_order_id,
+        data.razorpay_payment_id,
+        data.razorpay_signature,
+      )
     ) {
       throw new Error("Invalid payment signature");
     }
 
-    if (data.purpose === "pro" || data.purpose === "pro_yearly" || data.purpose === "pro_weekly") {
-      const days = data.purpose === "pro_yearly" ? 365 : data.purpose === "pro_weekly" ? 7 : 30;
-      const until = new Date(Date.now() + days * 86400_000).toISOString();
-      await context.supabase
-        .from("users")
-        .update({ is_pro: true, pro_since: new Date().toISOString(), pro_until: until })
-        .eq("id", context.userId);
-      if (data.voucher_code) {
-        const { findRedeemableVoucher, consumeVoucher } = await import("@/lib/voucher.server");
-        const v = await findRedeemableVoucher(context.userId, data.voucher_code);
-        if (v) await consumeVoucher(v.id);
-      }
-      if (data.promo_code) {
-        const { findValidPromo, redeemPromo } = await import("@/lib/promo.server");
-        const promo = await findValidPromo(data.promo_code, data.purpose, context.userId);
-        if (promo) await redeemPromo(promo, context.userId, data.purpose);
-      }
-      return { ok: true as const, purpose: data.purpose };
+    const [order, payment] = await Promise.all([
+      fetchRazorpayEntity<RazorpayOrder>(`orders/${encodeURIComponent(data.razorpay_order_id)}`),
+      fetchRazorpayEntity<RazorpayPayment>(
+        `payments/${encodeURIComponent(data.razorpay_payment_id)}`,
+      ),
+    ]);
+    const expectedAmount = amountFor(data.purpose);
+    const notes = order.notes ?? {};
+    const storedPurpose = purposeSchema.safeParse(notes.purpose);
+    if (
+      order.id !== data.razorpay_order_id ||
+      payment.id !== data.razorpay_payment_id ||
+      payment.order_id !== order.id ||
+      order.status !== "paid" ||
+      order.amount_paid !== expectedAmount ||
+      order.amount_due !== 0 ||
+      payment.status !== "captured" ||
+      payment.captured !== true ||
+      order.currency !== "INR" ||
+      payment.currency !== "INR" ||
+      order.amount !== expectedAmount ||
+      payment.amount !== expectedAmount ||
+      notes.expected_amount_paise !== String(expectedAmount) ||
+      notes.billing_model !== "one_time_non_renewing" ||
+      notes.user_id !== context.userId ||
+      !storedPurpose.success ||
+      storedPurpose.data !== data.purpose
+    ) {
+      throw new Error("Payment details do not match the server-created order");
     }
 
-    // wallet_topup
-    const amount = data.amount_inr ?? 0;
-    if (amount <= 0) throw new Error("Invalid amount");
-    const note = `Wallet top-up via Razorpay (${data.razorpay_payment_id})`;
-    // Idempotency: if this payment_id was already credited (by client retry or webhook), no-op.
-    const { data: dup } = await context.supabase
-      .from("wallet_transactions")
-      .select("id, balance_after")
-      .eq("note", note)
-      .maybeSingle();
-    if (dup) {
-      return {
-        ok: true as const,
-        purpose: "wallet_topup" as const,
-        balance: Number(dup.balance_after ?? 0),
-      };
-    }
-    const { data: u } = await context.supabase
-      .from("users")
-      .select("balance, referred_by, referral_credited")
-      .eq("id", context.userId)
-      .maybeSingle();
-    const cur = Number(u?.balance ?? 0);
-    const next = cur + amount;
-    await context.supabase.from("users").update({ balance: next }).eq("id", context.userId);
-    await context.supabase.from("wallet_transactions").insert({
-      user_id: context.userId,
-      type: "credit",
-      category: "topup",
-      amount,
-      balance_after: next,
-      note,
-      reference_id: null,
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: fulfillment, error } = await (supabaseAdmin as any).rpc("fulfill_pro_payment", {
+      p_payment_id: payment.id,
+      p_order_id: order.id,
+      p_user_id: context.userId,
+      p_purpose: storedPurpose.data,
+      p_amount_paise: expectedAmount,
     });
+    if (error) throw error;
+    const result = Array.isArray(fulfillment) ? fulfillment[0] : fulfillment;
+    if (!result?.fulfilled || !result?.pro_until) throw new Error("Payment fulfillment failed");
 
-    // Referral reward: first-ever top-up gives the referrer a one-time Pro
-    // discount voucher (15%–25% off any Pro plan).
-    if (u?.referred_by && !u.referral_credited) {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { awardReferralVoucher } = await import("@/lib/voucher.server");
-      const voucher = await awardReferralVoucher(u.referred_by);
-      await supabaseAdmin
-        .from("users")
-        .update({ referral_credited: true })
-        .eq("id", context.userId);
-      if (voucher) {
-        await supabaseAdmin.from("notifications").insert({
-          user_id: u.referred_by,
-          kind: "referral",
-          title: `🎁 You earned ${voucher.percent}% off Pro`,
-          body: `A friend you invited just topped up. Use code ${voucher.code} at checkout.`,
-          link: "/pricing",
-        });
-      }
-    }
-
-    return { ok: true as const, purpose: "wallet_topup" as const, balance: next };
+    return {
+      ok: true as const,
+      purpose: storedPurpose.data,
+      pro_until: result.pro_until as string,
+    };
   });

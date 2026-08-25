@@ -1,13 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { listNotifications, markNotificationsRead } from "@/lib/community.functions";
-import { ArrowLeft, Bell, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Bell, BellRing, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { failMessage } from "@/lib/friendly-error";
 import { toast } from "sonner";
 import { useUserStore } from "@/store/user";
+import {
+  isNative,
+  notifyNow,
+  requestNotificationPermission,
+  scheduleRecurringReminders,
+} from "@/lib/local-notifications";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
   head: () => ({
@@ -27,7 +33,32 @@ function Notifications() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const meId = useUserStore((s) => s.profile?.id);
+  const [testingDevice, setTestingDevice] = useState(false);
   const list = useQuery({ queryKey: ["notifications"], queryFn: () => listNotifications() });
+
+  const testDeviceNotification = async () => {
+    setTestingDevice(true);
+    try {
+      const granted = await requestNotificationPermission();
+      if (!granted) {
+        toast.error("Notification permission was not granted. Enable it in your device settings.");
+        return;
+      }
+      if (isNative()) await scheduleRecurringReminders();
+      await notifyNow(
+        "Last Topper notifications are ready ✅",
+        isNative()
+          ? "Device reminders have been scheduled."
+          : "Browser alerts work while Last Topper is open.",
+        1901,
+      );
+      toast.success("Test notification sent.");
+    } catch (error) {
+      toast.error(failMessage(error, "Could not send the test notification."));
+    } finally {
+      setTestingDevice(false);
+    }
+  };
 
   useEffect(() => {
     if (!meId) return;
@@ -65,8 +96,23 @@ function Notifications() {
           <h1 className="text-base font-semibold">Notifications</h1>
           <Button
             size="sm"
-            variant="ghost"
+            variant="outline"
             className="ml-auto"
+            aria-label="Test device notifications"
+            disabled={testingDevice}
+            onClick={testDeviceNotification}
+          >
+            {testingDevice ? (
+              <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <BellRing className="mr-1 h-3.5 w-3.5" />
+            )}
+            <span className="hidden sm:inline">{testingDevice ? "Sending…" : "Test device"}</span>
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-label="Mark all notifications as read"
             disabled={markRead.isPending || !list.data?.some((item) => !item.read_at)}
             onClick={() => markRead.mutate()}
           >
@@ -75,7 +121,9 @@ function Notifications() {
             ) : (
               <Check className="mr-1 h-3.5 w-3.5" />
             )}
-            {markRead.isPending ? "Marking…" : "Mark all read"}
+            <span className="hidden sm:inline">
+              {markRead.isPending ? "Marking…" : "Mark all read"}
+            </span>
           </Button>
         </div>
       </header>

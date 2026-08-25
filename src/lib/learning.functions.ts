@@ -31,6 +31,20 @@ export type QuizQuestion = {
   explanation: string;
 };
 
+const generatedQuizQuestionSchema = z.object({
+  chapter: z.string().max(300),
+  question: z.string().trim().min(1).max(20_000),
+  options: z.object({
+    A: z.string().max(10_000),
+    B: z.string().max(10_000),
+    C: z.string().max(10_000),
+    D: z.string().max(10_000),
+  }),
+  correct: z.enum(["A", "B", "C", "D"]),
+  hint: z.string().max(10_000).default(""),
+  explanation: z.string().max(20_000).default(""),
+});
+
 export const getSubjectsWithChapters = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -87,11 +101,6 @@ export const getSubjectsWithChapters = createServerFn({ method: "GET" })
     return Array.from(catalog.values()).filter((subject) => subject.chapters.length > 0);
   });
 
-const generateSchema = z.object({
-  chapter_ids: z.array(z.string().uuid()).min(1),
-  question_count: z.union([z.literal(20), z.literal(50), z.literal(100)]),
-});
-
 async function callGeminiBatch(
   chapterNames: string[],
   profession: string,
@@ -135,172 +144,36 @@ Rules:
     throw new Error("AI_BUSY");
   }
   const content: string = data?.choices?.[0]?.message?.content ?? "{}";
-  let parsed: { questions?: Array<Omit<QuizQuestion, "id" | "chapter_id"> & { chapter: string }> } =
-    {};
   try {
-    parsed = JSON.parse(content);
-  } catch {
-    throw new Error("AI returned invalid JSON");
-  }
-
-  const raw = parsed.questions ?? [];
-  return raw.slice(0, count).map((q, i) => ({
-    id: `q_${Date.now()}_${batchIndex}_${i}`,
-    chapter_id: "",
-    question: q.question,
-    options: q.options,
-    correct: q.correct,
-    hint: q.hint,
-    explanation: q.explanation,
-  }));
-}
-
-async function callGeminiForQuestions(
-  chapterNames: string[],
-  profession: string,
-  count: number,
-): Promise<QuizQuestion[]> {
-  // Batch large requests so a single slow/oversized response doesn't tank the whole set.
-  const BATCH = 25;
-  const batches: number[] = [];
-  let remaining = count;
-  while (remaining > 0) {
-    const n = Math.min(BATCH, remaining);
-    batches.push(n);
-    remaining -= n;
-  }
-
-  // Run batches in parallel with per-batch retry for much faster 50/100 generation.
-  const settled = await Promise.all(
-    batches.map(async (n, i) => {
-      let lastErr: unknown;
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          const got = await callGeminiBatch(chapterNames, profession, n, i);
-          if (got.length > 0) return got;
-        } catch (e) {
-          lastErr = e;
-          if (e instanceof Error && e.message === "AI_BUSY") throw e;
-        }
-      }
-      if (lastErr instanceof Error) throw lastErr;
-      return [] as QuizQuestion[];
-    }),
-  );
-
-  const results = settled.flat();
-  if (results.length === 0) throw new Error("AI returned no questions");
-  return results.slice(0, count);
-}
-
-export const generateQuestions = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => generateSchema.parse(data))
-  .handler(async ({ data, context }) => {
-    const { data: profile } = await context.supabase
-      .from("users")
-      .select("profession, is_pro")
-      .eq("id", context.userId)
-      .maybeSingle();
-    const profession = profile?.profession;
-    if (!profession) throw new Error("Complete onboarding first");
-    if (data.question_count > 20 && !profile?.is_pro) {
-      throw new Error("PRO_REQUIRED");
-    }
-    {
-      const { assertQuota } = await import("@/lib/quota.server");
-      await assertQuota(context.supabase, context.userId, data.question_count);
-    }
-
-    const { data: cached } = await context.supabase
-      .from("generated_questions")
-      .select("id, questions, created_at")
-      .eq("user_id", context.userId)
-      .eq("question_count", data.question_count)
-      .gt("expires_at", new Date().toISOString())
-      .order("created_at", { ascending: false })
-      .limit(5);
-
-    const targetKey = [...data.chapter_ids].sort().join(",");
-    const hit = (cached ?? []).find((c) => {
-      const qs = c.questions as QuizQuestion[];
-      const chSet = Array.from(new Set(qs.map((q) => q.chapter_id)))
-        .sort()
-        .join(",");
-      return chSet === targetKey;
-    });
-    if (hit) return { questions: hit.questions as QuizQuestion[], cached: true };
-
-    const { data: chapters } = await context.supabase
-      .from("chapters")
-      .select("id, name")
-      .in("id", data.chapter_ids);
-    const nameById = new Map((chapters ?? []).map((c) => [c.id, c.name] as const));
-    const chapterNames = data.chapter_ids.map((id) => nameById.get(id) ?? "").filter(Boolean);
-
-    let questions: QuizQuestion[];
-    try {
-      questions = await callGeminiForQuestions(chapterNames, profession, data.question_count);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      // AI failed — try the fallback bank
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { sampleFromBank } = await import("@/lib/question-bank.server");
-      const bank = await sampleFromBank(
-        supabaseAdmin,
-        profession,
-        data.question_count,
-        data.chapter_ids,
-      );
-      if (bank.length >= Math.min(data.question_count, 5)) {
-        return {
-          questions: bank,
-          cached: false,
-          error: "Using saved questions (AI busy)." as const,
-        };
-      }
-      if (msg === "AI_BUSY") {
-        return {
-          questions: [] as QuizQuestion[],
-          cached: false,
-          error: "AI is busy — please try again in a minute." as const,
-        };
-      }
-      throw e;
-    }
-
-    questions = questions.map((q, i) => ({
-      ...q,
-      chapter_id: data.chapter_ids[i % data.chapter_ids.length],
+    const parsed = z
+      .object({ questions: z.array(generatedQuizQuestionSchema).max(100) })
+      .parse(JSON.parse(content));
+    return parsed.questions.slice(0, count).map((q) => ({
+      id: `q_${crypto.randomUUID()}`,
+      chapter_id: "",
+      question: q.question,
+      options: q.options,
+      correct: q.correct,
+      hint: q.hint,
+      explanation: q.explanation,
     }));
-
-    // Save AI-generated questions to the fallback bank (best effort)
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { saveToBank } = await import("@/lib/question-bank.server");
-      void saveToBank(supabaseAdmin, profession, questions);
-    } catch {
-      /* non-fatal */
-    }
-
-    await context.supabase.from("generated_questions").insert({
-      user_id: context.userId,
-      chapter_ids: data.chapter_ids,
-      profession,
-      question_count: data.question_count,
-      questions: questions as unknown as never,
-    });
-
-    return { questions, cached: false };
-  });
+  } catch {
+    throw new Error("AI returned an invalid question batch");
+  }
+}
 
 /* ---------------- Progressive (5-at-a-time) generation ---------------- */
 
 const startProgressiveSchema = z.object({
-  chapter_ids: z.array(z.string().uuid()).min(1),
+  chapter_ids: z.array(z.string().uuid()).min(1).max(100),
   target_count: z.union([z.literal(20), z.literal(50), z.literal(100)]),
   timer_enabled: z.boolean(),
-  duration_seconds: z.number().int().positive().nullable(),
+  duration_seconds: z
+    .number()
+    .int()
+    .positive()
+    .max(7 * 24 * 60 * 60)
+    .nullable(),
 });
 
 const PROG_BATCH = 5;
@@ -361,6 +234,7 @@ export const startProgressiveQuiz = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => startProgressiveSchema.parse(d))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profile } = await context.supabase
       .from("users")
       .select("is_pro")
@@ -376,7 +250,7 @@ export const startProgressiveQuiz = createServerFn({ method: "POST" })
     let first: QuizQuestion[];
     try {
       first = await generateBatchForSession(
-        context.supabase,
+        supabaseAdmin,
         context.userId,
         data.chapter_ids,
         firstCount,
@@ -389,18 +263,19 @@ export const startProgressiveQuiz = createServerFn({ method: "POST" })
     }
 
     const nowIso = new Date().toISOString();
-    const { data: row, error } = await context.supabase
+    const { data: row, error } = await supabaseAdmin
       .from("quiz_sessions")
       .insert({
         user_id: context.userId,
         chapter_ids: data.chapter_ids,
         question_count: data.target_count,
-        questions: first as unknown as never,
+        questions: first,
+        xp_eligible: true,
         timer_enabled: data.timer_enabled,
         duration_seconds: data.duration_seconds,
         start_time: nowIso,
         last_heartbeat: nowIso,
-      })
+      } as never)
       .select("id")
       .single();
     if (error) throw error;
@@ -411,7 +286,8 @@ export const extendQuizSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: s, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: s, error } = await supabaseAdmin
       .from("quiz_sessions")
       .select("questions, question_count, chapter_ids, submitted_at")
       .eq("id", data.id)
@@ -430,41 +306,69 @@ export const extendQuizSession = createServerFn({ method: "POST" })
     const batchIdx = Math.floor(cur.length / PROG_BATCH);
     const chapterIds = (s.chapter_ids as string[]) ?? [];
     const more = await generateBatchForSession(
-      context.supabase,
+      supabaseAdmin,
       context.userId,
       chapterIds,
       n,
       batchIdx,
     );
     const next = [...cur, ...more];
-    await context.supabase
+    const { error: updateError } = await supabaseAdmin
       .from("quiz_sessions")
       .update({ questions: next as unknown as never })
       .eq("id", data.id)
-      .eq("user_id", context.userId);
+      .eq("user_id", context.userId)
+      .is("submitted_at", null);
+    if (updateError) throw updateError;
     return { done: next.length >= target, added: more.length, total: next.length };
   });
 
-const createSessionSchema = z.object({
-  chapter_ids: z.array(z.string().uuid()).min(1),
-  question_count: z.number().int().positive(),
-  questions: z.array(z.any()),
-  timer_enabled: z.boolean(),
-  duration_seconds: z.number().int().positive().nullable(),
+const quizQuestionInputSchema = z.object({
+  id: z.string().min(1).max(128),
+  chapter_id: z.string().max(128),
+  question: z.string().min(1).max(20_000),
+  options: z.object({
+    A: z.string().max(10_000),
+    B: z.string().max(10_000),
+    C: z.string().max(10_000),
+    D: z.string().max(10_000),
+  }),
+  correct: z.enum(["A", "B", "C", "D"]),
+  hint: z.string().max(10_000),
+  explanation: z.string().max(20_000),
 });
+
+const createSessionSchema = z
+  .object({
+    chapter_ids: z.array(z.string().uuid()).min(1).max(100),
+    question_count: z.number().int().min(1).max(100),
+    questions: z.array(quizQuestionInputSchema).min(1).max(100),
+    timer_enabled: z.boolean(),
+    duration_seconds: z
+      .number()
+      .int()
+      .positive()
+      .max(7 * 24 * 60 * 60)
+      .nullable(),
+  })
+  .refine((value) => value.question_count === value.questions.length, "Question count mismatch");
 
 export const createQuizSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => createSessionSchema.parse(data))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const nowIso = new Date().toISOString();
-    const { data: row, error } = await context.supabase
+    const { data: row, error } = await supabaseAdmin
       .from("quiz_sessions")
       .insert({
         user_id: context.userId,
         chapter_ids: data.chapter_ids,
         question_count: data.question_count,
         questions: data.questions,
+        // Retry/practice papers come from previously revealed client content and
+        // must never affect XP, authoritative analytics, or Mega study tasks.
+        xp_eligible: false,
         timer_enabled: data.timer_enabled,
         duration_seconds: data.duration_seconds,
         start_time: nowIso,
@@ -480,26 +384,35 @@ export const getQuizSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { data: row, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await supabaseAdmin
       .from("quiz_sessions")
       .select("*")
       .eq("id", data.id)
       .eq("user_id", context.userId)
       .maybeSingle();
     if (error) throw error;
-    return row;
+    if (!row || row.submitted_at) return row;
+    return {
+      ...row,
+      questions: ((row.questions as QuizQuestion[]) ?? []).map(
+        ({ correct: _correct, explanation: _explanation, ...question }) => question,
+      ),
+    };
   });
 
 export const heartbeatSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
       .from("quiz_sessions")
       .update({ last_heartbeat: new Date().toISOString() })
       .eq("id", data.id)
       .eq("user_id", context.userId)
       .is("submitted_at", null);
+    if (error) throw error;
     return { ok: true };
   });
 
@@ -516,69 +429,66 @@ function scoreQuestions(questions: QuizQuestion[], answers: Record<string, "A" |
 
 const submitSchema = z.object({
   id: z.string().uuid(),
-  answers: z.record(z.string(), z.enum(["A", "B", "C", "D"])),
-  time_taken_seconds: z.number().int().nonnegative(),
+  answers: z
+    .record(z.string().max(128), z.enum(["A", "B", "C", "D"]))
+    .refine((answers) => Object.keys(answers).length <= 200, "Too many answers"),
+  // Retained for wire compatibility; elapsed time is derived by the database.
+  time_taken_seconds: z
+    .number()
+    .int()
+    .nonnegative()
+    .max(7 * 24 * 60 * 60),
 });
 
 export const submitQuizSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => submitSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const { data: session, error: gErr } = await context.supabase
-      .from("quiz_sessions")
-      .select("questions, user_id, submitted_at")
-      .eq("id", data.id)
-      .eq("user_id", context.userId)
-      .maybeSingle();
-    if (gErr) throw gErr;
-    if (!session) throw new Error("Session not found");
-    if (session.submitted_at) {
-      const questions = session.questions as QuizQuestion[];
-      return scoreQuestions(questions, data.answers);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: submissionData, error: submissionError } = await (supabaseAdmin as any).rpc(
+      "submit_quiz_session",
+      {
+        p_session_id: data.id,
+        p_user_id: context.userId,
+        p_answers: data.answers,
+        p_allow_late: false,
+      },
+    );
+    if (submissionError) throw submissionError;
+    const submission = Array.isArray(submissionData) ? submissionData[0] : submissionData;
+    if (!submission) throw new Error("Quiz submission failed");
+
+    const correct = Number(submission.correct_count ?? 0);
+    const incorrect = Number(submission.incorrect_count ?? 0);
+    const total = Number(submission.total ?? 0);
+    const accuracy = Number(submission.accuracy ?? 0);
+
+    if (submission.submitted) {
+      // Refresh the user's rolling accuracy after the authoritative submission.
+      const { data: all, error: accuracyReadError } = await supabaseAdmin
+        .from("quiz_sessions")
+        .select("accuracy")
+        .eq("user_id", context.userId)
+        .eq("xp_eligible", true)
+        .not("submitted_at", "is", null);
+      if (accuracyReadError) throw accuracyReadError;
+      if (all.length > 0) {
+        const avg = all.reduce((sum, row) => sum + Number(row.accuracy ?? 0), 0) / all.length;
+        const { error: accuracyError } = await supabaseAdmin
+          .from("users")
+          .update({ total_accuracy: Math.round(avg * 100) / 100 })
+          .eq("id", context.userId);
+        if (accuracyError) throw accuracyError;
+      }
     }
-
-    const questions = session.questions as QuizQuestion[];
-    const { correct, incorrect, total, accuracy } = scoreQuestions(questions, data.answers);
-
-    const { error: uErr } = await context.supabase
-      .from("quiz_sessions")
-      .update({
-        answers: data.answers,
-        score: correct,
-        correct_count: correct,
-        incorrect_count: incorrect,
-        accuracy,
-        time_taken_seconds: data.time_taken_seconds,
-        submitted_at: new Date().toISOString(),
-      })
-      .eq("id", data.id)
-      .eq("user_id", context.userId);
-    if (uErr) throw uErr;
-
-    // Refresh user's rolling accuracy across submitted sessions
-    const { data: all } = await context.supabase
-      .from("quiz_sessions")
-      .select("accuracy")
-      .eq("user_id", context.userId)
-      .not("submitted_at", "is", null);
-    if (all && all.length > 0) {
-      const avg = all.reduce((sum, r) => sum + Number(r.accuracy ?? 0), 0) / all.length;
-      await context.supabase
-        .from("users")
-        .update({ total_accuracy: Math.round(avg * 100) / 100 })
-        .eq("id", context.userId);
-    }
-
-    const { awardQuestionXp } = await import("@/lib/xp.server");
-    const xp = await awardQuestionXp(context.supabase, context.userId, correct).catch(() => null);
 
     return {
       correct,
       incorrect,
       total,
       accuracy,
-      xp_gained: xp?.gained ?? 0,
-      xp_total: xp?.xp ?? 0,
+      xp_gained: Number(submission.xp_gained ?? 0),
+      xp_total: Number(submission.xp_total ?? 0),
     };
   });
 
@@ -586,36 +496,30 @@ export const submitQuizSession = createServerFn({ method: "POST" })
 export const finalizeStaleSessions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const cutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-    const { data: stale } = await context.supabase
+    const { data: stale, error: staleError } = await supabaseAdmin
       .from("quiz_sessions")
-      .select("id, questions, answers, start_time, last_heartbeat")
+      .select("id, answers")
       .eq("user_id", context.userId)
       .is("submitted_at", null)
       .lt("last_heartbeat", cutoff);
+    if (staleError) throw staleError;
 
     const finalized: string[] = [];
-    for (const s of stale ?? []) {
-      const questions = (s.questions as QuizQuestion[]) ?? [];
-      const answers = (s.answers as Record<string, "A" | "B" | "C" | "D">) ?? {};
-      const { correct, incorrect, accuracy } = scoreQuestions(questions, answers);
-      const startMs = new Date(s.start_time as string).getTime();
-      const hbMs = new Date((s.last_heartbeat ?? s.start_time) as string).getTime();
-      const timeTaken = Math.max(0, Math.floor((hbMs - startMs) / 1000));
-      await context.supabase
-        .from("quiz_sessions")
-        .update({
-          score: correct,
-          correct_count: correct,
-          incorrect_count: incorrect,
-          accuracy,
-          time_taken_seconds: timeTaken,
-          submitted_at: new Date().toISOString(),
-          was_auto_submitted: true,
-        })
-        .eq("id", s.id)
-        .eq("user_id", context.userId);
-      finalized.push(s.id as string);
+    for (const session of stale ?? []) {
+      const { data: submissionData, error: submissionError } = await (supabaseAdmin as any).rpc(
+        "submit_quiz_session",
+        {
+          p_session_id: session.id,
+          p_user_id: context.userId,
+          p_answers: session.answers ?? {},
+          p_allow_late: true,
+        },
+      );
+      if (submissionError) throw submissionError;
+      const submission = Array.isArray(submissionData) ? submissionData[0] : submissionData;
+      if (submission?.submitted) finalized.push(session.id as string);
     }
     return { finalized };
   });
@@ -631,7 +535,8 @@ export const getTodayUsage = createServerFn({ method: "GET" })
 export const getQuizHistory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("quiz_sessions")
       .select(
         "id, question_count, correct_count, incorrect_count, accuracy, time_taken_seconds, submitted_at, was_auto_submitted, chapter_ids",
@@ -654,10 +559,12 @@ export type MistakeItem = {
 export const getMistakes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("quiz_sessions")
       .select("id, questions, answers, submitted_at")
       .eq("user_id", context.userId)
+      .eq("xp_eligible", true)
       .not("submitted_at", "is", null)
       .order("submitted_at", { ascending: false })
       .limit(50);
@@ -706,13 +613,16 @@ export type Analytics = {
 export const getAnalytics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<Analytics> => {
-    const { data: sessions } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: sessions, error: sessionsError } = await supabaseAdmin
       .from("quiz_sessions")
       .select("questions, answers, submitted_at, time_taken_seconds")
       .eq("user_id", context.userId)
+      .eq("xp_eligible", true)
       .not("submitted_at", "is", null)
       .order("submitted_at", { ascending: false })
       .limit(200);
+    if (sessionsError) throw sessionsError;
 
     type ChAgg = { correct: number; attempted: number };
     const chapterAgg = new Map<string, ChAgg>();

@@ -1,153 +1,141 @@
-# Native Android and iOS builds
+# Last Topper Android build and direct distribution
 
-Last Topper uses Capacitor with package ID `com.lasttopper.app`. The native shell loads an independently deployed HTTPS build and adds Android screenshot protection, local notifications, native sharing, payments, and deep links.
+Last Topper uses Capacitor with package ID `com.lasttopper.app`. The native Android shell loads the deployed HTTPS application and adds screenshot protection, App Links, local notifications, native sharing, and Razorpay-compatible navigation.
+
+Google Play and Apple App Store publication are not part of this project. Students receive a signed APK directly from a tagged GitHub Release; the website remains an installable PWA and web fallback.
 
 ## Requirements
 
 - Node.js 22.12 or newer
 - npm 10 or newer
-- Android Studio, Android SDK, and JDK 21 for Android
-- Xcode 15 or newer and CocoaPods for iOS
-
-Install dependencies and build the web application:
+- Android SDK and JDK 21 for local Android builds
 
 ```bash
 npm ci
 npm run build
 ```
 
-The native platform packages are development dependencies. The workflows invoke pinned Capacitor CLI and asset-generator versions through `npx`.
+The GitHub workflow generates the Android project at build time, so `android/` is not committed.
 
-## Deployment URL
+## Deployment origin
 
-`capacitor.config.ts` reads the public deployment from `CAPACITOR_SERVER_URL` and defaults to:
+`capacitor.config.ts` reads `CAPACITOR_SERVER_URL` and defaults to:
 
 ```text
 https://last-topper-web-test.vercel.app
 ```
 
-Set both variables when using another deployment host:
+GitHub Actions repository Variables:
 
-```bash
-export CAPACITOR_SERVER_URL=https://app.example.com
-export APP_HOST=app.example.com
+```text
+APP_HOST=last-topper-web-test.vercel.app
+CAPACITOR_SERVER_URL=https://last-topper-web-test.vercel.app
+ADMOB_ANDROID_APP_ID=<real AdMob app ID; omit until approved>
+APP_VERSION_NAME=1.0.1
+APP_VERSION_CODE=<increasing positive integer>
 ```
 
-Set `VITE_PUBLIC_APP_URL` to the same public URL when building the web app. Do not include a trailing slash.
+`VITE_PUBLIC_APP_URL` belongs in Vercel and must use the same public origin.
 
-For GitHub Actions, create repository variables named `CAPACITOR_SERVER_URL` and `APP_HOST`. The Android and iOS workflows use the independent GitHub Pages host by default.
-
-## Create and sync native projects
+## Local Android project
 
 ```bash
 npx cap add android
-npx cap add ios       # macOS only
-npx cap sync
-```
-
-Open the generated projects with:
-
-```bash
+npx cap sync android
 npx cap open android
-npx cap open ios
 ```
 
-The workflows generate `android/` and `ios/` at build time, so those directories do not need to be committed.
+## Native security
 
-## Android screenshot protection
+The Android workflow:
 
-The Android workflow writes `MainActivity.java` with `FLAG_SECURE`. This blocks screenshots, screen recordings, and the recent-app preview:
-
-```java
-getWindow().setFlags(
-    WindowManager.LayoutParams.FLAG_SECURE,
-    WindowManager.LayoutParams.FLAG_SECURE
-);
-```
-
-iOS does not provide an equivalent system flag.
+- sets minimum SDK 26;
+- writes `MainActivity.java` with `FLAG_SECURE` to block screenshots, recording, and the recent-app preview;
+- refuses cleartext HTTP;
+- adds verified HTTPS App Links and the `lasttopper://` fallback schemes;
+- configures the selected AdMob Android application ID;
+- adds notification permissions.
 
 ## Local notifications
 
-`src/lib/local-notifications.ts` schedules reminders on the device through `@capacitor/local-notifications`. Android requires:
+The installed Android application uses `@capacitor/local-notifications` for device-side reminders. It schedules:
+
+- a daily 6:30 PM streak reminder;
+- daytime motivation reminders;
+- Saturday evening and Sunday morning Mega Test reminders.
+
+Android permissions added by the build:
 
 ```xml
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 ```
 
-The Android workflow adds both permissions. Remote notifications that arrive without the app scheduling them require a separate FCM/APNs integration.
+Users can open the in-app **Notifications** page and select **Test device**. This requests permission from a user gesture, sends an immediate test, and reschedules native reminders.
 
-## Deep links and OAuth
+On the website/PWA, immediate browser alerts work only while Last Topper is open and permission has been granted. Closed-app remote notifications require a future FCM integration; local native reminders do not require FCM.
 
-The app supports:
+A real Android-device test remains required before calling the APK notification behavior production-verified.
 
-- HTTPS App Links and Universal Links on `APP_HOST`
-- `lasttopper://app/...` for application routes
-- `lasttopper://auth/callback` for the native OAuth return
+## Google login and App Links
 
-Public association files are stored at:
-
-- `public/.well-known/assetlinks.json`
-- `public/.well-known/apple-app-site-association`
-
-Serve these files directly from the root of `APP_HOST`, without redirects. Replace the Apple placeholder in `apple-app-site-association` with the production Apple Team ID. Keep the Android certificate fingerprints in `assetlinks.json` synchronized with the Play signing certificate.
-
-Google sign-in opens in the device's external browser. Configure Supabase Authentication to allow this redirect URL:
+The app uses Supabase's browser-based Google OAuth flow. Configure:
 
 ```text
-https://APP_HOST/auth/callback?native_app=1
+Google authorized origin:
+https://last-topper-web-test.vercel.app
+
+Google authorized redirect URI:
+https://hcqlwtmeylnhqernwljj.supabase.co/auth/v1/callback
+
+Supabase redirect allowlist:
+https://last-topper-web-test.vercel.app/auth/callback
 ```
 
-Also configure the web callback URL without the query marker. After Supabase completes sign-in, the callback page returns the session to the installed app through the custom URL scheme when necessary.
+The public Android association file is:
 
-## Payments
-
-The Capacitor configuration permits the configured deployment host, Supabase, and Razorpay checkout hosts. To let Razorpay open installed UPI applications, add this to `AndroidManifest.xml`:
-
-```xml
-<queries>
-  <intent>
-    <action android:name="android.intent.action.VIEW" />
-    <data android:scheme="upi" />
-  </intent>
-</queries>
+```text
+public/.well-known/assetlinks.json
 ```
 
-## GitHub Actions builds
+Its package name must be `com.lasttopper.app`, and its SHA-256 fingerprint must match the permanent release certificate. The tagged release workflow fails if the signed APK certificate and `assetlinks.json` do not match.
 
-| Workflow                        | Output                         | Trigger                                    |
-| ------------------------------- | ------------------------------ | ------------------------------------------ |
-| `.github/workflows/android.yml` | Debug APK; release AAB and APK | Push/PR to `main`, `v*` tag, or manual run |
-| `.github/workflows/ios.yml`     | Unsigned iOS `.app`            | `v*` tag or manual run                     |
+## Permanent signing
 
-The Android release can be signed with these repository secrets:
-
-| Secret                      | Value                           |
-| --------------------------- | ------------------------------- |
-| `ANDROID_KEYSTORE_BASE64`   | Base64-encoded release keystore |
-| `ANDROID_KEYSTORE_PASSWORD` | Keystore password               |
-| `ANDROID_KEY_ALIAS`         | Key alias                       |
-| `ANDROID_KEY_PASSWORD`      | Key password                    |
-
-Create a keystore once:
+Create one release keystore and preserve it permanently:
 
 ```bash
-keytool -genkey -v -keystore my-release-key.jks -keyalg RSA \
-  -keysize 2048 -validity 10000 -alias lasttopper
+keytool -genkeypair -v \
+  -keystore last-topper-release.jks \
+  -alias lasttopper \
+  -keyalg RSA \
+  -keysize 2048 \
+  -validity 10000
 ```
 
-Then encode it on Linux:
+GitHub Actions repository Secrets:
 
-```bash
-base64 -w0 my-release-key.jks
+```text
+ANDROID_KEYSTORE_BASE64
+ANDROID_KEYSTORE_PASSWORD
+ANDROID_KEY_ALIAS
+ANDROID_KEY_PASSWORD
 ```
 
-Before each release, increment `APP_VERSION_CODE` and update `APP_VERSION_NAME` in the Android workflow. Trigger a tagged build with:
+Never commit the keystore or passwords. Tagged builds refuse to publish without signing secrets.
 
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
+## Release flow
 
-Download the resulting artifacts from the GitHub Actions run. The unsigned iOS artifact must be opened, signed, and archived with an Apple Developer team before App Store submission.
+1. Deploy and validate the matching website/database release.
+2. Increase `APP_VERSION_CODE`.
+3. Confirm `APP_VERSION_NAME` or use the intended `v*` tag.
+4. Confirm `assetlinks.json` contains the permanent certificate fingerprint.
+5. Push an approved tag, for example `v1.0.1`.
+6. GitHub Actions builds and verifies the signed APK.
+7. The GitHub Release contains:
+   - `last-topper.apk`
+   - `last-topper-source.zip`
+   - `SHA256SUMS.txt`
+8. Publish the stable APK URL from the Last Topper admin app-update page.
+
+The same release key must be used for every future APK update.

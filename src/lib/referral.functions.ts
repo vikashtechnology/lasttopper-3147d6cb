@@ -7,7 +7,7 @@ export const getMyReferral = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data: me } = await context.supabase
       .from("users")
-      .select("referral_code, referred_by, mega_credits")
+      .select("referral_code, referred_by")
       .eq("id", context.userId)
       .maybeSingle();
 
@@ -28,7 +28,6 @@ export const getMyReferral = createServerFn({ method: "GET" })
     return {
       code: (me?.referral_code as string | null) ?? null,
       referred_by: (me?.referred_by as string | null) ?? null,
-      mega_credits: Number(me?.mega_credits ?? 0),
       invited: count ?? 0,
       converted,
       milestone_size: MILESTONE,
@@ -87,10 +86,11 @@ export const applyReferralCode = createServerFn({ method: "POST" })
     if (!ref || ref.id === context.userId)
       return { ok: false as const, error: "Invalid referral code" };
 
-    const { error } = await context.supabase
+    const { error } = await supabaseAdmin
       .from("users")
       .update({ referred_by: ref.id })
-      .eq("id", context.userId);
+      .eq("id", context.userId)
+      .is("referred_by", null);
     if (error) return { ok: false as const, error: "Could not apply referral code" };
     return { ok: true as const };
   });

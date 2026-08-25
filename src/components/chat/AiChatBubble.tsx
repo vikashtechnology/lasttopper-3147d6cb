@@ -23,7 +23,7 @@ type Msg = { role: "user" | "assistant"; content: string; image_url?: string | n
 const INTRO: Msg = {
   role: "assistant",
   content:
-    "Hi! I'm **Topper AI** ✨\n\nAsk me any NCERT doubt (Physics, Chemistry, Math, Biology) or how to use the app — quizzes, battles, wallet, and more.",
+    "Hi! I'm **Topper AI** ✨\n\nAsk me any NCERT doubt (Physics, Chemistry, Math, Biology) or how to use the app — quizzes, battles, Mega Tests, and more.",
 };
 
 export function AiChatBubble() {

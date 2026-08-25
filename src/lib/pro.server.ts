@@ -2,16 +2,18 @@ type Sb = { from: (t: string) => any };
 
 /** Weakest chapters (lowest accuracy) for a user, derived from submitted quizzes. */
 export async function getAnalyticsFor(
-  supabase: Sb,
+  _supabase: Sb,
   userId: string,
 ): Promise<{ chapter: string; accuracy: number }[]> {
-  const { data: sessions } = await supabase
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: sessions, error } = await supabaseAdmin
     .from("quiz_sessions")
     .select("questions, answers")
     .eq("user_id", userId)
     .not("submitted_at", "is", null)
     .order("created_at", { ascending: false })
     .limit(40);
+  if (error) throw error;
 
   const agg = new Map<string, { correct: number; total: number }>();
   for (const s of sessions ?? []) {

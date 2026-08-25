@@ -1,31 +1,46 @@
-import { xpForCorrect, tierForXp } from "@/lib/xp";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
-type AnyClient = {
-  from: (table: string) => any;
+type AnyClient = SupabaseClient<Database>;
+
+export type QuestionXpSource = {
+  type: "battle" | "daily_challenge" | "quiz_session" | "review";
+  id: string;
+  version?: number;
 };
 
 /**
- * Award XP for correctly solved questions.
- * 10 XP per correct answer at Bronze, doubling with each rank crossed.
+ * Atomically award XP for correctly solved questions. The database locks the
+ * user row and deduplicates the server-owned source identity, so concurrent or
+ * replayed requests cannot lose or duplicate XP.
  */
-export async function awardQuestionXp(client: AnyClient, userId: string, correctCount: number) {
-  if (!correctCount || correctCount <= 0) return { gained: 0, xp: 0, tierUp: false };
+export async function awardQuestionXp(
+  client: AnyClient,
+  userId: string,
+  correctCount: number,
+  source: QuestionXpSource,
+) {
+  if (!Number.isInteger(correctCount) || correctCount < 0 || correctCount > 200) {
+    throw new Error("Invalid correct answer count");
+  }
 
-  const { data: row } = await client
-    .from("users")
-    .select("reputation, is_pro")
-    .eq("id", userId)
-    .maybeSingle();
+  const { data, error } = await (client as any).rpc("award_question_xp", {
+    p_user_id: userId,
+    p_correct_count: correctCount,
+    p_source_type: source.type,
+    p_source_id: source.id,
+    p_source_version: source.version ?? 1,
+  });
+  if (error) throw error;
+  const result = Array.isArray(data) ? data[0] : data;
+  if (!result) throw new Error("XP award failed");
 
-  const { PRO_XP_MULTIPLIER } = await import("@/lib/pro");
-  const current = Number(row?.reputation ?? 0);
-  const boost = row?.is_pro ? PRO_XP_MULTIPLIER : 1;
-  const gained = xpForCorrect(current, correctCount, boost);
-  const next = current + gained;
-
-  await client.from("users").update({ reputation: next }).eq("id", userId);
-
-  const beforeTier = tierForXp(current);
-  const afterTier = tierForXp(next);
-  return { gained, xp: next, boost, tierUp: beforeTier.key !== afterTier.key, tier: afterTier.key };
+  return {
+    gained: Number(result.gained ?? 0),
+    xp: Number(result.xp ?? 0),
+    boost: Number(result.boost ?? 1),
+    tierUp: !!result.tier_up,
+    tier: String(result.tier ?? "bronze"),
+    awarded: !!result.awarded,
+  };
 }

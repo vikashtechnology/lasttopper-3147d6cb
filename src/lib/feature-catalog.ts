@@ -31,7 +31,7 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       },
       {
         title: "Daily challenge",
-        description: "Complete one fresh 10-question challenge and earn Topper Coins.",
+        description: "Complete one fresh 10-question challenge to build score, XP, and streaks.",
       },
       {
         title: "Revision notes and flashcards",
@@ -70,11 +70,12 @@ export const FEATURE_GROUPS: readonly FeatureGroup[] = [
       },
       {
         title: "Sunday Mega Test",
-        description: "Join scheduled full-length tests with wallet entry and Topper Coin prizes.",
+        description: "Join scheduled full-length tests and compete through score, rank, and XP.",
       },
       {
-        title: "Wallet and rewards",
-        description: "Review Topper Coin activity, referrals, vouchers, and eligible withdrawals.",
+        title: "Verified Mega access tasks",
+        description:
+          "Complete every fresh task assigned by an admin to unlock one specific Mega Test.",
       },
     ],
   },

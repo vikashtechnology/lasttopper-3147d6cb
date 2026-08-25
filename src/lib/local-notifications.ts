@@ -122,7 +122,7 @@ export async function scheduleRecurringReminders() {
         // Saturday evening teaser
         id: ID.megaSaturday,
         title: "Sunday Mega Test tomorrow 🏆",
-        body: "Entry opens tomorrow — 1st rank wins 100 TC + a free subscription. Get ready!",
+        body: "Entry opens tomorrow — complete every assigned access task, then compete for the top rank.",
         schedule: { on: { weekday: 7, hour: 20, minute: 0 }, allowWhileIdle: true, repeats: true },
       },
       {

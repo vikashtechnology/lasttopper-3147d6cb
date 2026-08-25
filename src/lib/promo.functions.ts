@@ -29,18 +29,13 @@ async function assertAdmin(ctx: {
   if (!data) throw new Error("Forbidden: admin only");
 }
 
-/** Check a promo code for the signed-in user + plan. Returns percent off (0 if invalid). */
+/** Promo redemption is disabled so Pro passes always use fixed published prices. */
 export const checkPromoCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z.object({ code: z.string().trim().min(2).max(32), plan: planEnum }).parse(d),
   )
-  .handler(async ({ data, context }) => {
-    const { findValidPromo } = await import("@/lib/promo.server");
-    const promo = await findValidPromo(data.code, data.plan, context.userId);
-    if (!promo) return { valid: false as const, percent: 0 };
-    return { valid: true as const, percent: promo.percent, code: promo.code };
-  });
+  .handler(async () => ({ valid: false as const, percent: 0 }));
 
 export const adminListPromoCodes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -74,37 +69,15 @@ export const adminSavePromoCode = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const row = {
-      code: data.code.toUpperCase(),
-      percent: data.percent,
-      plans: data.plans,
-      valid_until: data.valid_until ? new Date(data.valid_until).toISOString() : null,
-      max_uses: data.max_uses ?? null,
-      is_active: data.is_active,
-      note: data.note ?? null,
-    };
-    if (data.id) {
-      const { error } = await supabaseAdmin.from("promo_codes").update(row).eq("id", data.id);
-      if (error) throw error;
-      return { ok: true };
-    }
-    const { error } = await supabaseAdmin
-      .from("promo_codes")
-      .insert({ ...row, created_by: context.userId });
-    if (error) throw error;
-    return { ok: true };
+    throw new Error("Promo codes are disabled; Pro passes use fixed prices");
   });
 
 export const adminDeletePromoCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("promo_codes").delete().eq("id", data.id);
-    if (error) throw error;
-    return { ok: true };
+    throw new Error("Promo codes are disabled; Pro passes use fixed prices");
   });

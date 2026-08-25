@@ -17,11 +17,6 @@ const config: CapacitorConfig = {
     overrideUserAgent:
       "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36 LastTopperApp",
   },
-  ios: {
-    contentInset: "always",
-    limitsNavigationsToAppBoundDomains: false,
-    appendUserAgent: "LastTopperApp",
-  },
   server: {
     // The native shell loads the deployed HTTPS build.
     url: publicUrl,
@@ -41,7 +36,6 @@ const config: CapacitorConfig = {
     LocalNotifications: {
       smallIcon: "ic_stat_icon_config_sample",
       iconColor: "#4F46E5",
-      sound: "beep.wav",
     },
   },
 };

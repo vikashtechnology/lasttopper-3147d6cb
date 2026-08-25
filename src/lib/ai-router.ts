@@ -131,16 +131,25 @@ export async function aiChat(body: ChatBody): Promise<any> {
   if (providers.length === 0) throw new AiUnavailableError("No AI provider keys configured", 500);
 
   const requested = body.model ?? "google/gemini-2.5-flash";
+  // Keep question-generation requests within the serverless request budget.
+  // Individual providers get a short window while the whole rotation is capped.
+  const deadline = Date.now() + 30_000;
   let lastStatus = 503;
   let lastText = "AI unavailable";
 
   for (const p of providers) {
     for (let attempt = 0; attempt < 2; attempt += 1) {
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) {
+        lastText = "AI provider rotation timed out";
+        break;
+      }
       try {
         const resp = await fetch(p.url, {
           method: "POST",
           headers: p.headers,
           body: JSON.stringify({ ...body, stream: false, model: p.model(requested) }),
+          signal: AbortSignal.timeout(Math.min(12_000, remaining)),
         });
 
         if (resp.ok) return await resp.json();

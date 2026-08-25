@@ -96,7 +96,7 @@ function AuthPage() {
             <Benefit
               icon={<Swords className="h-4 w-4" />}
               title="Battle ready"
-              body="Keep your scores, rank, wallet, and history."
+              body="Keep your scores, rank, XP, and history."
             />
             <Benefit
               icon={<BarChart3 className="h-4 w-4" />}

@@ -12,6 +12,7 @@ import {
   CalendarCheck,
   Check,
   Clock3,
+  Download,
   History,
   MessageSquare,
   Repeat2,
@@ -21,7 +22,6 @@ import {
   Swords,
   Trophy,
   Users,
-  Wallet,
   Zap,
 } from "lucide-react";
 
@@ -53,10 +53,12 @@ const featureIcons: ReactNode[] = [
   <Brain className="h-5 w-5" />,
   <Repeat2 className="h-5 w-5" />,
   <BarChart3 className="h-5 w-5" />,
+  <History className="h-5 w-5" />,
   <Swords className="h-5 w-5" />,
   <Trophy className="h-5 w-5" />,
-  <Wallet className="h-5 w-5" />,
+  <ShieldCheck className="h-5 w-5" />,
   <MessageSquare className="h-5 w-5" />,
+  <Users className="h-5 w-5" />,
   <Users className="h-5 w-5" />,
   <Sparkles className="h-5 w-5" />,
 ];
@@ -64,6 +66,7 @@ const featureIcons: ReactNode[] = [
 function Landing() {
   const navigate = useNavigate();
   const [checking, setChecking] = useState(true);
+  const [androidDownloadUrl, setAndroidDownloadUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,6 +79,23 @@ function Landing() {
       cancelled = true;
     };
   }, [navigate]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void supabase
+      .from("app_releases")
+      .select("download_url")
+      .eq("is_active", true)
+      .order("version_code", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled && data?.download_url) setAndroidDownloadUrl(data.download_url);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (checking) {
     return (
@@ -146,14 +166,22 @@ function Landing() {
                   Continue with Google <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="h-12 px-6">
-                <a href="#features">Explore all features</a>
-              </Button>
+              {androidDownloadUrl ? (
+                <Button asChild size="lg" variant="outline" className="h-12 px-6">
+                  <a href={androidDownloadUrl} download>
+                    <Download className="mr-2 h-4 w-4" /> Download Android APK
+                  </a>
+                </Button>
+              ) : (
+                <Button asChild size="lg" variant="outline" className="h-12 px-6">
+                  <a href="#features">Explore all features</a>
+                </Button>
+              )}
             </div>
             <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
               <TrustItem>Google-only sign in</TrustItem>
               <TrustItem>PCM and PCB tracks</TrustItem>
-              <TrustItem>Works on web and mobile</TrustItem>
+              <TrustItem>Installable web app and direct Android APK</TrustItem>
             </div>
           </div>
 

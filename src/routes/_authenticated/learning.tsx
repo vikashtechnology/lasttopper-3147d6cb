@@ -9,7 +9,6 @@ import {
   getTodayUsage,
 } from "@/lib/learning.functions";
 import { getMyProfile } from "@/lib/user.functions";
-import { useHideAds } from "@/lib/useHideAds";
 import { ProUpgradeDialog } from "@/components/ProUpgradeDialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -56,7 +55,6 @@ export const Route = createFileRoute("/_authenticated/learning")({
 });
 
 function LearningPage() {
-  useHideAds();
   const nav = useNavigate();
   const { data: subjects } = useSuspenseQuery(subjectsQuery);
   const { data: profile } = useSuspenseQuery(profileQuery);

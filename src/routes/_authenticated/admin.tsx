@@ -13,13 +13,12 @@ import {
   LayoutDashboard,
   Users,
   Flag,
-  Wallet,
   Database,
   Crown,
+  Gift,
   Megaphone,
   Share2,
   Download,
-  Ticket,
 } from "lucide-react";
 import { failMessage } from "@/lib/friendly-error";
 
@@ -77,11 +76,10 @@ function AdminLayout() {
     { to: "/admin", icon: LayoutDashboard, label: "Overview" },
     { to: "/admin/users", icon: Users, label: "Users" },
     { to: "/admin/moderation", icon: Flag, label: "Moderation" },
-    { to: "/admin/withdrawals", icon: Wallet, label: "Withdrawals" },
+    { to: "/admin/tasks", icon: Gift, label: "Mega access tasks" },
     { to: "/admin/bank", icon: Database, label: "Question Bank" },
     { to: "/admin/announcements", icon: Megaphone, label: "Announcements" },
     { to: "/admin/social", icon: Share2, label: "Social links" },
-    { to: "/admin/promos", icon: Ticket, label: "Promo codes" },
     { to: "/admin/app-update", icon: Download, label: "App update" },
 
     ...(owner.data?.owner ? [{ to: "/admin/admins", icon: Crown, label: "Admins" }] : []),

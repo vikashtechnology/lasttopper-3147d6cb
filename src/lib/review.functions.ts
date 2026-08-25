@@ -14,23 +14,25 @@ export const getReviewQueue = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ due: ReviewItem[]; total: number; dueCount: number }> => {
     const { upsertReviewItems } = await import("@/lib/review.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Sync recent mistakes into the queue.
-    const { data: sessions } = await context.supabase
+    const { data: sessions, error: sessionsError } = await supabaseAdmin
       .from("quiz_sessions")
       .select("questions, answers, submitted_at")
       .eq("user_id", context.userId)
+      .eq("xp_eligible", true)
       .not("submitted_at", "is", null)
       .order("submitted_at", { ascending: false })
       .limit(20);
+    if (sessionsError) throw sessionsError;
     const wrong: QuizQuestion[] = [];
     for (const s of sessions ?? []) {
       const qs = (s.questions as QuizQuestion[]) ?? [];
       const ans = (s.answers as Record<string, string>) ?? {};
       for (const q of qs) if (ans[q.id] !== q.correct) wrong.push(q);
     }
-    if (wrong.length)
-      await upsertReviewItems(context.supabase, context.userId, wrong.slice(0, 200));
+    if (wrong.length) await upsertReviewItems(supabaseAdmin, context.userId, wrong.slice(0, 200));
 
     const nowIso = new Date().toISOString();
     const { data: due } = await context.supabase
@@ -68,43 +70,24 @@ export const gradeReview = createServerFn({ method: "POST" })
     z.object({ id: z.string().uuid(), correct: z.boolean() }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { BOX_DAYS } = await import("@/lib/review.server");
     const { assertQuota } = await import("@/lib/quota.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await assertQuota(context.supabase, context.userId, 1);
-    const { data: item } = await context.supabase
-      .from("review_items")
-      .select("box, reviewed_count")
-      .eq("id", data.id)
-      .eq("user_id", context.userId)
-      .maybeSingle();
-    if (!item) throw new Error("Review item not found");
 
-    const box = data.correct ? Math.min(5, Number(item.box ?? 1) + 1) : 1;
-    const dueAt = new Date(Date.now() + BOX_DAYS[box] * 24 * 60 * 60 * 1000).toISOString();
+    const { data: resultData, error } = await (supabaseAdmin as any).rpc("grade_review_item", {
+      p_item_id: data.id,
+      p_user_id: context.userId,
+      p_correct: data.correct,
+    });
+    if (error) throw error;
+    const result = Array.isArray(resultData) ? resultData[0] : resultData;
+    if (!result) throw new Error("Review could not be graded");
 
-    if (data.correct) {
-      const { awardQuestionXp } = await import("@/lib/xp.server");
-      await awardQuestionXp(context.supabase, context.userId, 1).catch(() => null);
-    }
-
-    if (data.correct && box >= 5) {
-      await context.supabase
-        .from("review_items")
-        .delete()
-        .eq("id", data.id)
-        .eq("user_id", context.userId);
-      return { retired: true, box, due_at: dueAt };
-    }
-
-    await context.supabase
-      .from("review_items")
-      .update({
-        box,
-        due_at: dueAt,
-        last_result: data.correct ? "correct" : "wrong",
-        reviewed_count: Number(item.reviewed_count ?? 0) + 1,
-      })
-      .eq("id", data.id)
-      .eq("user_id", context.userId);
-    return { retired: false, box, due_at: dueAt };
+    return {
+      retired: !!result.retired,
+      box: Number(result.box),
+      due_at: String(result.due_at),
+      xp_gained: Number(result.xp_gained ?? 0),
+      xp_total: Number(result.xp_total ?? 0),
+    };
   });

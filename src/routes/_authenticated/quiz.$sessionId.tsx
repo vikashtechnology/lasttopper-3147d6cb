@@ -10,7 +10,6 @@ import {
   type QuizQuestion,
 } from "@/lib/learning.functions";
 import { useQuizStore, type Answer } from "@/store/quiz";
-import { useHideAds } from "@/lib/useHideAds";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Latex } from "@/components/Latex";
@@ -32,7 +31,6 @@ export const Route = createFileRoute("/_authenticated/quiz/$sessionId")({
 });
 
 function QuizPage() {
-  useHideAds();
   const { sessionId } = Route.useParams();
   const nav = useNavigate();
   const qc = useQueryClient();

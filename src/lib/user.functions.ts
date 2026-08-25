@@ -34,6 +34,7 @@ export const saveSignupDetails = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => signupSchema.parse(data))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Validate DOB (>= 8 years old, <= 100)
     const dob = new Date(data.date_of_birth + "T00:00:00Z");
     const now = new Date();
@@ -44,7 +45,7 @@ export const saveSignupDetails = createServerFn({ method: "POST" })
     }
 
     // Enforce uniqueness of email across accounts
-    const { data: existing, error: qErr } = await context.supabase
+    const { data: existing, error: qErr } = await supabaseAdmin
       .from("users")
       .select("id")
       .eq("email", data.email)
@@ -55,7 +56,7 @@ export const saveSignupDetails = createServerFn({ method: "POST" })
       throw new Error("This email is already linked to another account.");
     }
 
-    const { error } = await context.supabase
+    const { error } = await supabaseAdmin
       .from("users")
       .update({
         full_name: data.full_name,
@@ -84,7 +85,8 @@ export const updatePhone = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => phoneSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const { data: existing, error: qErr } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: existing, error: qErr } = await supabaseAdmin
       .from("users")
       .select("id")
       .eq("phone", data.phone)
@@ -93,7 +95,7 @@ export const updatePhone = createServerFn({ method: "POST" })
     if (qErr) throw qErr;
     if (existing) throw new Error("This phone number is already linked to another account.");
 
-    const { error } = await context.supabase
+    const { error } = await supabaseAdmin
       .from("users")
       .update({ country_code: data.country_code, phone: data.phone })
       .eq("id", context.userId);
@@ -107,7 +109,8 @@ export const setProfession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => professionSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
       .from("users")
       .update({ profession: data.profession })
       .eq("id", context.userId);
@@ -118,7 +121,8 @@ export const setProfession = createServerFn({ method: "POST" })
 export const completeOnboarding = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: u, error: profileError } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: u, error: profileError } = await supabaseAdmin
       .from("users")
       .select(
         "email, full_name, profession, date_of_birth, terms_accepted_at, signup_alert_sent_at, created_at",
@@ -133,7 +137,7 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       throw new Error("Please complete your profile, accept the terms, and choose a track.");
     }
 
-    const { error } = await context.supabase
+    const { error } = await supabaseAdmin
       .from("users")
       .update({ onboarded: true })
       .eq("id", context.userId);
@@ -161,10 +165,11 @@ export const completeOnboarding = createServerFn({ method: "POST" })
         ].join("\n"),
       );
 
-      await context.supabase
+      const { error: alertError } = await supabaseAdmin
         .from("users")
         .update({ signup_alert_sent_at: new Date().toISOString() })
         .eq("id", context.userId);
+      if (alertError) throw alertError;
     }
 
     return { ok: true };
@@ -175,11 +180,13 @@ export const completeOnboarding = createServerFn({ method: "POST" })
 export const pingActivity = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: u } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: u, error: profileError } = await supabaseAdmin
       .from("users")
       .select("streak, best_streak, last_streak_date")
       .eq("id", context.userId)
       .maybeSingle();
+    if (profileError) throw profileError;
 
     const today = new Date();
     const todayStr = today.toISOString().slice(0, 10);
@@ -199,7 +206,7 @@ export const pingActivity = createServerFn({ method: "POST" })
       else nextStreak = 1;
     }
 
-    await context.supabase
+    const { error: updateError } = await supabaseAdmin
       .from("users")
       .update({
         streak: nextStreak,
@@ -208,6 +215,7 @@ export const pingActivity = createServerFn({ method: "POST" })
         last_active_date: todayStr,
       })
       .eq("id", context.userId);
+    if (updateError) throw updateError;
     return { streak: nextStreak };
   });
 

@@ -1,7 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { StreakDetailsDialog } from "@/components/StreakDetailsDialog";
-import { useMonetagAds } from "@/lib/useMonetagAds";
 
 import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMyProfile, pingActivity } from "@/lib/user.functions";
@@ -50,7 +49,6 @@ export const Route = createFileRoute("/_authenticated/home")({
 
 function HomePage() {
   const navigate = useNavigate();
-  useMonetagAds();
   const qc = useQueryClient();
   const [streakOpen, setStreakOpen] = useState(false);
 
@@ -122,7 +120,7 @@ function HomePage() {
     <AppShell
       header={`Welcome back, ${p?.full_name?.split(" ")[0] ?? p?.email?.split("@")[0] ?? "Learner"}`}
       groups={groups}
-      footerNote={<>© {new Date().getFullYear()} Last Topper — Learn. Compete. Earn.</>}
+      footerNote={<>© {new Date().getFullYear()} Last Topper — Learn. Practise. Compete.</>}
       headerActions={
         <>
           <div className="mr-0.5 flex items-center gap-1.5" data-tour="streak">
@@ -239,7 +237,7 @@ function HomePage() {
         <NavTile
           icon={<CalendarCheck className="h-5 w-5" />}
           title="Daily challenge"
-          body="10 questions · earn TC"
+          body="10 questions · score & XP"
           onClick={() => navigate({ to: "/daily" })}
         />
         <NavTile
