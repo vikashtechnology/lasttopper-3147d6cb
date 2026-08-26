@@ -1,12 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  isNativeApp,
-  NATIVE_CALLBACK_MARKER,
-  openNativeAuthUrl,
-  PUBLIC_APP_URL,
-} from "@/lib/native-auth";
+import { firebaseClient } from "@/integrations/firebase/client";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { toast } from "sonner";
@@ -31,10 +25,10 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    firebaseClient.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/home", replace: true });
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: sub } = firebaseClient.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) navigate({ to: "/home", replace: true });
     });
     return () => sub.subscription.unsubscribe();
@@ -43,19 +37,10 @@ function AuthPage() {
   async function handleGoogleSignIn() {
     setBusy(true);
     try {
-      const native = await isNativeApp();
-      const callbackBase = native ? PUBLIC_APP_URL : window.location.origin;
-      const redirectTo = `${callbackBase}/auth/callback${native ? `?${NATIVE_CALLBACK_MARKER}=1` : ""}`;
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo, skipBrowserRedirect: native },
-      });
+      const { data, error } = await firebaseClient.auth.signInWithGoogle();
       if (error) throw error;
-      if (native) {
-        if (!data.url)
-          throw new Error("The authentication provider returned no authorization URL.");
-        await openNativeAuthUrl(data.url);
-      }
+      if (!data.session) throw new Error("Firebase returned no authenticated session");
+      navigate({ to: "/home", replace: true });
     } catch (error) {
       console.error(error);
       toast.error("Google sign-in failed. Please try again.");

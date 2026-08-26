@@ -1,7 +1,7 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+import type { FirestoreDataClient } from "@/integrations/firebase/data.server";
+import type { Database } from "@/integrations/firebase/types";
 
-type AnyClient = SupabaseClient<Database>;
+type AnyClient = FirestoreDataClient;
 
 export type QuestionXpSource = {
   type: "battle" | "daily_challenge" | "quiz_session" | "review";

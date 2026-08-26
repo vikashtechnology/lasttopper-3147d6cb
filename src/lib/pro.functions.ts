@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 import { aiChatText } from "@/lib/ai-router";
 
 export type ProStudyPlan = {
@@ -13,9 +13,9 @@ export type ProStudyPlan = {
  * Free users get `is_pro: false` and a locked card in the UI.
  */
 export const getProStudyPlan = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }): Promise<ProStudyPlan> => {
-    const { data: profile } = await context.supabase
+    const { data: profile } = await context.db
       .from("users")
       .select("is_pro, profession")
       .eq("id", context.userId)
@@ -24,7 +24,7 @@ export const getProStudyPlan = createServerFn({ method: "GET" })
     if (!profile?.is_pro) return { is_pro: false, plan: null, weak: [] };
 
     const { getAnalyticsFor } = await import("@/lib/pro.server");
-    const weak = await getAnalyticsFor(context.supabase, context.userId);
+    const weak = await getAnalyticsFor(context.db, context.userId);
     if (weak.length === 0) {
       return {
         is_pro: true,

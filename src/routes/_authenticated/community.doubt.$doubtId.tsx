@@ -6,7 +6,6 @@ import { getDoubt, replyToDoubt, acceptDoubtReply, reportContent } from "@/lib/c
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, Check, Flag } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useUserStore } from "@/store/user";
 import { failMessage } from "@/lib/friendly-error";
 
@@ -21,21 +20,8 @@ function DoubtDetail() {
   const d = useQuery({
     queryKey: ["doubt", doubtId],
     queryFn: () => getDoubt({ data: { doubt_id: doubtId } }),
+    refetchInterval: 15_000,
   });
-
-  useEffect(() => {
-    const ch = supabase
-      .channel(`doubt-${doubtId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "doubt_replies", filter: `doubt_id=eq.${doubtId}` },
-        () => qc.invalidateQueries({ queryKey: ["doubt", doubtId] }),
-      )
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(ch);
-    };
-  }, [doubtId, qc]);
 
   const [body, setBody] = useState("");
   const reply = useMutation({

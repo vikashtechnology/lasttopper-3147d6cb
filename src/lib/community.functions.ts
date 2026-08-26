@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { firebaseUidSchema } from "@/integrations/firebase/validation";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 import {
   sendTelegramAlert,
   sendTelegramDocument,
@@ -12,9 +13,9 @@ import {
 // ==================== FORUMS ====================
 
 export const listForumCategories = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { data, error } = await context.db
       .from("forum_categories")
       .select("id, slug, name, description")
       .order("display_order");
@@ -23,10 +24,10 @@ export const listForumCategories = createServerFn({ method: "GET" })
   });
 
 export const listForumPosts = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ category_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: posts, error } = await context.supabase
+    const { data: posts, error } = await context.db
       .from("forum_posts")
       .select("id, title, body, upvote_count, reply_count, view_count, created_at, user_id")
       .eq("category_id", data.category_id)
@@ -36,7 +37,7 @@ export const listForumPosts = createServerFn({ method: "GET" })
     const userIds = Array.from(new Set((posts ?? []).map((p) => p.user_id)));
     const authors = userIds.length
       ? ((
-          await context.supabase
+          await context.db
             .from("public_profiles")
             .select("id, full_name, avatar_url")
             .in("id", userIds)
@@ -47,10 +48,10 @@ export const listForumPosts = createServerFn({ method: "GET" })
   });
 
 export const searchForumPosts = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ q: z.string().min(2).max(80) }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: posts, error } = await context.supabase
+    const { data: posts, error } = await context.db
       .from("forum_posts")
       .select("id, title, upvote_count, reply_count, created_at, category_id")
       .ilike("title", `%${data.q}%`)
@@ -61,7 +62,7 @@ export const searchForumPosts = createServerFn({ method: "GET" })
   });
 
 export const createForumPost = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -72,30 +73,21 @@ export const createForumPost = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: row, error } = await context.supabase
-      .from("forum_posts")
-      .insert({
-        category_id: data.category_id,
-        user_id: context.userId,
-        title: data.title,
-        body: data.body,
-      })
-      .select("id")
-      .single();
-    if (error) throw error;
-    await context.supabase.from("activity_events").insert({
+    const { createForumPostAtomic } = await import("@/lib/community-transactions.server");
+    const id = await createForumPostAtomic(context.userId, data);
+    await context.db.from("activity_events").insert({
       user_id: context.userId,
       kind: "forum_post_created",
-      payload: { post_id: row.id, title: data.title },
+      payload: { post_id: id, title: data.title },
     });
-    return { id: row.id };
+    return { id };
   });
 
 export const getForumPost = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ post_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: post, error } = await context.supabase
+    const { data: post, error } = await context.db
       .from("forum_posts")
       .select(
         "id, title, body, category_id, upvote_count, reply_count, view_count, created_at, user_id",
@@ -105,17 +97,17 @@ export const getForumPost = createServerFn({ method: "GET" })
     if (error) throw error;
     if (!post) return null;
     const [{ data: author }, { data: replies }, { data: myVote }] = await Promise.all([
-      context.supabase
+      context.db
         .from("public_profiles")
         .select("id, full_name, avatar_url, reputation")
         .eq("id", post.user_id)
         .maybeSingle(),
-      context.supabase
+      context.db
         .from("forum_replies")
         .select("id, body, upvote_count, created_at, user_id")
         .eq("post_id", data.post_id)
         .order("created_at"),
-      context.supabase
+      context.db
         .from("forum_votes")
         .select("value")
         .eq("user_id", context.userId)
@@ -126,18 +118,16 @@ export const getForumPost = createServerFn({ method: "GET" })
     const replyUserIds = Array.from(new Set((replies ?? []).map((r) => r.user_id)));
     const replyAuthors = replyUserIds.length
       ? ((
-          await context.supabase
+          await context.db
             .from("public_profiles")
             .select("id, full_name, avatar_url, reputation")
             .in("id", replyUserIds)
         ).data ?? [])
       : [];
     const rm = new Map(replyAuthors.map((a) => [a.id, a]));
-    // increment view count (fire and forget)
-    await context.supabase
-      .from("forum_posts")
-      .update({ view_count: (post.view_count ?? 0) + 1 })
-      .eq("id", post.id);
+    // Use an atomic increment so concurrent readers cannot lose view counts.
+    const { incrementForumView } = await import("@/lib/community-transactions.server");
+    await incrementForumView(post.id);
     return {
       post: { ...post, author },
       replies: (replies ?? []).map((r) => ({ ...r, author: rm.get(r.user_id) ?? null })),
@@ -146,20 +136,18 @@ export const getForumPost = createServerFn({ method: "GET" })
   });
 
 export const replyToPost = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z.object({ post_id: z.string().uuid(), body: z.string().trim().min(1).max(4000) }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("forum_replies")
-      .insert({ post_id: data.post_id, user_id: context.userId, body: data.body });
-    if (error) throw error;
+    const { createForumReplyAtomic } = await import("@/lib/community-transactions.server");
+    await createForumReplyAtomic(context.userId, data.post_id, data.body);
     return { ok: true };
   });
 
 export const voteOnTarget = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -170,34 +158,20 @@ export const voteOnTarget = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    // Remove existing vote for that target
-    await context.supabase
-      .from("forum_votes")
-      .delete()
-      .eq("user_id", context.userId)
-      .eq("target_type", data.target_type)
-      .eq("target_id", data.target_id);
-    if (data.value !== 0) {
-      const { error } = await context.supabase.from("forum_votes").insert({
-        user_id: context.userId,
-        target_type: data.target_type,
-        target_id: data.target_id,
-        value: data.value,
-      });
-      if (error) throw error;
-    }
+    const { setForumVoteAtomic } = await import("@/lib/community-transactions.server");
+    await setForumVoteAtomic(context.userId, data.target_type, data.target_id, data.value);
     return { ok: true };
   });
 
 // ==================== DOUBTS ====================
 
 export const listDoubts = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z.object({ q: z.string().optional(), subject_id: z.string().uuid().optional() }).parse(d ?? {}),
   )
   .handler(async ({ data, context }) => {
-    let q = context.supabase
+    let q = context.db
       .from("doubts")
       .select(
         "id, title, body, image_url, resolved, upvote_count, reply_count, created_at, user_id, subject_id, chapter_id",
@@ -211,7 +185,7 @@ export const listDoubts = createServerFn({ method: "GET" })
     const userIds = Array.from(new Set((rows ?? []).map((r) => r.user_id)));
     const authors = userIds.length
       ? ((
-          await context.supabase
+          await context.db
             .from("public_profiles")
             .select("id, full_name, avatar_url")
             .in("id", userIds)
@@ -222,7 +196,7 @@ export const listDoubts = createServerFn({ method: "GET" })
   });
 
 export const createDoubt = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -235,32 +209,26 @@ export const createDoubt = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: row, error } = await context.supabase
-      .from("doubts")
-      .insert({
-        user_id: context.userId,
-        title: data.title,
-        body: data.body,
-        subject_id: data.subject_id ?? null,
-        chapter_id: data.chapter_id ?? null,
-        image_url: data.image_url ?? null,
-      })
-      .select("id")
-      .single();
-    if (error) throw error;
-    await context.supabase.from("activity_events").insert({
+    const { createDoubtAtomic } = await import("@/lib/community-transactions.server");
+    const id = await createDoubtAtomic(context.userId, {
+      ...data,
+      subject_id: data.subject_id ?? null,
+      chapter_id: data.chapter_id ?? null,
+      image_url: data.image_url ?? null,
+    });
+    await context.db.from("activity_events").insert({
       user_id: context.userId,
       kind: "doubt_created",
-      payload: { doubt_id: row.id, title: data.title },
+      payload: { doubt_id: id, title: data.title },
     });
-    return { id: row.id };
+    return { id };
   });
 
 export const getDoubt = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ doubt_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: doubt, error } = await context.supabase
+    const { data: doubt, error } = await context.db
       .from("doubts")
       .select(
         "id, title, body, image_url, resolved, upvote_count, reply_count, created_at, user_id, subject_id, chapter_id",
@@ -270,12 +238,12 @@ export const getDoubt = createServerFn({ method: "GET" })
     if (error) throw error;
     if (!doubt) return null;
     const [{ data: author }, { data: replies }] = await Promise.all([
-      context.supabase
+      context.db
         .from("public_profiles")
         .select("id, full_name, avatar_url, reputation")
         .eq("id", doubt.user_id)
         .maybeSingle(),
-      context.supabase
+      context.db
         .from("doubt_replies")
         .select("id, body, image_url, is_accepted, upvote_count, created_at, user_id")
         .eq("doubt_id", data.doubt_id)
@@ -285,7 +253,7 @@ export const getDoubt = createServerFn({ method: "GET" })
     const ids = Array.from(new Set((replies ?? []).map((r) => r.user_id)));
     const auths = ids.length
       ? ((
-          await context.supabase
+          await context.db
             .from("public_profiles")
             .select("id, full_name, avatar_url, reputation")
             .in("id", ids)
@@ -299,7 +267,7 @@ export const getDoubt = createServerFn({ method: "GET" })
   });
 
 export const replyToDoubt = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -310,21 +278,19 @@ export const replyToDoubt = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("doubt_replies").insert({
-      doubt_id: data.doubt_id,
-      user_id: context.userId,
+    const { createDoubtReplyAtomic } = await import("@/lib/community-transactions.server");
+    await createDoubtReplyAtomic(context.userId, data.doubt_id, {
       body: data.body,
       image_url: data.image_url ?? null,
     });
-    if (error) throw error;
     // notify doubt owner
-    const { data: d0 } = await context.supabase
+    const { data: d0 } = await context.db
       .from("doubts")
       .select("user_id, title")
       .eq("id", data.doubt_id)
       .maybeSingle();
     if (d0 && d0.user_id !== context.userId) {
-      await context.supabase.from("notifications").insert({
+      await context.db.from("notifications").insert({
         user_id: d0.user_id,
         kind: "doubt_reply",
         title: "New reply on your doubt",
@@ -336,58 +302,37 @@ export const replyToDoubt = createServerFn({ method: "POST" })
   });
 
 export const acceptDoubtReply = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ reply_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("doubt_replies")
-      .update({ is_accepted: true })
-      .eq("id", data.reply_id);
-    if (error) throw error;
+    const { acceptDoubtReplyAtomic } = await import("@/lib/community-transactions.server");
+    await acceptDoubtReplyAtomic(context.userId, data.reply_id);
     return { ok: true };
-  });
-
-// ==================== IMAGE UPLOAD (signed URL for doubt-images) ====================
-
-export const createDoubtImageUploadUrl = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ ext: z.string().min(2).max(6) }).parse(d))
-  .handler(async ({ data, context }) => {
-    const path = `${context.userId}/${crypto.randomUUID()}.${data.ext.replace(/[^a-z0-9]/gi, "")}`;
-    const { data: signed, error } = await context.supabase.storage
-      .from("doubt-images")
-      .createSignedUploadUrl(path);
-    if (error) throw error;
-    return { path, token: signed.token, signedUrl: signed.signedUrl };
-  });
-
-export const getDoubtImageUrl = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ path: z.string().min(1) }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { data: signed, error } = await context.supabase.storage
-      .from("doubt-images")
-      .createSignedUrl(data.path, 3600);
-    if (error) throw error;
-    return { url: signed.signedUrl };
   });
 
 // ==================== STUDY GROUPS ====================
 
 export const listStudyGroups = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("study_groups")
-      .select("id, name, description, is_private, member_count, owner_id, created_at")
-      .order("created_at", { ascending: false })
-      .limit(50);
+    const [{ data, error }, { data: memberships }] = await Promise.all([
+      context.db
+        .from("study_groups")
+        .select("id, name, description, is_private, member_count, owner_id, created_at")
+        .order("created_at", { ascending: false })
+        .limit(50),
+      context.db.from("study_group_members").select("group_id").eq("user_id", context.userId),
+    ]);
     if (error) throw error;
-    return data ?? [];
+    const visibleGroupIds = new Set((memberships ?? []).map((membership) => membership.group_id));
+    return (data ?? []).filter(
+      (group) =>
+        !group.is_private || group.owner_id === context.userId || visibleGroupIds.has(group.id),
+    );
   });
 
 export const createStudyGroup = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -398,55 +343,43 @@ export const createStudyGroup = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: row, error } = await context.supabase
-      .from("study_groups")
-      .insert({
-        owner_id: context.userId,
-        name: data.name,
-        description: data.description ?? null,
-        is_private: data.is_private,
-      })
-      .select("id")
-      .single();
-    if (error) throw error;
-    return { id: row.id };
+    const { createStudyGroupAtomic } = await import("@/lib/community-transactions.server");
+    const id = await createStudyGroupAtomic(context.userId, {
+      ...data,
+      description: data.description ?? null,
+    });
+    return { id };
   });
 
 export const joinStudyGroup = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ group_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("study_group_members")
-      .insert({ group_id: data.group_id, user_id: context.userId, role: "member" });
-    if (error && !error.message.includes("duplicate")) throw error;
+    const { setStudyGroupMembership } = await import("@/lib/community-transactions.server");
+    await setStudyGroupMembership(context.userId, data.group_id, "join");
     return { ok: true };
   });
 
 export const leaveStudyGroup = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ group_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("study_group_members")
-      .delete()
-      .eq("group_id", data.group_id)
-      .eq("user_id", context.userId);
-    if (error) throw error;
+    const { setStudyGroupMembership } = await import("@/lib/community-transactions.server");
+    await setStudyGroupMembership(context.userId, data.group_id, "leave");
     return { ok: true };
   });
 
 export const getStudyGroup = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ group_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const [{ data: g }, { data: members }, { data: me }] = await Promise.all([
-      context.supabase.from("study_groups").select("*").eq("id", data.group_id).maybeSingle(),
-      context.supabase
+      context.db.from("study_groups").select("*").eq("id", data.group_id).maybeSingle(),
+      context.db
         .from("study_group_members")
         .select("user_id, role, joined_at")
         .eq("group_id", data.group_id),
-      context.supabase
+      context.db
         .from("study_group_members")
         .select("role")
         .eq("group_id", data.group_id)
@@ -454,10 +387,11 @@ export const getStudyGroup = createServerFn({ method: "GET" })
         .maybeSingle(),
     ]);
     if (!g) return null;
+    if (g.is_private && !me && g.owner_id !== context.userId) return null;
     const ids = (members ?? []).map((m) => m.user_id);
     const profiles = ids.length
-      ? ((await context.supabase.from("users").select("id, full_name, avatar_url").in("id", ids))
-          .data ?? [])
+      ? ((await context.db.from("users").select("id, full_name, avatar_url").in("id", ids)).data ??
+        [])
       : [];
     const pm = new Map(profiles.map((p) => [p.id, p]));
     return {
@@ -468,10 +402,12 @@ export const getStudyGroup = createServerFn({ method: "GET" })
   });
 
 export const listGroupMessages = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ group_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: msgs, error } = await context.supabase
+    const { requireStudyGroupMember } = await import("@/lib/community-transactions.server");
+    await requireStudyGroupMember(context.userId, data.group_id);
+    const { data: msgs, error } = await context.db
       .from("study_group_messages")
       .select("id, body, created_at, user_id")
       .eq("group_id", data.group_id)
@@ -480,58 +416,49 @@ export const listGroupMessages = createServerFn({ method: "GET" })
     if (error) throw error;
     const ids = Array.from(new Set((msgs ?? []).map((m) => m.user_id)));
     const profiles = ids.length
-      ? ((await context.supabase.from("users").select("id, full_name, avatar_url").in("id", ids))
-          .data ?? [])
+      ? ((await context.db.from("users").select("id, full_name, avatar_url").in("id", ids)).data ??
+        [])
       : [];
     const pm = new Map(profiles.map((p) => [p.id, p]));
     return (msgs ?? []).map((m) => ({ ...m, author: pm.get(m.user_id) ?? null }));
   });
 
 export const sendGroupMessage = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z.object({ group_id: z.string().uuid(), body: z.string().trim().min(1).max(2000) }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("study_group_messages")
-      .insert({ group_id: data.group_id, user_id: context.userId, body: data.body });
-    if (error) throw error;
+    const { sendStudyGroupMessageAtomic } = await import("@/lib/community-transactions.server");
+    await sendStudyGroupMessageAtomic(context.userId, data.group_id, data.body);
     return { ok: true };
   });
 
 // ==================== FOLLOWS & PROFILES ====================
 
 export const followUser = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ user_id: z.string().uuid() }).parse(d))
+  .middleware([requireFirebaseAuth])
+  .inputValidator((d: unknown) => z.object({ user_id: firebaseUidSchema }).parse(d))
   .handler(async ({ data, context }) => {
-    if (data.user_id === context.userId) throw new Error("cannot follow yourself");
-    const { error } = await context.supabase
-      .from("follows")
-      .insert({ follower_id: context.userId, following_id: data.user_id });
-    if (error && !error.message.includes("duplicate")) throw error;
+    const { setFollowAtomic } = await import("@/lib/community-transactions.server");
+    await setFollowAtomic(context.userId, data.user_id, true);
     return { ok: true };
   });
 
 export const unfollowUser = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ user_id: z.string().uuid() }).parse(d))
+  .middleware([requireFirebaseAuth])
+  .inputValidator((d: unknown) => z.object({ user_id: firebaseUidSchema }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("follows")
-      .delete()
-      .eq("follower_id", context.userId)
-      .eq("following_id", data.user_id);
-    if (error) throw error;
+    const { setFollowAtomic } = await import("@/lib/community-transactions.server");
+    await setFollowAtomic(context.userId, data.user_id, false);
     return { ok: true };
   });
 
 export const getPublicProfile = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ user_id: z.string().uuid() }).parse(d))
+  .middleware([requireFirebaseAuth])
+  .inputValidator((d: unknown) => z.object({ user_id: firebaseUidSchema }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
     const [
       { data: user },
       { data: badges },
@@ -539,23 +466,23 @@ export const getPublicProfile = createServerFn({ method: "GET" })
       { count: followingCount },
       { data: iFollow },
     ] = await Promise.all([
-      context.supabase
+      context.db
         .from("public_profiles")
         .select(
           "id, full_name, avatar_url, profession, streak, total_accuracy, reputation, bio, created_at",
         )
         .eq("id", data.user_id)
         .maybeSingle(),
-      supabaseAdmin.from("user_badges").select("badge_id, awarded_at").eq("user_id", data.user_id),
-      supabaseAdmin
+      firestoreAdmin.from("user_badges").select("badge_id, awarded_at").eq("user_id", data.user_id),
+      firestoreAdmin
         .from("follows")
         .select("follower_id", { count: "exact", head: true })
         .eq("following_id", data.user_id),
-      supabaseAdmin
+      firestoreAdmin
         .from("follows")
         .select("following_id", { count: "exact", head: true })
         .eq("follower_id", data.user_id),
-      context.supabase
+      context.db
         .from("follows")
         .select("id")
         .eq("follower_id", context.userId)
@@ -565,7 +492,7 @@ export const getPublicProfile = createServerFn({ method: "GET" })
     const badgeIds = (badges ?? []).map((b) => b.badge_id);
     const badgeMeta = badgeIds.length
       ? ((
-          await context.supabase
+          await context.db
             .from("badges")
             .select("id, slug, name, description, icon")
             .in("id", badgeIds)
@@ -583,19 +510,19 @@ export const getPublicProfile = createServerFn({ method: "GET" })
 // ==================== ACTIVITY FEED ====================
 
 export const getActivityFeed = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
     // Get list of users I follow
-    const { data: follows } = await context.supabase
+    const { data: follows } = await context.db
       .from("follows")
       .select("following_id")
       .eq("follower_id", context.userId);
     const ids = (follows ?? []).map((f) => f.following_id);
     if (ids.length === 0) {
-      return { events: [], trending_doubts: await trendingDoubts(context.supabase) };
+      return { events: [], trending_doubts: await trendingDoubts(context.db) };
     }
-    const { data: events, error } = await supabaseAdmin
+    const { data: events, error } = await firestoreAdmin
       .from("activity_events")
       .select("id, user_id, kind, payload, created_at")
       .in("user_id", ids)
@@ -605,7 +532,7 @@ export const getActivityFeed = createServerFn({ method: "GET" })
     const userIds = Array.from(new Set((events ?? []).map((e) => e.user_id)));
     const profiles = userIds.length
       ? ((
-          await context.supabase
+          await context.db
             .from("public_profiles")
             .select("id, full_name, avatar_url")
             .in("id", userIds)
@@ -614,11 +541,13 @@ export const getActivityFeed = createServerFn({ method: "GET" })
     const pm = new Map(profiles.map((p) => [p.id, p]));
     return {
       events: (events ?? []).map((e) => ({ ...e, author: pm.get(e.user_id) ?? null })),
-      trending_doubts: await trendingDoubts(context.supabase),
+      trending_doubts: await trendingDoubts(context.db),
     };
   });
 
-async function trendingDoubts(sb: import("@supabase/supabase-js").SupabaseClient) {
+async function trendingDoubts(
+  sb: import("@/integrations/firebase/data.server").FirestoreDataClient,
+) {
   const { data } = await sb
     .from("doubts")
     .select("id, title, upvote_count, reply_count, created_at")
@@ -630,7 +559,7 @@ async function trendingDoubts(sb: import("@supabase/supabase-js").SupabaseClient
 // ==================== REPORTS ====================
 
 export const reportContent = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -642,7 +571,7 @@ export const reportContent = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("post_reports").insert({
+    const { error } = await context.db.from("post_reports").insert({
       reporter_id: context.userId,
       target_type: data.target_type,
       target_id: data.target_id,
@@ -668,9 +597,9 @@ export const reportContent = createServerFn({ method: "POST" })
 // ==================== NOTIFICATIONS ====================
 
 export const listNotifications = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { data, error } = await context.db
       .from("notifications")
       .select("id, kind, title, body, link, read_at, created_at")
       .eq("user_id", context.userId)
@@ -681,9 +610,9 @@ export const listNotifications = createServerFn({ method: "GET" })
   });
 
 export const markNotificationsRead = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { error } = await context.supabase
+    const { error } = await context.db
       .from("notifications")
       .update({ read_at: new Date().toISOString() })
       .eq("user_id", context.userId)
@@ -693,9 +622,9 @@ export const markNotificationsRead = createServerFn({ method: "POST" })
   });
 
 export const unreadNotificationsCount = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { count, error } = await context.supabase
+    const { count, error } = await context.db
       .from("notifications")
       .select("id", { count: "exact", head: true })
       .eq("user_id", context.userId)
@@ -707,9 +636,9 @@ export const unreadNotificationsCount = createServerFn({ method: "GET" })
 // ==================== SIGNUP TELEGRAM ALERT (called on first-time login) ====================
 
 export const notifyFirstLogin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { data: u } = await context.supabase
+    const { data: u } = await context.db
       .from("users")
       .select("email, full_name, last_active_date")
       .eq("id", context.userId)

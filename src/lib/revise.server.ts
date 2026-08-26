@@ -1,7 +1,7 @@
 import { aiChat, openRouterChat } from "@/lib/ai-router";
 import type { ReviseReference, ReviseTopic } from "./revise.types";
 
-type SupabaseContext = { supabase: { from: (table: string) => any } };
+type FirestoreContext = { db: { from: (table: string) => any } };
 
 type ChapterRow = {
   id: string;
@@ -249,19 +249,19 @@ function sanitizeDiagram(value: unknown): string | null {
 
 export async function listChapterTopics(
   chapterId: string,
-  context: SupabaseContext,
+  context: FirestoreContext,
 ): Promise<{
   chapter: { id: string; name: string; class_level: number | null } | null;
   topics: ReviseTopic[];
 }> {
-  const { data: chapter } = await context.supabase
+  const { data: chapter } = await context.db
     .from("chapters")
     .select("id, name, class_level, subject_id")
     .eq("id", chapterId)
     .maybeSingle();
   if (!chapter) return { chapter: null, topics: [] };
 
-  const { data: existing } = await context.supabase
+  const { data: existing } = await context.db
     .from("revise_topics")
     .select("*")
     .eq("chapter_id", chapterId)
@@ -271,7 +271,7 @@ export async function listChapterTopics(
     return { chapter, topics: existing as unknown as ReviseTopic[] };
   }
 
-  const { data: subject } = await context.supabase
+  const { data: subject } = await context.db
     .from("subjects")
     .select("name")
     .eq("id", (chapter as ChapterRow).subject_id)
@@ -304,8 +304,8 @@ export async function listChapterTopics(
     if (!isAiGenerationError(error)) throw error;
   }
 
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: inserted, error } = await supabaseAdmin
+  const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+  const { data: inserted, error } = await firestoreAdmin
     .from("revise_topics")
     .upsert(buildTopicRows(chapterId, titles), {
       onConflict: "chapter_id,slug",
@@ -319,19 +319,33 @@ export async function listChapterTopics(
 
 export async function readTopicRevision(
   topicId: string,
-  context: SupabaseContext,
+  context: FirestoreContext,
 ): Promise<ReviseTopic> {
-  const { data: topic, error } = await context.supabase
+  const { data: topic, error } = await context.db
     .from("revise_topics")
-    .select("*, chapters(name, class_level, subjects(name))")
+    .select("*")
     .eq("id", topicId)
     .maybeSingle();
   if (error) throw error;
   if (!topic) throw new Error("Topic not found");
 
-  const topicRecord = topic as Record<string, unknown> & { chapters?: ChapterDetails };
-  const { chapters, ...rest } = topicRecord;
-  const chapter = chapters ?? { name: "NCERT", class_level: null, subjects: { name: "subject" } };
+  const topicRecord = topic as Record<string, unknown>;
+  const { data: chapterRow } = await context.db
+    .from("chapters")
+    .select("name, class_level, subject_id")
+    .eq("id", String(topicRecord.chapter_id ?? ""))
+    .maybeSingle();
+  const { data: subjectRow } = chapterRow?.subject_id
+    ? await context.db.from("subjects").select("name").eq("id", chapterRow.subject_id).maybeSingle()
+    : { data: null };
+  const rest = topicRecord;
+  const chapter: ChapterDetails = chapterRow
+    ? {
+        name: chapterRow.name,
+        class_level: chapterRow.class_level,
+        subjects: { name: subjectRow?.name ?? "subject" },
+      }
+    : { name: "NCERT", class_level: null, subjects: { name: "subject" } };
 
   // Fully cached note (text + diagram) — served identically to every user.
   if (topicRecord.summary && topicRecord.generated_at && topicRecord.diagram) {
@@ -343,8 +357,8 @@ export async function readTopicRevision(
   if (topicRecord.summary && topicRecord.generated_at) {
     const dia = await generateDiagram(String(topicRecord.title ?? "Revision"), chapter);
     if (!dia.diagram) return rest as unknown as ReviseTopic;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: updated } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: updated } = await firestoreAdmin
       .from("revise_topics")
       .update({ diagram: dia.diagram, diagram_caption: dia.diagram_caption })
       .eq("id", topicId)
@@ -382,8 +396,8 @@ Do NOT include copyrighted text from any textbook — write in your own words.`,
       firecrawlReferences(String(topicRecord.title ?? "Revision"), chapter.name),
       generateDiagram(String(topicRecord.title ?? "Revision"), chapter),
     ]);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: updated, error: upErr } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: updated, error: upErr } = await firestoreAdmin
       .from("revise_topics")
       .update({
         summary: ai.summary,

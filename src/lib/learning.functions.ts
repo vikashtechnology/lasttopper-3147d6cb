@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { aiChat } from "@/lib/ai-router";
 import { sendTelegramAlert } from "@/lib/telegram-alert";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 
 export type Chapter = {
   id: string;
@@ -46,9 +46,9 @@ const generatedQuizQuestionSchema = z.object({
 });
 
 export const getSubjectsWithChapters = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { data: profile } = await context.supabase
+    const { data: profile } = await context.db
       .from("users")
       .select("profession")
       .eq("id", context.userId)
@@ -56,14 +56,14 @@ export const getSubjectsWithChapters = createServerFn({ method: "GET" })
     const profession = profile?.profession;
     if (!profession) return [] as SubjectWithChapters[];
 
-    const { data: subjects, error: sErr } = await context.supabase
+    const { data: subjects, error: sErr } = await context.db
       .from("subjects")
       .select("id, code, name, profession, display_order")
       .eq("profession", profession)
       .order("display_order");
     if (sErr) throw sErr;
 
-    const { data: chapters, error: cErr } = await context.supabase
+    const { data: chapters, error: cErr } = await context.db
       .from("chapters")
       .select("id, subject_id, name, class_level, display_order")
       .in(
@@ -179,25 +179,20 @@ const startProgressiveSchema = z.object({
 const PROG_BATCH = 5;
 
 async function generateBatchForSession(
-  supabase: import("@supabase/supabase-js").SupabaseClient<
-    import("@/integrations/supabase/types").Database
-  >,
+  db: import("@/integrations/firebase/data.server").FirestoreDataClient,
   userId: string,
   chapterIds: string[],
   count: number,
   batchIndex: number,
 ): Promise<QuizQuestion[]> {
-  const { data: profile } = await supabase
+  const { data: profile } = await db
     .from("users")
     .select("profession")
     .eq("id", userId)
     .maybeSingle();
   const profession = profile?.profession;
   if (!profession) throw new Error("Complete onboarding first");
-  const { data: chapters } = await supabase
-    .from("chapters")
-    .select("id, name")
-    .in("id", chapterIds);
+  const { data: chapters } = await db.from("chapters").select("id, name").in("id", chapterIds);
   const nameById = new Map((chapters ?? []).map((c) => [c.id, c.name] as const));
   const chapterNames = chapterIds.map((id) => nameById.get(id) ?? "").filter(Boolean);
   try {
@@ -208,17 +203,17 @@ async function generateBatchForSession(
       chapter_id: chapterIds[i % chapterIds.length],
     }));
     try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
       const { saveToBank } = await import("@/lib/question-bank.server");
-      void saveToBank(supabaseAdmin, profession, mapped);
+      void saveToBank(firestoreAdmin, profession, mapped);
     } catch {
       /* non-fatal */
     }
     return mapped;
   } catch (e) {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
     const { sampleFromBank } = await import("@/lib/question-bank.server");
-    const bank = await sampleFromBank(supabaseAdmin, profession, count, chapterIds);
+    const bank = await sampleFromBank(firestoreAdmin, profession, count, chapterIds);
     if (bank.length >= Math.min(count, 3)) {
       return bank.map((q, i) => ({
         ...q,
@@ -231,11 +226,11 @@ async function generateBatchForSession(
 }
 
 export const startProgressiveQuiz = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => startProgressiveSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: profile } = await context.supabase
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: profile } = await context.db
       .from("users")
       .select("is_pro")
       .eq("id", context.userId)
@@ -243,14 +238,14 @@ export const startProgressiveQuiz = createServerFn({ method: "POST" })
     if (data.target_count > 20 && !profile?.is_pro) throw new Error("PRO_REQUIRED");
     {
       const { assertQuota } = await import("@/lib/quota.server");
-      await assertQuota(context.supabase, context.userId, data.target_count);
+      await assertQuota(context.db, context.userId, data.target_count);
     }
 
     const firstCount = Math.min(PROG_BATCH, data.target_count);
     let first: QuizQuestion[];
     try {
       first = await generateBatchForSession(
-        supabaseAdmin,
+        firestoreAdmin,
         context.userId,
         data.chapter_ids,
         firstCount,
@@ -263,7 +258,7 @@ export const startProgressiveQuiz = createServerFn({ method: "POST" })
     }
 
     const nowIso = new Date().toISOString();
-    const { data: row, error } = await supabaseAdmin
+    const { data: row, error } = await firestoreAdmin
       .from("quiz_sessions")
       .insert({
         user_id: context.userId,
@@ -283,11 +278,11 @@ export const startProgressiveQuiz = createServerFn({ method: "POST" })
   });
 
 export const extendQuizSession = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: s, error } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: s, error } = await firestoreAdmin
       .from("quiz_sessions")
       .select("questions, question_count, chapter_ids, submitted_at")
       .eq("id", data.id)
@@ -306,14 +301,14 @@ export const extendQuizSession = createServerFn({ method: "POST" })
     const batchIdx = Math.floor(cur.length / PROG_BATCH);
     const chapterIds = (s.chapter_ids as string[]) ?? [];
     const more = await generateBatchForSession(
-      supabaseAdmin,
+      firestoreAdmin,
       context.userId,
       chapterIds,
       n,
       batchIdx,
     );
     const next = [...cur, ...more];
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await firestoreAdmin
       .from("quiz_sessions")
       .update({ questions: next as unknown as never })
       .eq("id", data.id)
@@ -354,12 +349,12 @@ const createSessionSchema = z
   .refine((value) => value.question_count === value.questions.length, "Question count mismatch");
 
 export const createQuizSession = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((data: unknown) => createSessionSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
     const nowIso = new Date().toISOString();
-    const { data: row, error } = await supabaseAdmin
+    const { data: row, error } = await firestoreAdmin
       .from("quiz_sessions")
       .insert({
         user_id: context.userId,
@@ -381,11 +376,11 @@ export const createQuizSession = createServerFn({ method: "POST" })
   });
 
 export const getQuizSession = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: row, error } = await firestoreAdmin
       .from("quiz_sessions")
       .select("*")
       .eq("id", data.id)
@@ -402,11 +397,11 @@ export const getQuizSession = createServerFn({ method: "POST" })
   });
 
 export const heartbeatSession = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { error } = await firestoreAdmin
       .from("quiz_sessions")
       .update({ last_heartbeat: new Date().toISOString() })
       .eq("id", data.id)
@@ -441,11 +436,11 @@ const submitSchema = z.object({
 });
 
 export const submitQuizSession = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((data: unknown) => submitSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: submissionData, error: submissionError } = await (supabaseAdmin as any).rpc(
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: submissionData, error: submissionError } = await (firestoreAdmin as any).rpc(
       "submit_quiz_session",
       {
         p_session_id: data.id,
@@ -465,7 +460,7 @@ export const submitQuizSession = createServerFn({ method: "POST" })
 
     if (submission.submitted) {
       // Refresh the user's rolling accuracy after the authoritative submission.
-      const { data: all, error: accuracyReadError } = await supabaseAdmin
+      const { data: all, error: accuracyReadError } = await firestoreAdmin
         .from("quiz_sessions")
         .select("accuracy")
         .eq("user_id", context.userId)
@@ -474,7 +469,7 @@ export const submitQuizSession = createServerFn({ method: "POST" })
       if (accuracyReadError) throw accuracyReadError;
       if (all.length > 0) {
         const avg = all.reduce((sum, row) => sum + Number(row.accuracy ?? 0), 0) / all.length;
-        const { error: accuracyError } = await supabaseAdmin
+        const { error: accuracyError } = await firestoreAdmin
           .from("users")
           .update({ total_accuracy: Math.round(avg * 100) / 100 })
           .eq("id", context.userId);
@@ -494,11 +489,11 @@ export const submitQuizSession = createServerFn({ method: "POST" })
 
 // Lazy check: auto-submit any live session whose last_heartbeat is stale (>2 min).
 export const finalizeStaleSessions = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
     const cutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-    const { data: stale, error: staleError } = await supabaseAdmin
+    const { data: stale, error: staleError } = await firestoreAdmin
       .from("quiz_sessions")
       .select("id, answers")
       .eq("user_id", context.userId)
@@ -508,7 +503,7 @@ export const finalizeStaleSessions = createServerFn({ method: "POST" })
 
     const finalized: string[] = [];
     for (const session of stale ?? []) {
-      const { data: submissionData, error: submissionError } = await (supabaseAdmin as any).rpc(
+      const { data: submissionData, error: submissionError } = await (firestoreAdmin as any).rpc(
         "submit_quiz_session",
         {
           p_session_id: session.id,
@@ -525,18 +520,18 @@ export const finalizeStaleSessions = createServerFn({ method: "POST" })
   });
 
 export const getTodayUsage = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
     const { getQuotaState } = await import("@/lib/quota.server");
-    const state = await getQuotaState(context.supabase, context.userId);
+    const state = await getQuotaState(context.db, context.userId);
     return { used: state.used, limit: state.limit, is_pro: state.is_pro };
   });
 
 export const getQuizHistory = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data, error } = await firestoreAdmin
       .from("quiz_sessions")
       .select(
         "id, question_count, correct_count, incorrect_count, accuracy, time_taken_seconds, submitted_at, was_auto_submitted, chapter_ids",
@@ -557,10 +552,10 @@ export type MistakeItem = {
 };
 
 export const getMistakes = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data, error } = await firestoreAdmin
       .from("quiz_sessions")
       .select("id, questions, answers, submitted_at")
       .eq("user_id", context.userId)
@@ -611,10 +606,10 @@ export type Analytics = {
 };
 
 export const getAnalytics = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }): Promise<Analytics> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: sessions, error: sessionsError } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: sessions, error: sessionsError } = await firestoreAdmin
       .from("quiz_sessions")
       .select("questions, answers, submitted_at, time_taken_seconds")
       .eq("user_id", context.userId)
@@ -655,11 +650,11 @@ export const getAnalytics = createServerFn({ method: "GET" })
 
     const chapterIds = Array.from(chapterAgg.keys()).filter(Boolean);
     const { data: chapters } = chapterIds.length
-      ? await context.supabase.from("chapters").select("id, name, subject_id").in("id", chapterIds)
+      ? await context.db.from("chapters").select("id, name, subject_id").in("id", chapterIds)
       : { data: [] as Array<{ id: string; name: string; subject_id: string }> };
     const subjectIds = Array.from(new Set((chapters ?? []).map((c) => c.subject_id)));
     const { data: subjects } = subjectIds.length
-      ? await context.supabase.from("subjects").select("id, name").in("id", subjectIds)
+      ? await context.db.from("subjects").select("id, name").in("id", subjectIds)
       : { data: [] as Array<{ id: string; name: string }> };
     const subjectNameById = new Map((subjects ?? []).map((s) => [s.id, s.name] as const));
     const chapterMeta = new Map(
@@ -724,10 +719,10 @@ const reportSchema = z.object({
 });
 
 export const reportIssue = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((data: unknown) => reportSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("question_reports").insert({
+    const { error } = await context.db.from("question_reports").insert({
       user_id: context.userId,
       session_id: data.session_id,
       question_id: data.question_id,

@@ -10,10 +10,10 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { supabase } from "@/integrations/supabase/client";
 import { registerPWA } from "@/lib/pwa-register";
 import { storeReferralFromUrl } from "@/lib/referral-link";
-import { parseOAuthCallback, closeNativeBrowser, nativeRouteFromUrl } from "@/lib/native-auth";
+import { nativeRouteFromUrl } from "@/lib/native-auth";
+import { firebaseClient } from "@/integrations/firebase/client";
 
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
@@ -147,24 +147,8 @@ function RootComponent() {
         const { App } = await import("@capacitor/app");
         const openNativeUrl = (url: string) => {
           storeReferralFromUrl(url);
-          void (async () => {
-            // Google sign-in finished in the system browser and handed the
-            // tokens back to the app — set the session here.
-            const tokens = parseOAuthCallback(url);
-            if (tokens && !tokens.error) {
-              await closeNativeBrowser();
-              const { error } = await supabase.auth.setSession({
-                access_token: tokens.access_token,
-                refresh_token: tokens.refresh_token,
-              });
-              if (!error) {
-                void router.navigate({ to: "/home", replace: true });
-                return;
-              }
-            }
-            const path = nativeRouteFromUrl(url);
-            if (path) void router.navigate({ href: path });
-          })();
+          const path = nativeRouteFromUrl(url);
+          if (path) void router.navigate({ href: path });
         };
         const handle = await App.addListener("appUrlOpen", ({ url }) => openNativeUrl(url));
         remove = () => void handle.remove();
@@ -202,8 +186,8 @@ function RootComponent() {
   }, []);
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+    const { data: sub } = firebaseClient.auth.onAuthStateChange((event) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "TOKEN_REFRESHED") return;
       router.invalidate();
       if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
     });

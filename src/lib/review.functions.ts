@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 import type { QuizQuestion } from "@/lib/learning.functions";
 
 export type ReviewItem = {
@@ -11,13 +11,13 @@ export type ReviewItem = {
 };
 
 export const getReviewQueue = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }): Promise<{ due: ReviewItem[]; total: number; dueCount: number }> => {
     const { upsertReviewItems } = await import("@/lib/review.server");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
 
     // Sync recent mistakes into the queue.
-    const { data: sessions, error: sessionsError } = await supabaseAdmin
+    const { data: sessions, error: sessionsError } = await firestoreAdmin
       .from("quiz_sessions")
       .select("questions, answers, submitted_at")
       .eq("user_id", context.userId)
@@ -32,21 +32,21 @@ export const getReviewQueue = createServerFn({ method: "GET" })
       const ans = (s.answers as Record<string, string>) ?? {};
       for (const q of qs) if (ans[q.id] !== q.correct) wrong.push(q);
     }
-    if (wrong.length) await upsertReviewItems(supabaseAdmin, context.userId, wrong.slice(0, 200));
+    if (wrong.length) await upsertReviewItems(firestoreAdmin, context.userId, wrong.slice(0, 200));
 
     const nowIso = new Date().toISOString();
-    const { data: due } = await context.supabase
+    const { data: due } = await context.db
       .from("review_items")
       .select("id, question, box, due_at")
       .eq("user_id", context.userId)
       .lte("due_at", nowIso)
       .order("due_at")
       .limit(20);
-    const { count } = await context.supabase
+    const { count } = await context.db
       .from("review_items")
       .select("id", { count: "exact", head: true })
       .eq("user_id", context.userId);
-    const { count: dueCount } = await context.supabase
+    const { count: dueCount } = await context.db
       .from("review_items")
       .select("id", { count: "exact", head: true })
       .eq("user_id", context.userId)
@@ -65,16 +65,16 @@ export const getReviewQueue = createServerFn({ method: "GET" })
   });
 
 export const gradeReview = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z.object({ id: z.string().uuid(), correct: z.boolean() }).parse(d),
   )
   .handler(async ({ data, context }) => {
     const { assertQuota } = await import("@/lib/quota.server");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await assertQuota(context.supabase, context.userId, 1);
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    await assertQuota(context.db, context.userId, 1);
 
-    const { data: resultData, error } = await (supabaseAdmin as any).rpc("grade_review_item", {
+    const { data: resultData, error } = await (firestoreAdmin as any).rpc("grade_review_item", {
       p_item_id: data.id,
       p_user_id: context.userId,
       p_correct: data.correct,

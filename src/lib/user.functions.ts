@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
+
 import {
   safeFileName,
   sendTelegramDocument,
@@ -10,9 +11,11 @@ import {
 } from "@/lib/telegram-alert";
 
 export const getMyProfile = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { ensureFirstLoginProfile } = await import("@/lib/profile-bootstrap.server");
+    await ensureFirstLoginProfile(context.userId, context.claims);
+    const { data, error } = await context.db
       .from("users")
       .select(
         "id, email, full_name, avatar_url, country_code, phone, profession, onboarded, daily_question_limit, streak, total_accuracy, is_pro, pro_since, date_of_birth, terms_accepted_at",
@@ -31,10 +34,10 @@ const signupSchema = z.object({
 });
 
 export const saveSignupDetails = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((data: unknown) => signupSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
     // Validate DOB (>= 8 years old, <= 100)
     const dob = new Date(data.date_of_birth + "T00:00:00Z");
     const now = new Date();
@@ -45,7 +48,7 @@ export const saveSignupDetails = createServerFn({ method: "POST" })
     }
 
     // Enforce uniqueness of email across accounts
-    const { data: existing, error: qErr } = await supabaseAdmin
+    const { data: existing, error: qErr } = await firestoreAdmin
       .from("users")
       .select("id")
       .eq("email", data.email)
@@ -56,7 +59,7 @@ export const saveSignupDetails = createServerFn({ method: "POST" })
       throw new Error("This email is already linked to another account.");
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await firestoreAdmin
       .from("users")
       .update({
         full_name: data.full_name,
@@ -82,11 +85,11 @@ const phoneSchema = z.object({
 });
 
 export const updatePhone = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((data: unknown) => phoneSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: existing, error: qErr } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: existing, error: qErr } = await firestoreAdmin
       .from("users")
       .select("id")
       .eq("phone", data.phone)
@@ -95,7 +98,7 @@ export const updatePhone = createServerFn({ method: "POST" })
     if (qErr) throw qErr;
     if (existing) throw new Error("This phone number is already linked to another account.");
 
-    const { error } = await supabaseAdmin
+    const { error } = await firestoreAdmin
       .from("users")
       .update({ country_code: data.country_code, phone: data.phone })
       .eq("id", context.userId);
@@ -106,11 +109,11 @@ export const updatePhone = createServerFn({ method: "POST" })
 const professionSchema = z.object({ profession: z.enum(["pcm", "pcb"]) });
 
 export const setProfession = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((data: unknown) => professionSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { error } = await firestoreAdmin
       .from("users")
       .update({ profession: data.profession })
       .eq("id", context.userId);
@@ -119,10 +122,10 @@ export const setProfession = createServerFn({ method: "POST" })
   });
 
 export const completeOnboarding = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: u, error: profileError } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: u, error: profileError } = await firestoreAdmin
       .from("users")
       .select(
         "email, full_name, profession, date_of_birth, terms_accepted_at, signup_alert_sent_at, created_at",
@@ -137,7 +140,7 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       throw new Error("Please complete your profile, accept the terms, and choose a track.");
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await firestoreAdmin
       .from("users")
       .update({ onboarded: true })
       .eq("id", context.userId);
@@ -165,7 +168,7 @@ export const completeOnboarding = createServerFn({ method: "POST" })
         ].join("\n"),
       );
 
-      const { error: alertError } = await supabaseAdmin
+      const { error: alertError } = await firestoreAdmin
         .from("users")
         .update({ signup_alert_sent_at: new Date().toISOString() })
         .eq("id", context.userId);
@@ -178,10 +181,10 @@ export const completeOnboarding = createServerFn({ method: "POST" })
 // Update daily streak on app open. Increment when last_streak_date is yesterday;
 // reset to 1 when gap > 1 day; no-op when already updated today.
 export const pingActivity = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: u, error: profileError } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: u, error: profileError } = await firestoreAdmin
       .from("users")
       .select("streak, best_streak, last_streak_date")
       .eq("id", context.userId)
@@ -206,7 +209,7 @@ export const pingActivity = createServerFn({ method: "POST" })
       else nextStreak = 1;
     }
 
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await firestoreAdmin
       .from("users")
       .update({
         streak: nextStreak,
@@ -221,9 +224,9 @@ export const pingActivity = createServerFn({ method: "POST" })
 
 // Streak details for the home header chip modal.
 export const getStreakDetails = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { data, error } = await context.db
       .from("users")
       .select("streak, best_streak, last_streak_date, last_active_date")
       .eq("id", context.userId)

@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { getQuickLeaderboard } from "@/lib/battle.functions";
-import { supabase } from "@/integrations/supabase/client";
 import { Trophy } from "lucide-react";
 import { RankBadge } from "@/components/RankBadge";
 
@@ -27,18 +26,6 @@ function Board() {
     queryFn: () => getQuickLeaderboard(),
     refetchInterval: 15000,
   });
-  useEffect(() => {
-    const ch = supabase
-      .channel("board-battles")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "battle_sessions" }, () =>
-        qc.invalidateQueries({ queryKey: ["quick-leaderboard"] }),
-      )
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(ch);
-    };
-  }, [qc]);
-
   const items = q.data ?? [];
   return (
     <div className="space-y-4">

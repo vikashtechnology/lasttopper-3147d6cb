@@ -2,12 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import {
-  listDoubts,
-  createDoubt,
-  createDoubtImageUploadUrl,
-  getDoubtImageUrl,
-} from "@/lib/community.functions";
+import { listDoubts, createDoubt } from "@/lib/community.functions";
+import { firebaseClient } from "@/integrations/firebase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,7 +15,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus, ArrowUp, MessageCircle, CheckCircle2, ImagePlus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/community/doubts")({
@@ -33,20 +28,25 @@ function DoubtsList() {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [imagePath, setImagePath] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
   async function handleFile(file: File) {
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() ?? "png";
-      const signed = await createDoubtImageUploadUrl({ data: { ext } });
-      const { error } = await supabase.storage
-        .from("doubt-images")
-        .uploadToSignedUrl(signed.path, signed.token, file);
-      if (error) throw error;
-      setImagePath(signed.path);
-      toast.success("Image attached");
+      const { data, error } = await firebaseClient.auth.getSession();
+      if (error || !data.session) throw error ?? new Error("Please sign in again");
+      const form = new FormData();
+      form.set("image", file);
+      const response = await fetch("/api/images/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+        body: form,
+      });
+      const result = (await response.json()) as { url?: string; error?: string };
+      if (!response.ok || !result.url) throw new Error(result.error ?? "Upload failed");
+      setImageUrl(result.url);
+      toast.success("Image attached for 7 days");
     } catch (e) {
       toast.error(failMessage(e, "Upload failed"));
     } finally {
@@ -55,20 +55,13 @@ function DoubtsList() {
   }
 
   const create = useMutation({
-    mutationFn: async () => {
-      let image_url: string | undefined;
-      if (imagePath) {
-        const s = await getDoubtImageUrl({ data: { path: imagePath } });
-        image_url = s.url;
-      }
-      return createDoubt({ data: { title, body, image_url } });
-    },
+    mutationFn: () => createDoubt({ data: { title, body, image_url: imageUrl ?? undefined } }),
     onSuccess: () => {
       toast.success("Doubt posted");
       setOpen(false);
       setTitle("");
       setBody("");
-      setImagePath(null);
+      setImageUrl(null);
       qc.invalidateQueries({ queryKey: ["doubts"] });
     },
     onError: (e: Error) => toast.error(failMessage(e)),
@@ -111,7 +104,7 @@ function DoubtsList() {
               <label className="flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-border p-3 text-sm text-muted-foreground hover:bg-muted/50">
                 <ImagePlus className="h-4 w-4" />
                 <span>
-                  {imagePath
+                  {imageUrl
                     ? "Image attached ✓"
                     : uploading
                       ? "Uploading…"

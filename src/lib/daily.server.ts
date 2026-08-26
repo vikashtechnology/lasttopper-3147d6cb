@@ -1,9 +1,9 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+import type { FirestoreDataClient } from "@/integrations/firebase/data.server";
+import type { Database } from "@/integrations/firebase/types";
 import type { QuizQuestion } from "@/lib/learning.functions";
 import { aiChat } from "@/lib/ai-router";
 
-type AnyClient = SupabaseClient<Database>;
+type AnyClient = FirestoreDataClient;
 
 export const DAILY_COUNT = 10;
 

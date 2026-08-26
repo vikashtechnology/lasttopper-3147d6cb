@@ -1,10 +1,10 @@
 import { createFileRoute, useParams, useNavigate } from "@tanstack/react-router";
+import { firebaseClient } from "@/integrations/firebase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getPublicProfile, followUser, unfollowUser } from "@/lib/community.functions";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Flame, Target, Award, ArrowLeft, UserPlus, UserMinus, LogOut } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useUserStore } from "@/store/user";
 import { toast } from "sonner";
 import { failMessage } from "@/lib/friendly-error";
@@ -52,7 +52,7 @@ function Profile() {
     await qc.cancelQueries();
     qc.clear();
     useUserStore.getState().clear();
-    await supabase.auth.signOut();
+    await firebaseClient.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
 

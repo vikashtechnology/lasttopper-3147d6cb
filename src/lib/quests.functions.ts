@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 
 type Quest = { kind: string; title: string; body: string; link: string };
 
@@ -9,9 +9,9 @@ type Quest = { kind: string; title: string; body: string; link: string };
  * Deduped: at most one notification per quest per day.
  */
 export const pushPendingQuestReminders = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
     const userId = context.userId;
 
     const now = new Date();
@@ -21,14 +21,14 @@ export const pushPendingQuestReminders = createServerFn({ method: "POST" })
     const pending: Quest[] = [];
 
     // 1) Daily challenge
-    const { data: profile, error: profileError } = await context.supabase
+    const { data: profile, error: profileError } = await context.db
       .from("users")
       .select("profession")
       .eq("id", userId)
       .maybeSingle();
     if (profileError) throw profileError;
     const { data: todaysChallenge, error: challengeError } = profile?.profession
-      ? await supabaseAdmin
+      ? await firestoreAdmin
           .from("daily_challenges")
           .select("id")
           .eq("challenge_date", dayKey)
@@ -38,7 +38,7 @@ export const pushPendingQuestReminders = createServerFn({ method: "POST" })
     if (challengeError) throw challengeError;
     let challengeDone = false;
     if (todaysChallenge?.id) {
-      const { data: attempt, error: attemptError } = await context.supabase
+      const { data: attempt, error: attemptError } = await context.db
         .from("daily_challenge_attempts")
         .select("completed_at")
         .eq("challenge_id", todaysChallenge.id)
@@ -57,7 +57,7 @@ export const pushPendingQuestReminders = createServerFn({ method: "POST" })
     }
 
     // 2) Spaced repetition queue
-    const { count: dueCount } = await context.supabase
+    const { count: dueCount } = await context.db
       .from("review_items")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
@@ -72,7 +72,7 @@ export const pushPendingQuestReminders = createServerFn({ method: "POST" })
     }
 
     // 3) Practice (learning)
-    const { count: quizToday, error: quizError } = await supabaseAdmin
+    const { count: quizToday, error: quizError } = await firestoreAdmin
       .from("quiz_sessions")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
@@ -88,7 +88,7 @@ export const pushPendingQuestReminders = createServerFn({ method: "POST" })
     }
 
     // 4) Revise
-    const { count: reviseToday } = await context.supabase
+    const { count: reviseToday } = await context.db
       .from("activity_events")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
@@ -106,7 +106,7 @@ export const pushPendingQuestReminders = createServerFn({ method: "POST" })
     if (!pending.length) return { sent: 0 };
 
     // Dedupe: skip quests already notified today
-    const { data: already } = await supabaseAdmin
+    const { data: already } = await firestoreAdmin
       .from("notifications")
       .select("kind")
       .eq("user_id", userId)
@@ -122,6 +122,6 @@ export const pushPendingQuestReminders = createServerFn({ method: "POST" })
       .map((q) => ({ user_id: userId, kind: q.kind, title: q.title, body: q.body, link: q.link }));
     if (!rows.length) return { sent: 0 };
 
-    await supabaseAdmin.from("notifications").insert(rows);
+    await firestoreAdmin.from("notifications").insert(rows);
     return { sent: rows.length };
   });

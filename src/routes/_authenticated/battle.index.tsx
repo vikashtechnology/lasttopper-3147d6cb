@@ -11,7 +11,6 @@ import {
   submitBattle,
   getQuickLeaderboard,
 } from "@/lib/battle.functions";
-import { supabase } from "@/integrations/supabase/client";
 import { Timer, Zap, Trophy, Loader2 } from "lucide-react";
 import type { BattleQuestion } from "@/lib/battle.functions";
 import { failMessage } from "@/lib/friendly-error";
@@ -54,18 +53,6 @@ function QuickBattle() {
     queryFn: () => getQuickLeaderboard(),
     refetchInterval: 15000,
   });
-
-  useEffect(() => {
-    const ch = supabase
-      .channel("quick-battles")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "battle_sessions" }, () =>
-        qc.invalidateQueries({ queryKey: ["quick-leaderboard"] }),
-      )
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(ch);
-    };
-  }, [qc]);
 
   const start = useMutation({
     mutationFn: () => startQuickBattle(),

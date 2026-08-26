@@ -65,8 +65,18 @@ jobs:
           fi
 
       - name: Add Capacitor Android platform
+        env:
+          FIREBASE_GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_BASE64 }}
         run: |
           npx --yes @capacitor/cli@8.5.0 add android
+          if [ -n "$FIREBASE_GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "$FIREBASE_GOOGLE_SERVICES_JSON_BASE64" | base64 -d > android/app/google-services.json
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Release builds require FIREBASE_GOOGLE_SERVICES_JSON_BASE64 for native Google sign-in." >&2
+            exit 1
+          else
+            echo "No Firebase Android config: APK will build, but native Google sign-in cannot be validated."
+          fi
           # The app targets Android 8.0+ (API 26); Capacitor scaffolds 23/24.
           python3 - <<'PY'
           import re, pathlib

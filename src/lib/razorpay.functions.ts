@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 
 /** One-time, non-renewing Pro passes with fixed server-side pricing. */
 type Purpose = "pro_weekly" | "pro" | "pro_yearly";
@@ -23,7 +23,7 @@ function razorpayAuth() {
 const createOrderSchema = z.object({ purpose: purposeSchema });
 
 export const createRazorpayOrder = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((input: unknown) => createOrderSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { key, basic } = razorpayAuth();
@@ -109,7 +109,7 @@ async function fetchRazorpayEntity<T>(path: string): Promise<T> {
 }
 
 export const verifyRazorpayPayment = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((input: unknown) => verifySchema.parse(input))
   .handler(async ({ data, context }) => {
     if (
@@ -153,8 +153,8 @@ export const verifyRazorpayPayment = createServerFn({ method: "POST" })
       throw new Error("Payment details do not match the server-created order");
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: fulfillment, error } = await (supabaseAdmin as any).rpc("fulfill_pro_payment", {
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: fulfillment, error } = await (firestoreAdmin as any).rpc("fulfill_pro_payment", {
       p_payment_id: payment.id,
       p_order_id: order.id,
       p_user_id: context.userId,

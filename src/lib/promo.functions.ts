@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 
 export type AdminPromo = {
   id: string;
@@ -18,10 +18,10 @@ export type AdminPromo = {
 const planEnum = z.enum(["pro_weekly", "pro", "pro_yearly"]);
 
 async function assertAdmin(ctx: {
-  supabase: import("@supabase/supabase-js").SupabaseClient;
+  db: import("@/integrations/firebase/data.server").FirestoreDataClient;
   userId: string;
 }) {
-  const { data, error } = await ctx.supabase.rpc("has_role", {
+  const { data, error } = await ctx.db.rpc("has_role", {
     _user_id: ctx.userId,
     _role: "admin",
   });
@@ -31,18 +31,18 @@ async function assertAdmin(ctx: {
 
 /** Promo redemption is disabled so Pro passes always use fixed published prices. */
 export const checkPromoCode = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z.object({ code: z.string().trim().min(2).max(32), plan: planEnum }).parse(d),
   )
   .handler(async () => ({ valid: false as const, percent: 0 }));
 
 export const adminListPromoCodes = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data, error } = await firestoreAdmin
       .from("promo_codes")
       .select(
         "id, code, percent, plans, valid_until, max_uses, used_count, is_active, note, created_at",
@@ -54,7 +54,7 @@ export const adminListPromoCodes = createServerFn({ method: "GET" })
   });
 
 export const adminSavePromoCode = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -75,7 +75,7 @@ export const adminSavePromoCode = createServerFn({ method: "POST" })
   });
 
 export const adminDeletePromoCode = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context }) => {
     await assertAdmin(context);

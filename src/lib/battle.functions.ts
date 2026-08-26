@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 import type { QuizQuestion } from "@/lib/learning.functions";
 import { aiChat } from "@/lib/ai-router";
 
@@ -71,23 +71,23 @@ async function generateWithFallback(
   batchIdx: number,
   mode: "quick" | "1v1",
 ): Promise<QuizQuestion[]> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
   const { saveToBank, sampleFromBank } = await import("@/lib/question-bank.server");
   try {
     const qs = await generateQuickBatch(profession, count, batchIdx, mode);
-    void saveToBank(supabaseAdmin, profession, qs, null);
+    void saveToBank(firestoreAdmin, profession, qs, null);
     return qs;
   } catch (e) {
-    const bank = await sampleFromBank(supabaseAdmin, profession, count);
+    const bank = await sampleFromBank(firestoreAdmin, profession, count);
     if (bank.length >= Math.min(count, 3)) return bank;
     throw e;
   }
 }
 
 export const startQuickBattle = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { data: profile } = await context.supabase
+    const { data: profile } = await context.db
       .from("users")
       .select("profession")
       .eq("id", context.userId)
@@ -95,8 +95,8 @@ export const startQuickBattle = createServerFn({ method: "POST" })
     const profession = profile?.profession;
     if (!profession) throw new Error("Complete onboarding first");
     const first = await generateWithFallback(profession, QUICK_BATCH, 0, "quick");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: row, error } = await firestoreAdmin
       .from("battle_sessions")
       .insert({
         user_id: context.userId,
@@ -111,9 +111,9 @@ export const startQuickBattle = createServerFn({ method: "POST" })
   });
 
 export const start1v1Battle = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { data: profile } = await context.supabase
+    const { data: profile } = await context.db
       .from("users")
       .select("profession")
       .eq("id", context.userId)
@@ -121,8 +121,8 @@ export const start1v1Battle = createServerFn({ method: "POST" })
     const profession = profile?.profession;
     if (!profession) throw new Error("Complete onboarding first");
     const first = await generateWithFallback(profession, QUICK_BATCH, 0, "1v1");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: row, error } = await firestoreAdmin
       .from("battle_sessions")
       .insert({
         user_id: context.userId,
@@ -137,11 +137,11 @@ export const start1v1Battle = createServerFn({ method: "POST" })
   });
 
 export const extendQuickBattle = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: s } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: s } = await firestoreAdmin
       .from("battle_sessions")
       .select("questions, profession, submitted_at, mode")
       .eq("id", data.id)
@@ -166,7 +166,7 @@ export const extendQuickBattle = createServerFn({ method: "POST" })
       mode === "1v1" ? "1v1" : "quick",
     );
     const next = [...cur, ...more];
-    const { error: updateError } = await supabaseAdmin
+    const { error: updateError } = await firestoreAdmin
       .from("battle_sessions")
       .update({ questions: next as unknown as never })
       .eq("id", data.id)
@@ -186,14 +186,14 @@ const submitBattleSchema = z.object({
 });
 
 export const submitBattle = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => submitBattleSchema.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
     // The service-role-only RPC locks the session, scores against the paper
     // inside the transaction, derives elapsed time from database timestamps,
     // rejects late/replayed submissions, and atomically updates a Mega entry.
-    const { data: submissionData, error: submissionError } = await (supabaseAdmin as any).rpc(
+    const { data: submissionData, error: submissionError } = await (firestoreAdmin as any).rpc(
       "submit_battle_result",
       {
         p_session_id: data.id,
@@ -211,7 +211,7 @@ export const submitBattle = createServerFn({ method: "POST" })
     // The XP ledger is independently idempotent, so a retry can safely repair
     // an award if the original request ended after the score was committed.
     const { awardQuestionXp } = await import("@/lib/xp.server");
-    const xp = await awardQuestionXp(supabaseAdmin, context.userId, correct, {
+    const xp = await awardQuestionXp(firestoreAdmin, context.userId, correct, {
       type: "battle",
       id: data.id,
     }).catch(() => null);
@@ -225,11 +225,11 @@ export const submitBattle = createServerFn({ method: "POST" })
   });
 
 export const getBattleSession = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: session, error } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: session, error } = await firestoreAdmin
       .from("battle_sessions")
       .select("id, mode, profession, mega_test_id, questions, submitted_at, start_time")
       .eq("id", data.id)
@@ -240,7 +240,7 @@ export const getBattleSession = createServerFn({ method: "POST" })
 
     let endsAt = new Date(session.start_time).getTime() + 3 * 60 * 60_000;
     if (session.mode === "mega" && session.mega_test_id) {
-      const { data: test, error: testError } = await supabaseAdmin
+      const { data: test, error: testError } = await firestoreAdmin
         .from("mega_tests")
         .select("scheduled_end")
         .eq("id", session.mega_test_id)
@@ -259,11 +259,11 @@ export const getBattleSession = createServerFn({ method: "POST" })
 /* -------------------------------- Leaderboards --------------------------- */
 
 export const getQuickLeaderboard = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { data } = await supabaseAdmin
+    const { data } = await firestoreAdmin
       .from("battle_sessions")
       .select("id, user_id, score, correct_count, time_taken_seconds, submitted_at")
       .eq("mode", "quick")
@@ -275,7 +275,7 @@ export const getQuickLeaderboard = createServerFn({ method: "GET" })
     const rows = data ?? [];
     const userIds = Array.from(new Set(rows.map((r) => r.user_id as string)));
     const { data: users } = userIds.length
-      ? await supabaseAdmin
+      ? await firestoreAdmin
           .from("public_profiles")
           .select("id, full_name, avatar_url")
           .in("id", userIds)
@@ -283,7 +283,7 @@ export const getQuickLeaderboard = createServerFn({ method: "GET" })
     const map = new Map((users ?? []).map((u) => [u.id, u] as const));
 
     // Showcase-only demo players (display in leaderboard/history; cannot join mega battles)
-    const { data: demo } = await (supabaseAdmin as any)
+    const { data: demo } = await (firestoreAdmin as any)
       .from("demo_players")
       .select("id, full_name, avatar_url, xp, score, correct_count, time_taken_seconds");
 
@@ -355,18 +355,20 @@ function nextSundayIST(): { start: Date; end: Date } {
 }
 
 export const getUpcomingMegaTest = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { data: profile } = await context.supabase
+    const { recoverMegaTestLifecycleIfDue } = await import("@/lib/mega-lifecycle.server");
+    await recoverMegaTestLifecycleIfDue();
+    const { data: profile } = await context.db
       .from("users")
       .select("profession")
       .eq("id", context.userId)
       .maybeSingle();
     const profession = profile?.profession;
     if (!profession) return null;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
     const { start, end } = nextSundayIST();
-    const { data: existing, error: existingError } = await supabaseAdmin
+    const { data: existing, error: existingError } = await firestoreAdmin
       .from("mega_tests")
       .select(
         "id, profession, scheduled_start, scheduled_end, status, min_participants, question_count, created_at",
@@ -379,7 +381,7 @@ export const getUpcomingMegaTest = createServerFn({ method: "GET" })
     if (!test) {
       // Provisioning is a trusted server operation. Authenticated users only
       // have read access to mega_tests, so inserts must use the service client.
-      const { data: inserted, error } = await supabaseAdmin
+      const { data: inserted, error } = await firestoreAdmin
         .from("mega_tests")
         .upsert(
           {
@@ -399,14 +401,14 @@ export const getUpcomingMegaTest = createServerFn({ method: "GET" })
       if (error) throw error;
       test = inserted;
     }
-    const { data: entry, error: entryError } = await (context.supabase as any)
+    const { data: entry, error: entryError } = await (context.db as any)
       .from("mega_test_entries")
       .select("id, access_verified_at, session_id, score, rank")
       .eq("mega_test_id", test.id)
       .eq("user_id", context.userId)
       .maybeSingle();
     if (entryError) throw entryError;
-    const { count, error: countError } = await supabaseAdmin
+    const { count, error: countError } = await firestoreAdmin
       .from("mega_test_entries")
       .select("id", { count: "exact", head: true })
       .eq("mega_test_id", test.id)
@@ -416,11 +418,11 @@ export const getUpcomingMegaTest = createServerFn({ method: "GET" })
   });
 
 export const joinMegaTest = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ mega_test_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: registrationData, error } = await (supabaseAdmin as any).rpc(
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: registrationData, error } = await (firestoreAdmin as any).rpc(
       "register_free_mega_test",
       { p_mega_test_id: data.mega_test_id, p_user_id: context.userId },
     );
@@ -431,11 +433,11 @@ export const joinMegaTest = createServerFn({ method: "POST" })
   });
 
 export const startMegaSession = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ mega_test_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: test, error: testError } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: test, error: testError } = await firestoreAdmin
       .from("mega_tests")
       .select("*")
       .eq("id", data.mega_test_id)
@@ -447,7 +449,7 @@ export const startMegaSession = createServerFn({ method: "POST" })
     const end = new Date(test.scheduled_end as string).getTime();
     if (now < start) throw new Error("Test hasn't started yet");
     if (now > end) throw new Error("Test has ended");
-    const { data: entry, error: entryError } = await (context.supabase as any)
+    const { data: entry, error: entryError } = await (context.db as any)
       .from("mega_test_entries")
       .select("id, access_verified_at")
       .eq("mega_test_id", data.mega_test_id)
@@ -461,8 +463,8 @@ export const startMegaSession = createServerFn({ method: "POST" })
     // If not yet generated for this test, look for a shared set generated for the same time slot
     // (one set is shared across all professions for fairness).
     if (!questions || questions.length === 0) {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: peer, error: peerError } = await supabaseAdmin
+      const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+      const { data: peer, error: peerError } = await firestoreAdmin
         .from("mega_tests")
         .select("questions")
         .eq("scheduled_start", test.scheduled_start as string)
@@ -473,7 +475,7 @@ export const startMegaSession = createServerFn({ method: "POST" })
       const shared = (peer?.questions as QuizQuestion[] | null) ?? null;
       if (shared && shared.length === Number(test.question_count)) {
         questions = shared;
-        const { error: updateError } = await supabaseAdmin
+        const { error: updateError } = await firestoreAdmin
           .from("mega_tests")
           .update({ questions: shared as unknown as never, status: "live" })
           .eq("id", data.mega_test_id);
@@ -483,7 +485,7 @@ export const startMegaSession = createServerFn({ method: "POST" })
     if (!questions || questions.length === 0) {
       throw new Error("Test questions are still being prepared. Please try again in a minute.");
     }
-    const { data: sessionData, error: sessionError } = await (supabaseAdmin as any).rpc(
+    const { data: sessionData, error: sessionError } = await (firestoreAdmin as any).rpc(
       "start_mega_battle_session",
       {
         p_mega_test_id: data.mega_test_id,
@@ -497,10 +499,10 @@ export const startMegaSession = createServerFn({ method: "POST" })
   });
 
 export const getBattleHistory = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data, error } = await firestoreAdmin
       .from("battle_sessions")
       .select("id, mode, score, correct_count, time_taken_seconds, submitted_at, mega_test_id")
       .eq("user_id", context.userId)

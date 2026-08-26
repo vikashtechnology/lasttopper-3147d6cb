@@ -103,8 +103,8 @@ export const Route = createFileRoute("/api/public/hooks/mega-task-partner")({
         }
 
         try {
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { error } = await (supabaseAdmin as any).rpc("complete_mega_access_task_attempt", {
+          const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+          const { error } = await (firestoreAdmin as any).rpc("complete_mega_access_task_attempt", {
             p_attempt_id: payload.attempt_id,
             p_nonce: payload.nonce,
             p_provider: provider,

@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 import type { QuizQuestion } from "@/lib/learning.functions";
 import type { BattleQuestion } from "@/lib/battle.functions";
 
@@ -16,12 +16,12 @@ export type DailyChallengeView = {
 };
 
 export const getDailyChallenge = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }): Promise<DailyChallengeView> => {
     const { ensureDailyChallenge, todayKey } = await import("@/lib/daily.server");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
 
-    const { data: profile, error: profileError } = await context.supabase
+    const { data: profile, error: profileError } = await context.db
       .from("users")
       .select("profession")
       .eq("id", context.userId)
@@ -30,8 +30,8 @@ export const getDailyChallenge = createServerFn({ method: "GET" })
     const profession = profile?.profession as "pcm" | "pcb" | null;
     if (!profession) throw new Error("Complete onboarding first");
 
-    const ch = await ensureDailyChallenge(supabaseAdmin, supabaseAdmin, profession);
-    const { data: attempt, error: attemptError } = await context.supabase
+    const ch = await ensureDailyChallenge(firestoreAdmin, firestoreAdmin, profession);
+    const { data: attempt, error: attemptError } = await context.db
       .from("daily_challenge_attempts")
       .select("correct_count, completed_at")
       .eq("challenge_id", ch.id)
@@ -40,7 +40,7 @@ export const getDailyChallenge = createServerFn({ method: "GET" })
     if (attemptError) throw attemptError;
 
     const { getQuotaState } = await import("@/lib/quota.server");
-    const quota = await getQuotaState(context.supabase, context.userId);
+    const quota = await getQuotaState(context.db, context.userId);
     const locked =
       !attempt?.completed_at && !quota.is_pro && quota.remaining < (ch.questions ?? []).length;
 
@@ -59,7 +59,7 @@ export const getDailyChallenge = createServerFn({ method: "GET" })
   });
 
 export const submitDailyChallenge = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -71,9 +71,9 @@ export const submitDailyChallenge = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
 
-    const { data: ch, error: challengeError } = await supabaseAdmin
+    const { data: ch, error: challengeError } = await firestoreAdmin
       .from("daily_challenges")
       .select("id, questions")
       .eq("id", data.challenge_id)
@@ -82,7 +82,7 @@ export const submitDailyChallenge = createServerFn({ method: "POST" })
     if (!ch) throw new Error("Challenge not found");
 
     const questions = (ch.questions as QuizQuestion[]) ?? [];
-    const { data: prior, error: priorError } = await context.supabase
+    const { data: prior, error: priorError } = await context.db
       .from("daily_challenge_attempts")
       .select("completed_at")
       .eq("challenge_id", ch.id)
@@ -91,10 +91,10 @@ export const submitDailyChallenge = createServerFn({ method: "POST" })
     if (priorError) throw priorError;
     if (!prior?.completed_at) {
       const { assertQuota } = await import("@/lib/quota.server");
-      await assertQuota(context.supabase, context.userId, questions.length);
+      await assertQuota(context.db, context.userId, questions.length);
     }
 
-    const { data: completionData, error: completionError } = await (supabaseAdmin as any).rpc(
+    const { data: completionData, error: completionError } = await (firestoreAdmin as any).rpc(
       "complete_daily_challenge",
       {
         p_challenge_id: ch.id,
@@ -111,7 +111,7 @@ export const submitDailyChallenge = createServerFn({ method: "POST" })
     // The XP ledger is independently idempotent, so a retry can safely repair
     // an award if the original request ended after challenge completion.
     const { awardQuestionXp } = await import("@/lib/xp.server");
-    const xp = await awardQuestionXp(supabaseAdmin, context.userId, correct, {
+    const xp = await awardQuestionXp(firestoreAdmin, context.userId, correct, {
       type: "daily_challenge",
       id: ch.id,
     }).catch(() => null);
@@ -121,7 +121,7 @@ export const submitDailyChallenge = createServerFn({ method: "POST" })
     const wrong = questions.filter((q) => data.answers[q.id] !== q.correct);
     if (wrong.length) {
       const { upsertReviewItems } = await import("@/lib/review.server");
-      await upsertReviewItems(supabaseAdmin, context.userId, wrong);
+      await upsertReviewItems(firestoreAdmin, context.userId, wrong);
     }
 
     return {

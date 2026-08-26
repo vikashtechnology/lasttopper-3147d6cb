@@ -1,15 +1,10 @@
 import { useEffect, useRef } from "react";
-import type { RealtimeChannel } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { listNotifications } from "@/lib/community.functions";
 import { isNative, notifyNow, scheduleRecurringReminders } from "@/lib/local-notifications";
 
 /**
- * Mounts device notifications:
- *  - schedules recurring reminders in an installed native app
- *  - shows live community/personal alerts while the application is running
- *
- * Web notification permission is requested only from the explicit test/enable
- * button on the Notifications page because browsers require a user gesture.
+ * Schedules native reminders and polls server-owned Firestore notifications.
+ * Client Firestore access stays disabled; Firebase Admin serves the data.
  */
 export function useAppNotifications() {
   const started = useRef(false);
@@ -17,69 +12,33 @@ export function useAppNotifications() {
   useEffect(() => {
     if (started.current) return;
     started.current = true;
+    if (isNative()) void scheduleRecurringReminders();
 
-    if (isNative()) {
-      void scheduleRecurringReminders();
-    }
-
-    let userId: string | null = null;
-    let personalChannel: RealtimeChannel | null = null;
     let disposed = false;
+    let initialized = false;
+    let known = new Set<string>();
 
-    const channel = supabase
-      .channel("app-notifications")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "forum_posts" },
-        (payload) => {
-          const row = payload.new as { title?: string; user_id?: string };
-          if (row.user_id && row.user_id === userId) return;
-          void notifyNow(
-            "New discussion in Community 💬",
-            row.title ?? "Someone started a new thread.",
-          );
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "study_group_messages" },
-        (payload) => {
-          const row = payload.new as { body?: string; user_id?: string };
-          if (row.user_id && row.user_id === userId) return;
-          void notifyNow(
-            "New message in your study group 👥",
-            row.body?.slice(0, 120) ?? "Tap to read.",
-          );
-        },
-      )
-      .subscribe();
+    const refresh = async () => {
+      try {
+        const rows = await listNotifications();
+        if (disposed) return;
+        if (initialized) {
+          for (const row of rows) {
+            if (!known.has(row.id)) void notifyNow(row.title ?? "Last Topper", row.body ?? "");
+          }
+        }
+        known = new Set(rows.map((row) => row.id));
+        initialized = true;
+      } catch {
+        // Authentication may still be settling; the next poll retries.
+      }
+    };
 
-    void supabase.auth.getUser().then(({ data }) => {
-      if (disposed) return;
-      userId = data.user?.id ?? null;
-      if (!userId) return;
-      personalChannel = supabase
-        .channel(`personal-notifications-${userId}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "notifications",
-            filter: `user_id=eq.${userId}`,
-          },
-          (payload) => {
-            const row = payload.new as { title?: string; body?: string };
-            void notifyNow(row.title ?? "Last Topper", row.body ?? "");
-          },
-        )
-        .subscribe();
-    });
-
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 30_000);
     return () => {
       disposed = true;
-      void supabase.removeChannel(channel);
-      if (personalChannel) void supabase.removeChannel(personalChannel);
+      window.clearInterval(timer);
     };
   }, []);
 }

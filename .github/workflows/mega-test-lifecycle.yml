@@ -1,0 +1,47 @@
+name: Mega Test lifecycle
+
+on:
+  schedule:
+    # GitHub schedules are best effort and can be delayed during high load.
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mega-test-lifecycle
+  cancel-in-progress: false
+
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      MEGA_LIFECYCLE_URL: ${{ vars.MEGA_LIFECYCLE_URL }}
+      INTERNAL_HOOK_SECRET: ${{ secrets.INTERNAL_HOOK_SECRET }}
+    steps:
+      - name: Validate scheduler configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$MEGA_LIFECYCLE_URL" == https://*/api/public/hooks/mega-test-lifecycle ]] || {
+            echo "Set repository variable MEGA_LIFECYCLE_URL to the deployed HTTPS lifecycle endpoint." >&2
+            exit 1
+          }
+          [[ ${#INTERNAL_HOOK_SECRET} -ge 32 ]] || {
+            echo "Set repository secret INTERNAL_HOOK_SECRET to the same 32+ character value used by Vercel." >&2
+            exit 1
+          }
+
+      - name: Run idempotent lifecycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --silent --show-error \
+            --retry 3 --retry-all-errors --max-time 540 \
+            --request POST \
+            --header "Authorization: Bearer $INTERNAL_HOOK_SECRET" \
+            --header "Content-Type: application/json" \
+            --data '{}' \
+            "$MEGA_LIFECYCLE_URL"

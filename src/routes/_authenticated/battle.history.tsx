@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { getBattleHistory } from "@/lib/battle.functions";
-import { supabase } from "@/integrations/supabase/client";
 import { History } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/battle/history")({
@@ -26,21 +25,6 @@ function HistoryPage() {
     queryFn: () => getBattleHistory(),
     refetchInterval: 30000,
   });
-  useEffect(() => {
-    const ch = supabase
-      .channel("battle-history-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "battle_sessions" }, () =>
-        qc.invalidateQueries({ queryKey: ["battle-history"] }),
-      )
-      .on("postgres_changes", { event: "*", schema: "public", table: "mega_test_entries" }, () =>
-        qc.invalidateQueries({ queryKey: ["battle-history"] }),
-      )
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(ch);
-    };
-  }, [qc]);
-
   const items = q.data ?? [];
   return (
     <div className="space-y-4">

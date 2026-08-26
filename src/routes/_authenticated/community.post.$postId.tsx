@@ -6,7 +6,6 @@ import { getForumPost, replyToPost, voteOnTarget, reportContent } from "@/lib/co
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowUp, ArrowDown, Flag, MessageCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { failMessage } from "@/lib/friendly-error";
 
@@ -20,21 +19,8 @@ function PostDetail() {
   const post = useQuery({
     queryKey: ["forum-post", postId],
     queryFn: () => getForumPost({ data: { post_id: postId } }),
+    refetchInterval: 15_000,
   });
-
-  useEffect(() => {
-    const ch = supabase
-      .channel(`post-${postId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "forum_replies", filter: `post_id=eq.${postId}` },
-        () => qc.invalidateQueries({ queryKey: ["forum-post", postId] }),
-      )
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(ch);
-    };
-  }, [postId, qc]);
 
   const [body, setBody] = useState("");
   const reply = useMutation({

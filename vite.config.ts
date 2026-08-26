@@ -1,4 +1,5 @@
 import tailwindcss from "@tailwindcss/vite";
+import { fileURLToPath } from "node:url";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
@@ -34,7 +35,41 @@ export default defineConfig(({ command }) => ({
         },
       },
     }),
-    ...(command === "build" ? [nitro({ defaultPreset: "node" })] : []),
+    ...(command === "build"
+      ? [
+          nitro({
+            defaultPreset: "node",
+            // firebase-admin ships BOTH a CJS build (lib/*) and ESM wrappers
+            // (lib/esm/*). Pre-bundling both into one chunk trips rolldown's
+            // CJS interop: the ESM wrapper's default-import of the CJS module
+            // becomes `namespace.default.X` reads where `.default` does not
+            // exist on `__esModule` CJS exports -> the server function crashes
+            // at module load ("Cannot read properties of undefined (reading
+            // 'SDK_VERSION')"). Force every entry we import onto the CJS
+            // build (absolute paths bypass the package `exports` map) so only
+            // one consistent build is bundled.
+            alias: {
+              "firebase-admin/app": fileURLToPath(
+                new URL("./node_modules/firebase-admin/lib/app/index.js", import.meta.url),
+              ),
+              "firebase-admin/auth": fileURLToPath(
+                new URL("./node_modules/firebase-admin/lib/auth/index.js", import.meta.url),
+              ),
+              "firebase-admin/firestore": fileURLToPath(
+                new URL("./node_modules/firebase-admin/lib/firestore/index.js", import.meta.url),
+              ),
+            },
+            // Deploy as a Vercel lambda. The bundler leaves a handful of CJS
+            // packages as bare runtime require("...") calls inside the built
+            // `_ssr` chunks (see scripts/embed-function-deps.mjs) that the
+            // nf3 dep-tracer cannot follow -> "Cannot find module
+            // 'google-auth-library'" in /var/task. scripts/embed-function-deps.mjs
+            // (wired as `postbuild`) copies those packages + their closure into
+            // the output's node_modules, which is then uploaded by
+            // `vercel deploy --prebuilt`.
+          }),
+        ]
+      : []),
     react(),
     VitePWA({
       registerType: "autoUpdate",

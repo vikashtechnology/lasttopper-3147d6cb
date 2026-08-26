@@ -12,7 +12,7 @@
  * Pro users are never limited.
  */
 
-type Sb = { from: (t: string) => any };
+type DataClient = { from: (table: string) => any };
 
 export const DEFAULT_DAILY_LIMIT = 20;
 
@@ -39,20 +39,20 @@ export type QuotaState = {
 };
 
 /** Counts every question the user actually attempted today (PYQ + battles excluded). */
-export async function getQuotaState(_supabase: Sb, userId: string): Promise<QuotaState> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const supabase = supabaseAdmin;
+export async function getQuotaState(_db: DataClient, userId: string): Promise<QuotaState> {
+  const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+  const db = firestoreAdmin;
   const start = startOfTodayIso();
 
   const [profileResult, sessionsResult, dailyResult, reviewsResult] = await Promise.all([
-    supabase.from("users").select("is_pro, daily_question_limit").eq("id", userId).maybeSingle(),
-    supabase.from("quiz_sessions").select("answers").eq("user_id", userId).gte("created_at", start),
-    supabase
+    db.from("users").select("is_pro, daily_question_limit").eq("id", userId).maybeSingle(),
+    db.from("quiz_sessions").select("answers").eq("user_id", userId).gte("created_at", start),
+    db
       .from("daily_challenge_attempts")
       .select("total_count")
       .eq("user_id", userId)
       .gte("created_at", start),
-    supabase
+    db
       .from("review_items")
       .select("id")
       .eq("user_id", userId)
@@ -87,8 +87,12 @@ export async function getQuotaState(_supabase: Sb, userId: string): Promise<Quot
 }
 
 /** Throws `DailyLimitError` when the user can't attempt `need` more questions today. */
-export async function assertQuota(supabase: Sb, userId: string, need: number): Promise<QuotaState> {
-  const state = await getQuotaState(supabase, userId);
+export async function assertQuota(
+  db: DataClient,
+  userId: string,
+  need: number,
+): Promise<QuotaState> {
+  const state = await getQuotaState(db, userId);
   if (state.is_pro) return state;
   if (state.used + need > state.limit) throw new DailyLimitError(state.used, state.limit);
   return state;

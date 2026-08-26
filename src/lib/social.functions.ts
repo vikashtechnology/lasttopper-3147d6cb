@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 
 export type SocialLink = {
   id: string;
@@ -13,9 +13,9 @@ export type SocialLink = {
 
 /** Enabled links only — used by the sidebar dropdown and profile footer. */
 export const listSocialLinks = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await (context.supabase as any)
+    const { data, error } = await (context.db as any)
       .from("social_links")
       .select("id, platform, label, url, enabled, display_order")
       .eq("enabled", true)
@@ -25,10 +25,10 @@ export const listSocialLinks = createServerFn({ method: "GET" })
   });
 
 async function assertAdmin(ctx: {
-  supabase: import("@supabase/supabase-js").SupabaseClient;
+  db: import("@/integrations/firebase/data.server").FirestoreDataClient;
   userId: string;
 }) {
-  const { data, error } = await ctx.supabase.rpc("has_role", {
+  const { data, error } = await ctx.db.rpc("has_role", {
     _user_id: ctx.userId,
     _role: "admin",
   });
@@ -38,11 +38,11 @@ async function assertAdmin(ctx: {
 
 /** All links (including hidden ones) for the admin console. */
 export const adminListSocialLinks = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await (supabaseAdmin as any)
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data, error } = await (firestoreAdmin as any)
       .from("social_links")
       .select("id, platform, label, url, enabled, display_order")
       .order("display_order", { ascending: true });
@@ -65,7 +65,7 @@ const upsertSchema = z.object({
 });
 
 export const adminSaveSocialLink = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => upsertSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -74,7 +74,7 @@ export const adminSaveSocialLink = createServerFn({ method: "POST" })
       throw new Error("Link must start with http:// or https://");
     if (data.enabled && !url) throw new Error("Add a link before enabling it.");
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
     const row = {
       platform: data.platform.toLowerCase(),
       label: data.label,
@@ -83,19 +83,19 @@ export const adminSaveSocialLink = createServerFn({ method: "POST" })
       display_order: data.display_order,
     };
     const { error } = data.id
-      ? await (supabaseAdmin as any).from("social_links").update(row).eq("id", data.id)
-      : await (supabaseAdmin as any).from("social_links").insert(row);
+      ? await (firestoreAdmin as any).from("social_links").update(row).eq("id", data.id)
+      : await (firestoreAdmin as any).from("social_links").insert(row);
     if (error) throw error;
     return { ok: true };
   });
 
 export const adminDeleteSocialLink = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await (supabaseAdmin as any).from("social_links").delete().eq("id", data.id);
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { error } = await (firestoreAdmin as any).from("social_links").delete().eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });

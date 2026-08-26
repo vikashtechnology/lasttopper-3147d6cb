@@ -6,14 +6,17 @@
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
+    "postbuild": "node scripts/embed-function-deps.mjs",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:firebase": "firebase emulators:exec --only firestore --project demo-last-topper 'tsx --test tests/firebase-emulator.test.ts'"
   },
   "dependencies": {
     "@capacitor-community/admob": "8.1.0",
+    "@capacitor-firebase/authentication": "^8.4.0",
     "@capacitor/app": "^8.1.1",
     "@capacitor/browser": "^8.0.4",
     "@capacitor/core": "^8.4.2",
@@ -48,7 +51,6 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@supabase/supabase-js": "^2.110.8",
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/react-query": "^5.101.1",
     "@tanstack/react-router": "^1.170.16",
@@ -60,6 +62,8 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
+    "firebase": "^12.18.0",
+    "firebase-admin": "^14.3.0",
     "framer-motion": "^12.42.2",
     "howler": "^2.2.4",
     "html2canvas": "^1.4.1",
@@ -88,6 +92,7 @@
   "devDependencies": {
     "@capacitor/android": "^8.5.0",
     "@eslint/js": "^9.32.0",
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@types/canvas-confetti": "^1.9.0",
     "@types/howler": "^2.2.13",
     "@types/katex": "^0.16.8",
@@ -100,9 +105,11 @@
     "eslint-plugin-prettier": "^5.2.6",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
+    "firebase-tools": "^15.28.1",
     "globals": "^15.15.0",
     "nitro": "3.0.260610-beta",
     "prettier": "^3.7.3",
+    "tsx": "^4.20.6",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^8.0.16"

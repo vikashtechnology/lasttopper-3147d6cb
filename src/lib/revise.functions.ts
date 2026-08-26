@@ -1,13 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 import { listChapterTopics, readTopicRevision } from "./revise.server";
 import type { ReviseTopic } from "./revise.types";
 
 export type { ReviseTopic } from "./revise.types";
 
 export const getChapterTopics = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ chapter_id: z.string().uuid() }).parse(d))
   .handler(
     async ({
@@ -22,11 +22,11 @@ export const getChapterTopics = createServerFn({ method: "POST" })
   );
 
 export const getTopicRevision = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ topic_id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }): Promise<ReviseTopic> => {
     const topic = await readTopicRevision(data.topic_id, context);
-    await context.supabase
+    await context.db
       .from("activity_events")
       .insert({
         user_id: context.userId,

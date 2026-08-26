@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { firebaseUidSchema } from "@/integrations/firebase/validation";
 import { verifyAdMobSsvUrl } from "@/lib/mega-task-verification.server";
 
 const correlationSchema = z.object({
@@ -43,9 +44,9 @@ export const Route = createFileRoute("/api/public/hooks/admob-ssv")({
           }
 
           const correlation = parseCorrelation(payload.customData);
-          const userId = z.string().uuid().parse(payload.userId);
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { error } = await (supabaseAdmin as any).rpc("complete_mega_access_task_attempt", {
+          const userId = firebaseUidSchema.parse(payload.userId);
+          const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+          const { error } = await (firestoreAdmin as any).rpc("complete_mega_access_task_attempt", {
             p_attempt_id: correlation.attemptId,
             p_nonce: correlation.nonce,
             p_provider: "admob",

@@ -55,6 +55,7 @@ import { Route as AuthenticatedQuizSessionIdRouteImport } from './routes/_authen
 import { Route as AuthenticatedResultsSessionIdRouteImport } from './routes/_authenticated/results.$sessionId'
 import { Route as AuthenticatedReviseIndexRouteImport } from './routes/_authenticated/revise.index'
 import { Route as AuthenticatedReviseChapterIdRouteImport } from './routes/_authenticated/revise.$chapterId'
+import { Route as ApiImagesUploadRouteImport } from './routes/api/images/upload'
 import { Route as AuthenticatedBattlePlaySessionIdRouteImport } from './routes/_authenticated/battle.play.$sessionId'
 import { Route as AuthenticatedCommunityDoubtDoubtIdRouteImport } from './routes/_authenticated/community.doubt.$doubtId'
 import { Route as AuthenticatedCommunityForumCategoryIdRouteImport } from './routes/_authenticated/community.forum.$categoryId'
@@ -314,6 +315,11 @@ const AuthenticatedReviseChapterIdRoute =
     path: '/revise/$chapterId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiImagesUploadRoute = ApiImagesUploadRouteImport.update({
+  id: '/api/images/upload',
+  path: '/api/images/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedBattlePlaySessionIdRoute =
   AuthenticatedBattlePlaySessionIdRouteImport.update({
     id: '/play/$sessionId',
@@ -409,6 +415,7 @@ export interface FileRoutesByFullPath {
   '/quiz/$sessionId': typeof AuthenticatedQuizSessionIdRoute
   '/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
   '/revise/$chapterId': typeof AuthenticatedReviseChapterIdRoute
+  '/api/images/upload': typeof ApiImagesUploadRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/battle/': typeof AuthenticatedBattleIndexRoute
   '/community/': typeof AuthenticatedCommunityIndexRoute
@@ -462,6 +469,7 @@ export interface FileRoutesByTo {
   '/quiz/$sessionId': typeof AuthenticatedQuizSessionIdRoute
   '/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
   '/revise/$chapterId': typeof AuthenticatedReviseChapterIdRoute
+  '/api/images/upload': typeof ApiImagesUploadRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/battle': typeof AuthenticatedBattleIndexRoute
   '/community': typeof AuthenticatedCommunityIndexRoute
@@ -520,6 +528,7 @@ export interface FileRoutesById {
   '/_authenticated/quiz/$sessionId': typeof AuthenticatedQuizSessionIdRoute
   '/_authenticated/results/$sessionId': typeof AuthenticatedResultsSessionIdRoute
   '/_authenticated/revise/$chapterId': typeof AuthenticatedReviseChapterIdRoute
+  '/api/images/upload': typeof ApiImagesUploadRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/battle/': typeof AuthenticatedBattleIndexRoute
   '/_authenticated/community/': typeof AuthenticatedCommunityIndexRoute
@@ -578,6 +587,7 @@ export interface FileRouteTypes {
     | '/quiz/$sessionId'
     | '/results/$sessionId'
     | '/revise/$chapterId'
+    | '/api/images/upload'
     | '/admin/'
     | '/battle/'
     | '/community/'
@@ -631,6 +641,7 @@ export interface FileRouteTypes {
     | '/quiz/$sessionId'
     | '/results/$sessionId'
     | '/revise/$chapterId'
+    | '/api/images/upload'
     | '/admin'
     | '/battle'
     | '/community'
@@ -688,6 +699,7 @@ export interface FileRouteTypes {
     | '/_authenticated/quiz/$sessionId'
     | '/_authenticated/results/$sessionId'
     | '/_authenticated/revise/$chapterId'
+    | '/api/images/upload'
     | '/_authenticated/admin/'
     | '/_authenticated/battle/'
     | '/_authenticated/community/'
@@ -710,6 +722,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   RefundRoute: typeof RefundRoute
   TermsRoute: typeof TermsRoute
+  ApiImagesUploadRoute: typeof ApiImagesUploadRoute
   ApiPublicHooksAdmobSsvRoute: typeof ApiPublicHooksAdmobSsvRoute
   ApiPublicHooksMegaTaskPartnerRoute: typeof ApiPublicHooksMegaTaskPartnerRoute
   ApiPublicHooksMegaTestLifecycleRoute: typeof ApiPublicHooksMegaTestLifecycleRoute
@@ -1040,6 +1053,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReviseChapterIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/images/upload': {
+      id: '/api/images/upload'
+      path: '/api/images/upload'
+      fullPath: '/api/images/upload'
+      preLoaderRoute: typeof ApiImagesUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/battle/play/$sessionId': {
       id: '/_authenticated/battle/play/$sessionId'
       path: '/play/$sessionId'
@@ -1254,6 +1274,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   RefundRoute: RefundRoute,
   TermsRoute: TermsRoute,
+  ApiImagesUploadRoute: ApiImagesUploadRoute,
   ApiPublicHooksAdmobSsvRoute: ApiPublicHooksAdmobSsvRoute,
   ApiPublicHooksMegaTaskPartnerRoute: ApiPublicHooksMegaTaskPartnerRoute,
   ApiPublicHooksMegaTestLifecycleRoute: ApiPublicHooksMegaTestLifecycleRoute,

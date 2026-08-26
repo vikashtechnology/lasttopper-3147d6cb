@@ -1,6 +1,6 @@
 # Last Topper Android build and direct distribution
 
-Last Topper uses Capacitor with package ID `com.lasttopper.app`. The native Android shell loads the deployed HTTPS application and adds screenshot protection, App Links, local notifications, native sharing, and Razorpay-compatible navigation.
+Last Topper uses Capacitor with package ID `com.lasttopper.app`. The native shell loads the configured HTTPS deployment and adds native Firebase Google sign-in, screenshot protection, App Links, local notifications, sharing, and Razorpay-compatible navigation.
 
 Google Play and Apple App Store publication are not part of this project. Students receive a signed APK directly from a tagged GitHub Release; the website remains an installable PWA and web fallback.
 
@@ -8,91 +8,75 @@ Google Play and Apple App Store publication are not part of this project. Studen
 
 - Node.js 22.12 or newer
 - npm 10 or newer
-- Android SDK and JDK 21 for local Android builds
+- Android SDK
+- JDK 21 or newer
+- Firebase Android app registered as `com.lasttopper.app`
+- that app's `google-services.json`
 
-```bash
-npm ci
-npm run build
+The GitHub workflow generates `android/` at build time, so the directory is not committed.
+
+## Firebase native Google sign-in
+
+In the same isolated Firebase staging project used by the Preview:
+
+1. Open **Project settings → Your apps → Add Android app**.
+2. Use package name `com.lasttopper.app`.
+3. Add staging debug and permanent release SHA-1/SHA-256 certificate fingerprints.
+4. Download `google-services.json`.
+5. Base64-encode it without line breaks and add GitHub Actions secret:
+
+```text
+FIREBASE_GOOGLE_SERVICES_JSON_BASE64
 ```
 
-The GitHub workflow generates the Android project at build time, so `android/` is not committed.
+For a local generated project, copy the file to `android/app/google-services.json` before synchronization. Tagged/manual release builds intentionally fail without the Actions secret.
+
+Authentication must remain Google-only. The native plugin obtains a Firebase ID token and the Vercel server verifies it with Firebase Admin. No browser callback, phone login, email link, or password login is used.
 
 ## Deployment origin
 
-`capacitor.config.ts` reads `CAPACITOR_SERVER_URL` and defaults to:
+`capacitor.config.ts` reads `CAPACITOR_SERVER_URL` and defaults to the current web origin. Configure staging first with a stable Preview/branch domain.
+
+GitHub Actions repository variables:
 
 ```text
-https://last-topper-web-test.vercel.app
-```
-
-GitHub Actions repository Variables:
-
-```text
-APP_HOST=last-topper-web-test.vercel.app
-CAPACITOR_SERVER_URL=https://last-topper-web-test.vercel.app
+APP_HOST=YOUR-STAGING-HOST.vercel.app
+CAPACITOR_SERVER_URL=https://YOUR-STAGING-HOST.vercel.app
 ADMOB_ANDROID_APP_ID=<real AdMob app ID; omit until approved>
 APP_VERSION_NAME=1.0.1
 APP_VERSION_CODE=<increasing positive integer>
 ```
 
-`VITE_PUBLIC_APP_URL` belongs in Vercel and must use the same public origin.
+`VITE_PUBLIC_APP_URL` in Vercel must use the same origin. App Links use only the host, without `https://`.
 
 ## Local Android project
 
-```bash
+```sh
+npm ci
+npm run build
 npx cap add android
+cp /secure/path/google-services.json android/app/google-services.json
 npx cap sync android
 npx cap open android
 ```
+
+Run a physical-device sign-in test. A successful web sign-in alone does not validate native Firebase configuration, certificate fingerprints, or `google-services.json`.
 
 ## Native security
 
 The Android workflow:
 
 - sets minimum SDK 26;
-- writes `MainActivity.java` with `FLAG_SECURE` to block screenshots, recording, and the recent-app preview;
+- uses `FLAG_SECURE` to block screenshots, recording, and recent-app previews;
 - refuses cleartext HTTP;
-- adds verified HTTPS App Links and the `lasttopper://` fallback schemes;
+- adds verified HTTPS App Links and `lasttopper://` fallback schemes;
+- installs the Firebase Android configuration for release builds;
 - configures the selected AdMob Android application ID;
 - adds notification permissions.
 
-## Local notifications
+The Capacitor navigation allowlist includes only the deployed application host and required Razorpay hosts.
 
-The installed Android application uses `@capacitor/local-notifications` for device-side reminders. It schedules:
-
-- a daily 6:30 PM streak reminder;
-- daytime motivation reminders;
-- Saturday evening and Sunday morning Mega Test reminders.
-
-Android permissions added by the build:
-
-```xml
-<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-```
-
-The workflow also installs `assets/android/ic_stat_last_topper.xml` as the monochrome Android status-bar notification icon.
-
-Users can open the in-app **Notifications** page and select **Test device**. This requests permission from a user gesture, sends an immediate test, and reschedules native reminders. If Android has disabled exact alarms, Capacitor still schedules reminders non-exactly, so delivery time may be less precise.
-
-On the website/PWA, immediate browser alerts use the registered service worker and work only while Last Topper is open and permission has been granted. Closed-app remote notifications require a future FCM integration; local native reminders do not require FCM.
-
-A real Android-device test remains required before calling the APK notification behavior production-verified.
-
-## Google login and App Links
-
-The app uses Supabase's browser-based Google OAuth flow. Configure:
-
-```text
-Google authorized origin:
-https://last-topper-web-test.vercel.app
-
-Google authorized redirect URI:
-https://hcqlwtmeylnhqernwljj.supabase.co/auth/v1/callback
-
-Supabase redirect allowlist:
-https://last-topper-web-test.vercel.app/auth/callback
-```
+## App Links and web fallback
 
 The public Android association file is:
 
@@ -100,13 +84,48 @@ The public Android association file is:
 public/.well-known/assetlinks.json
 ```
 
-Its package name must be `com.lasttopper.app`, and its SHA-256 fingerprint must match the permanent release certificate. The tagged release workflow fails if the signed APK certificate and `assetlinks.json` do not match.
+Its package must be `com.lasttopper.app`, and its SHA-256 fingerprint must match the permanent release certificate. The tagged release workflow fails if the signed APK certificate and association file differ.
+
+Configure:
+
+```text
+APP_HOST=YOUR-PUBLIC-HOST
+CAPACITOR_SERVER_URL=https://YOUR-PUBLIC-HOST
+```
+
+Then verify on a device:
+
+```sh
+adb shell pm verify-app-links --re-verify com.lasttopper.app
+adb shell pm get-app-links com.lasttopper.app
+```
+
+Opening an HTTPS route should open the app when installed and the website when absent.
+
+## Local notifications
+
+The installed Android application schedules:
+
+- a daily 6:30 PM streak reminder;
+- daytime motivation reminders;
+- Saturday evening and Sunday morning Mega Test reminders.
+
+The workflow adds:
+
+```xml
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+```
+
+Users can select **Test device** on the in-app Notifications page. If exact alarms are disabled, delivery may be less precise. Website/PWA browser alerts work only while the site is open and permission is granted. Closed-app remote push is not implemented and must not be advertised.
+
+A real Android-device test is required before calling notification or login behavior production-verified.
 
 ## Permanent signing
 
 Create one release keystore and preserve it permanently:
 
-```bash
+```sh
 keytool -genkeypair -v \
   -keystore last-topper-release.jks \
   -alias lasttopper \
@@ -115,29 +134,29 @@ keytool -genkeypair -v \
   -validity 10000
 ```
 
-GitHub Actions repository Secrets:
+GitHub Actions repository secrets:
 
 ```text
+FIREBASE_GOOGLE_SERVICES_JSON_BASE64
 ANDROID_KEYSTORE_BASE64
 ANDROID_KEYSTORE_PASSWORD
 ANDROID_KEY_ALIAS
 ANDROID_KEY_PASSWORD
 ```
 
-Never commit the keystore or passwords. Tagged builds refuse to publish without signing secrets.
+Never commit the keystore, Firebase Admin credentials, or signing passwords. Add the release keystore's SHA-1/SHA-256 fingerprints to the Firebase Android app and use the same key for every future APK update.
 
 ## Release flow
 
-1. Deploy and validate the matching website/database release.
-2. Increase `APP_VERSION_CODE`.
-3. Confirm `APP_VERSION_NAME` or use the intended `v*` tag.
-4. Confirm `assetlinks.json` contains the permanent certificate fingerprint.
-5. Push an approved tag, for example `v1.0.1`.
-6. GitHub Actions builds and verifies the signed APK.
-7. The GitHub Release contains:
-   - `last-topper.apk`
-   - `last-topper-source.zip`
-   - `SHA256SUMS.txt`
-8. Publish the stable APK URL from the Last Topper admin app-update page.
+1. Complete isolated Firebase/Vercel staging validation.
+2. Obtain explicit production approval.
+3. Deploy and smoke-test the matching production website/backend.
+4. Increase `APP_VERSION_CODE`.
+5. Confirm `APP_VERSION_NAME` or the intended `v*` tag.
+6. Confirm the release certificate exists in Firebase Android settings and `assetlinks.json`.
+7. Push an approved tag, for example `v1.0.1`.
+8. GitHub Actions builds and verifies the signed APK.
+9. The GitHub Release contains `last-topper.apk`, `last-topper-source.zip`, and `SHA256SUMS.txt`.
+10. Publish the stable APK URL through the Last Topper admin app-update page.
 
-The same release key must be used for every future APK update.
+The same release key is required for every future update.

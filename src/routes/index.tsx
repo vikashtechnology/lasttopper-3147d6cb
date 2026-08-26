@@ -1,9 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { FEATURE_COUNT, FEATURE_GROUPS } from "@/lib/feature-catalog";
+import { firebaseClient } from "@/integrations/firebase/client";
+import { getLatestRelease } from "@/lib/app-release.functions";
 import {
   ArrowRight,
   BarChart3,
@@ -70,7 +71,7 @@ function Landing() {
 
   useEffect(() => {
     let cancelled = false;
-    supabase.auth.getSession().then(({ data }) => {
+    firebaseClient.auth.getSession().then(({ data }) => {
       if (cancelled) return;
       if (data.session) navigate({ to: "/home", replace: true });
       else setChecking(false);
@@ -82,16 +83,11 @@ function Landing() {
 
   useEffect(() => {
     let cancelled = false;
-    void supabase
-      .from("app_releases")
-      .select("download_url")
-      .eq("is_active", true)
-      .order("version_code", { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!cancelled && data?.download_url) setAndroidDownloadUrl(data.download_url);
-      });
+    void getLatestRelease()
+      .then((release) => {
+        if (!cancelled && release?.download_url) setAndroidDownloadUrl(release.download_url);
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };

@@ -1,8 +1,8 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+import type { FirestoreDataClient } from "@/integrations/firebase/data.server";
+import type { Database } from "@/integrations/firebase/types";
 import type { QuizQuestion } from "@/lib/learning.functions";
 
-type AnyClient = SupabaseClient<Database>;
+type AnyClient = FirestoreDataClient;
 
 /** Leitner intervals in days, indexed by box (1-5). */
 export const BOX_DAYS = [1, 1, 3, 7, 16, 35];

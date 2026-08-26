@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { firebaseClient } from "@/integrations/firebase/client";
 import { getLatestRelease, type AppRelease } from "@/lib/app-release.functions";
 
 const DISMISS_KEY = "lt-update-dismissed";
@@ -29,7 +29,7 @@ export function AppUpdateDialog() {
         const { Capacitor } = await import("@capacitor/core");
         if (!Capacitor.isNativePlatform()) return;
 
-        const { data: sess } = await supabase.auth.getSession();
+        const { data: sess } = await firebaseClient.auth.getSession();
         if (!sess.session) return;
 
         const { App } = await import("@capacitor/app");

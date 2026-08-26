@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Users, Send, LogOut, LogIn } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { failMessage } from "@/lib/friendly-error";
 
 export const Route = createFileRoute("/_authenticated/community/group/$groupId")({
@@ -30,28 +29,9 @@ function GroupChat() {
     queryKey: ["group-msgs", groupId],
     queryFn: () => listGroupMessages({ data: { group_id: groupId } }),
     enabled: !!info.data?.is_member,
+    refetchInterval: 10_000,
   });
   const scrollRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!info.data?.is_member) return;
-    const ch = supabase
-      .channel(`group-${groupId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "study_group_messages",
-          filter: `group_id=eq.${groupId}`,
-        },
-        () => qc.invalidateQueries({ queryKey: ["group-msgs", groupId] }),
-      )
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(ch);
-    };
-  }, [groupId, info.data?.is_member, qc]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });

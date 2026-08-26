@@ -1,8 +1,8 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+import type { FirestoreDataClient } from "@/integrations/firebase/data.server";
+import type { Database } from "@/integrations/firebase/types";
 import type { QuizQuestion } from "@/lib/learning.functions";
 
-type AdminClient = SupabaseClient<Database>;
+type AdminClient = FirestoreDataClient;
 
 /**
  * Persist AI-generated questions into the fallback bank. Best-effort:

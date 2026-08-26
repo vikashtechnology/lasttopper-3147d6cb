@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { listNotifications, markNotificationsRead } from "@/lib/community.functions";
 import { ArrowLeft, Bell, BellRing, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { failMessage } from "@/lib/friendly-error";
 import { toast } from "sonner";
 import { useUserStore } from "@/store/user";
@@ -34,7 +33,11 @@ function Notifications() {
   const qc = useQueryClient();
   const meId = useUserStore((s) => s.profile?.id);
   const [testingDevice, setTestingDevice] = useState(false);
-  const list = useQuery({ queryKey: ["notifications"], queryFn: () => listNotifications() });
+  const list = useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => listNotifications(),
+    refetchInterval: 30_000,
+  });
 
   const testDeviceNotification = async () => {
     setTestingDevice(true);
@@ -63,24 +66,6 @@ function Notifications() {
       setTestingDevice(false);
     }
   };
-
-  useEffect(() => {
-    if (!meId) return;
-    const ch = supabase
-      .channel(`notif-${meId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${meId}` },
-        () => {
-          qc.invalidateQueries({ queryKey: ["notifications"] });
-          qc.invalidateQueries({ queryKey: ["notif-unread"] });
-        },
-      )
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(ch);
-    };
-  }, [meId, qc]);
 
   const markRead = useMutation({
     mutationFn: () => markNotificationsRead(),

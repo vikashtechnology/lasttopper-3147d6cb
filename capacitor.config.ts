@@ -24,15 +24,13 @@ const config: CapacitorConfig = {
     cleartext: false,
     androidScheme: "https",
     iosScheme: "https",
-    allowNavigation: [
-      publicHost,
-      "*.razorpay.com",
-      "api.razorpay.com",
-      "checkout.razorpay.com",
-      "*.supabase.co",
-    ],
+    allowNavigation: [publicHost, "*.razorpay.com", "api.razorpay.com", "checkout.razorpay.com"],
   },
   plugins: {
+    FirebaseAuthentication: {
+      skipNativeAuth: false,
+      providers: ["google.com"],
+    },
     LocalNotifications: {
       smallIcon: "ic_stat_last_topper",
       iconColor: "#4F46E5",

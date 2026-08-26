@@ -1,22 +1,22 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 
 export const getMyReferral = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { data: me } = await context.supabase
+    const { data: me } = await context.db
       .from("users")
       .select("referral_code, referred_by")
       .eq("id", context.userId)
       .maybeSingle();
 
-    const { count } = await context.supabase
+    const { count } = await context.db
       .from("users")
       .select("id", { count: "exact", head: true })
       .eq("referred_by", context.userId);
 
-    const { count: paidCount } = await context.supabase
+    const { count: paidCount } = await context.db
       .from("users")
       .select("id", { count: "exact", head: true })
       .eq("referred_by", context.userId)
@@ -39,9 +39,9 @@ export const getMyReferral = createServerFn({ method: "GET" })
 
 /** Pro discount vouchers earned by this user (referral rewards). */
 export const getMyVouchers = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase
+    const { data } = await context.db
       .from("pro_vouchers")
       .select("id, code, percent, used_at, expires_at, note")
       .eq("user_id", context.userId)
@@ -61,12 +61,12 @@ export const getMyVouchers = createServerFn({ method: "GET" })
 const applySchema = z.object({ code: z.string().trim().min(4).max(16) });
 
 export const applyReferralCode = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => applySchema.parse(d))
   .handler(async ({ data, context }) => {
     const code = data.code.trim().toUpperCase();
 
-    const { data: me } = await context.supabase
+    const { data: me } = await context.db
       .from("users")
       .select("referred_by, referral_code")
       .eq("id", context.userId)
@@ -77,8 +77,8 @@ export const applyReferralCode = createServerFn({ method: "POST" })
 
     // RLS restricts the users table to the owner's row, so look up the
     // referrer with the admin client (read-only, id only).
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: ref } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: ref } = await firestoreAdmin
       .from("users")
       .select("id")
       .ilike("referral_code", code)
@@ -86,7 +86,7 @@ export const applyReferralCode = createServerFn({ method: "POST" })
     if (!ref || ref.id === context.userId)
       return { ok: false as const, error: "Invalid referral code" };
 
-    const { error } = await supabaseAdmin
+    const { error } = await firestoreAdmin
       .from("users")
       .update({ referred_by: ref.id })
       .eq("id", context.userId)

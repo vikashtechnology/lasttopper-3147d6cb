@@ -1,12 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { firebaseUidSchema } from "@/integrations/firebase/validation";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 import { sendTelegramAlert } from "@/lib/telegram-alert";
 
 const OWNER_EMAILS = new Set(["vikashraoa2343@gmail.com", "rajkatrina90@gmail.com"]);
 
 type AuthContext = {
-  supabase: import("@supabase/supabase-js").SupabaseClient;
+  db: import("@/integrations/firebase/data.server").FirestoreDataClient;
   userId: string;
   claims: Record<string, unknown>;
 };
@@ -23,30 +24,22 @@ function assertOwner(context: { claims: Record<string, unknown> }) {
   if (!isOwnerCtx(context)) throw new Error("Forbidden: owner only");
 }
 
-async function getAuthUserById(
-  supabaseAdmin: import("@supabase/supabase-js").SupabaseClient,
-  userId: string,
-) {
-  const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
-  if (error) throw error;
-  if (!data.user) throw new Error("No authenticated user found for that ID.");
-  return data.user;
+async function getAuthUserById(userId: string) {
+  const { getFirebaseAdminAuth } = await import("@/integrations/firebase/admin.server");
+  try {
+    return await (await getFirebaseAdminAuth()).getUser(userId);
+  } catch (error) {
+    throw new Error("No authenticated Firebase user found for that ID.", { cause: error });
+  }
 }
 
-async function findAuthUserByEmail(
-  supabaseAdmin: import("@supabase/supabase-js").SupabaseClient,
-  email: string,
-) {
-  const wanted = email.trim().toLowerCase();
-  let page = 1;
-
-  while (true) {
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
-    if (error) throw error;
-    const found = data.users.find((user) => user.email?.trim().toLowerCase() === wanted);
-    if (found) return found;
-    if (!data.nextPage) return null;
-    page = data.nextPage;
+async function findAuthUserByEmail(email: string) {
+  const { getFirebaseAdminAuth } = await import("@/integrations/firebase/admin.server");
+  try {
+    return await (await getFirebaseAdminAuth()).getUserByEmail(email.trim().toLowerCase());
+  } catch (error) {
+    if ((error as { code?: string })?.code === "auth/user-not-found") return null;
+    throw error;
   }
 }
 
@@ -54,12 +47,12 @@ async function findAuthUserByEmail(
  * The database trigger in the owner migration is the primary bootstrap path.
  * This server-side fallback safely covers an owner who signs in before that
  * migration is applied. It never creates an Auth identity; it only grants the
- * role after Supabase has verified the exact Google account email.
+ * role after Firebase has verified the exact Google account email.
  */
 async function ensureOwnerAdmin(ctx: AuthContext) {
   if (!isOwnerCtx(ctx)) return;
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { error } = await supabaseAdmin
+  const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+  const { error } = await firestoreAdmin
     .from("user_roles")
     .upsert({ user_id: ctx.userId, role: "admin" }, { onConflict: "user_id,role" });
   if (error) throw error;
@@ -67,7 +60,7 @@ async function ensureOwnerAdmin(ctx: AuthContext) {
 
 async function assertAdmin(ctx: AuthContext) {
   await ensureOwnerAdmin(ctx);
-  const { data, error } = await ctx.supabase.rpc("has_role", {
+  const { data, error } = await ctx.db.rpc("has_role", {
     _user_id: ctx.userId,
     _role: "admin",
   });
@@ -76,10 +69,10 @@ async function assertAdmin(ctx: AuthContext) {
 }
 
 export const amIAdmin = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
     await ensureOwnerAdmin(context);
-    const { data, error } = await context.supabase.rpc("has_role", {
+    const { data, error } = await context.db.rpc("has_role", {
       _user_id: context.userId,
       _role: "admin",
     });
@@ -88,19 +81,19 @@ export const amIAdmin = createServerFn({ method: "GET" })
   });
 
 export const adminStats = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
     const [users, posts, doubts, reports, battles] = await Promise.all([
-      supabaseAdmin.from("users").select("id", { count: "exact", head: true }),
-      supabaseAdmin.from("forum_posts").select("id", { count: "exact", head: true }),
-      supabaseAdmin.from("doubts").select("id", { count: "exact", head: true }),
-      supabaseAdmin
+      firestoreAdmin.from("users").select("id", { count: "exact", head: true }),
+      firestoreAdmin.from("forum_posts").select("id", { count: "exact", head: true }),
+      firestoreAdmin.from("doubts").select("id", { count: "exact", head: true }),
+      firestoreAdmin
         .from("post_reports")
         .select("id", { count: "exact", head: true })
         .eq("status", "pending"),
-      supabaseAdmin
+      firestoreAdmin
         .from("battle_sessions")
         .select("id", { count: "exact", head: true })
         .not("submitted_at", "is", null),
@@ -115,14 +108,14 @@ export const adminStats = createServerFn({ method: "GET" })
   });
 
 export const adminListUsers = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => z.object({ q: z.string().optional() }).parse(d ?? {}))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     // RLS on `users` limits reads to the caller's own row, so the admin list
     // must go through the service-role client (after the admin check above).
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    let q = supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    let q = firestoreAdmin
       .from("users")
       .select(
         "id, email, full_name, phone, profession, is_banned, reputation, streak, created_at, is_pro, pro_until",
@@ -137,20 +130,20 @@ export const adminListUsers = createServerFn({ method: "GET" })
   });
 
 export const adminGrantPro = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
-        user_id: z.string().uuid(),
+        user_id: firebaseUidSchema,
         plan: z.enum(["weekly", "monthly", "yearly", "revoke"]),
       })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
     if (data.plan === "revoke") {
-      const { error } = await supabaseAdmin
+      const { error } = await firestoreAdmin
         .from("users")
         .update({ is_pro: false, pro_until: null })
         .eq("id", data.user_id);
@@ -158,7 +151,7 @@ export const adminGrantPro = createServerFn({ method: "POST" })
       return { ok: true };
     }
     const days = data.plan === "yearly" ? 365 : data.plan === "monthly" ? 30 : 7;
-    const { data: u } = await supabaseAdmin
+    const { data: u } = await firestoreAdmin
       .from("users")
       .select("pro_until")
       .eq("id", data.user_id)
@@ -168,7 +161,7 @@ export const adminGrantPro = createServerFn({ method: "POST" })
         ? new Date(u.pro_until as string).getTime()
         : Date.now();
     const until = new Date(base + days * 86400_000).toISOString();
-    const { error } = await supabaseAdmin
+    const { error } = await firestoreAdmin
       .from("users")
       .update({ is_pro: true, pro_since: new Date().toISOString(), pro_until: until })
       .eq("id", data.user_id);
@@ -177,18 +170,18 @@ export const adminGrantPro = createServerFn({ method: "POST" })
   });
 
 export const adminSetBan = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ user_id: z.string().uuid(), banned: z.boolean() }).parse(d),
+    z.object({ user_id: firebaseUidSchema, banned: z.boolean() }).parse(d),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
     if (data.banned) {
-      const authUser = await getAuthUserById(supabaseAdmin, data.user_id);
+      const authUser = await getAuthUserById(data.user_id);
       if (isOwnerEmail(authUser.email)) throw new Error("Owner accounts cannot be banned.");
     }
-    const { error } = await supabaseAdmin
+    const { error } = await firestoreAdmin
       .from("users")
       .update({ is_banned: data.banned })
       .eq("id", data.user_id);
@@ -197,10 +190,10 @@ export const adminSetBan = createServerFn({ method: "POST" })
   });
 
 export const adminListReports = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { data, error } = await context.supabase
+    const { data, error } = await context.db
       .from("post_reports")
       .select("id, target_type, target_id, reason, message, status, created_at, reporter_id")
       .eq("status", "pending")
@@ -211,7 +204,7 @@ export const adminListReports = createServerFn({ method: "GET" })
   });
 
 export const adminResolveReport = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -222,7 +215,7 @@ export const adminResolveReport = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { data: report, error } = await context.supabase
+    const { data: report, error } = await context.db
       .from("post_reports")
       .select("target_type, target_id")
       .eq("id", data.report_id)
@@ -238,9 +231,9 @@ export const adminResolveReport = createServerFn({ method: "POST" })
             : report.target_type === "doubt"
               ? "doubts"
               : "doubt_replies";
-      await context.supabase.from(table).delete().eq("id", report.target_id);
+      await context.db.from(table).delete().eq("id", report.target_id);
     }
-    await context.supabase
+    await context.db
       .from("post_reports")
       .update({ status: data.action === "delete_content" ? "resolved" : "dismissed" })
       .eq("id", data.report_id);
@@ -248,12 +241,12 @@ export const adminResolveReport = createServerFn({ method: "POST" })
   });
 
 export const adminReportsChart = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
     // Signups per day, last 14 days
-    const { data: users } = await supabaseAdmin
+    const { data: users } = await firestoreAdmin
       .from("users")
       .select("created_at")
       .gte("created_at", new Date(Date.now() - 14 * 86400e3).toISOString());
@@ -294,11 +287,11 @@ const bulkUploadSchema = z.object({
 });
 
 export const adminBulkUploadQuestions = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) => bulkUploadSchema.parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
     const rows = data.rows.map((r) => ({
       question: r.question,
       options: r.options as unknown as never,
@@ -318,7 +311,7 @@ export const adminBulkUploadQuestions = createServerFn({ method: "POST" })
     let inserted = 0;
     for (let i = 0; i < rows.length; i += 200) {
       const chunk = rows.slice(i, i + 200);
-      const { error, count } = await supabaseAdmin
+      const { error, count } = await firestoreAdmin
         .from("question_bank")
         .insert(chunk as unknown as never, { count: "exact" });
       if (error) throw error;
@@ -328,17 +321,17 @@ export const adminBulkUploadQuestions = createServerFn({ method: "POST" })
   });
 
 export const adminBankStats = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
     const [total, ai, admin] = await Promise.all([
-      supabaseAdmin.from("question_bank").select("id", { count: "exact", head: true }),
-      supabaseAdmin
+      firestoreAdmin.from("question_bank").select("id", { count: "exact", head: true }),
+      firestoreAdmin
         .from("question_bank")
         .select("id", { count: "exact", head: true })
         .eq("source", "ai"),
-      supabaseAdmin
+      firestoreAdmin
         .from("question_bank")
         .select("id", { count: "exact", head: true })
         .eq("source", "admin"),
@@ -353,15 +346,15 @@ export const adminBankStats = createServerFn({ method: "GET" })
 /* ---------------- Owner-only: manage admins ---------------- */
 
 export const amIOwner = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => ({ owner: isOwnerCtx(context) }));
 
 export const ownerListAdmins = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
     assertOwner(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: roles, error } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: roles, error } = await firestoreAdmin
       .from("user_roles")
       .select("user_id, role, created_at")
       .eq("role", "admin");
@@ -369,12 +362,12 @@ export const ownerListAdmins = createServerFn({ method: "GET" })
     const ids = (roles ?? []).map((r) => r.user_id as string);
     if (!ids.length) return [];
     const [{ data: profiles }, authUsers] = await Promise.all([
-      supabaseAdmin.from("users").select("id, full_name, avatar_url").in("id", ids),
-      Promise.all(ids.map((id) => getAuthUserById(supabaseAdmin, id))),
+      firestoreAdmin.from("users").select("id, full_name, avatar_url").in("id", ids),
+      Promise.all(ids.map((id) => getAuthUserById(id))),
     ]);
     return (roles ?? []).map((r) => {
       const profile = profiles?.find((row) => row.id === r.user_id);
-      const authUser = authUsers.find((user) => user.id === r.user_id);
+      const authUser = authUsers.find((user) => user.uid === r.user_id);
       const email = authUser?.email?.trim().toLowerCase() ?? null;
       return {
         user_id: r.user_id as string,
@@ -388,12 +381,12 @@ export const ownerListAdmins = createServerFn({ method: "GET" })
   });
 
 export const ownerSetAdmin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
         email: z.string().email().optional(),
-        user_id: z.string().uuid().optional(),
+        user_id: firebaseUidSchema.optional(),
         make: z.boolean(),
       })
       .refine((v) => v.email || v.user_id, "email or user_id required")
@@ -401,17 +394,17 @@ export const ownerSetAdmin = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     assertOwner(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
 
     let userId = data.user_id;
     let email = data.email?.trim().toLowerCase();
     if (!userId && email) {
-      const authUser = await findAuthUserByEmail(supabaseAdmin, email);
+      const authUser = await findAuthUserByEmail(email);
       if (!authUser) throw new Error("No user found with that email. They must sign up first.");
-      userId = authUser.id;
+      userId = authUser.uid;
       email = authUser.email?.trim().toLowerCase();
     } else if (userId) {
-      const authUser = await getAuthUserById(supabaseAdmin, userId);
+      const authUser = await getAuthUserById(userId);
       email = authUser.email?.trim().toLowerCase();
     }
 
@@ -419,12 +412,12 @@ export const ownerSetAdmin = createServerFn({ method: "POST" })
     if (!data.make && isOwnerEmail(email)) throw new Error("Owner accounts cannot be removed.");
 
     if (data.make) {
-      const { error } = await supabaseAdmin
+      const { error } = await firestoreAdmin
         .from("user_roles")
         .insert({ user_id: userId!, role: "admin" });
       if (error && !`${error.message}`.includes("duplicate")) throw error;
     } else {
-      const { error } = await supabaseAdmin
+      const { error } = await firestoreAdmin
         .from("user_roles")
         .delete()
         .eq("user_id", userId!)
@@ -437,7 +430,7 @@ export const ownerSetAdmin = createServerFn({ method: "POST" })
 /* ---------------- Announcements (broadcast to all users) ---------------- */
 
 export const adminBroadcast = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -450,9 +443,9 @@ export const adminBroadcast = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
 
-    let q = supabaseAdmin.from("users").select("id").eq("is_banned", false);
+    let q = firestoreAdmin.from("users").select("id").eq("is_banned", false);
     if (data.audience === "pro") q = q.eq("is_pro", true);
     if (data.audience === "free") q = q.eq("is_pro", false);
     const { data: users, error } = await q;
@@ -472,7 +465,7 @@ export const adminBroadcast = createServerFn({ method: "POST" })
     let sent = 0;
     for (let i = 0; i < rows.length; i += 500) {
       const chunk = rows.slice(i, i + 500);
-      const { error: insErr } = await supabaseAdmin
+      const { error: insErr } = await firestoreAdmin
         .from("notifications")
         .insert(chunk as unknown as never);
       if (insErr) throw insErr;
@@ -486,11 +479,11 @@ export const adminBroadcast = createServerFn({ method: "POST" })
   });
 
 export const adminListAnnouncements = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data, error } = await firestoreAdmin
       .from("notifications")
       .select("title, body, created_at")
       .eq("kind", "announcement")

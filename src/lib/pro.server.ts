@@ -1,12 +1,12 @@
-type Sb = { from: (t: string) => any };
+type DataClient = { from: (table: string) => any };
 
 /** Weakest chapters (lowest accuracy) for a user, derived from submitted quizzes. */
 export async function getAnalyticsFor(
-  _supabase: Sb,
+  _db: DataClient,
   userId: string,
 ): Promise<{ chapter: string; accuracy: number }[]> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: sessions, error } = await supabaseAdmin
+  const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+  const { data: sessions, error } = await firestoreAdmin
     .from("quiz_sessions")
     .select("questions, answers")
     .eq("user_id", userId)

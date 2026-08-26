@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
+import { firebaseUidSchema } from "@/integrations/firebase/validation";
 
 const purposeSchema = z.enum(["pro_weekly", "pro", "pro_yearly"]);
 type Purpose = z.infer<typeof purposeSchema>;
@@ -82,7 +83,7 @@ export const Route = createFileRoute("/api/public/hooks/razorpay")({
           const payment = parsed.payload.payment.entity;
           const order = await fetchOrder(payment.order_id);
           const purpose = purposeSchema.safeParse(order.notes.purpose);
-          const userId = z.string().uuid().safeParse(order.notes.user_id);
+          const userId = firebaseUidSchema.safeParse(order.notes.user_id);
           if (!purpose.success || !userId.success) {
             return response(400, "Payment order metadata mismatch");
           }
@@ -99,8 +100,8 @@ export const Route = createFileRoute("/api/public/hooks/razorpay")({
             return response(400, "Payment order metadata mismatch");
           }
 
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { data, error } = await (supabaseAdmin as any).rpc("fulfill_pro_payment", {
+          const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+          const { data, error } = await (firestoreAdmin as any).rpc("fulfill_pro_payment", {
             p_payment_id: payment.id,
             p_order_id: order.id,
             p_user_id: userId.data,

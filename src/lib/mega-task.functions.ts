@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 import { getMegaTaskPartnerSecret } from "@/lib/mega-task-verification.server";
 
 export type MegaTaskType = "rewarded_ad" | "external_link" | "daily_challenge" | "quiz";
@@ -61,12 +61,12 @@ export type ProviderTaskCatalogItem = {
 };
 
 type AuthContext = {
-  supabase: import("@supabase/supabase-js").SupabaseClient;
+  db: import("@/integrations/firebase/data.server").FirestoreDataClient;
   userId: string;
 };
 
 async function assertAdmin(context: AuthContext) {
-  const { data, error } = await context.supabase.rpc("has_role", {
+  const { data, error } = await context.db.rpc("has_role", {
     _user_id: context.userId,
     _role: "admin",
   });
@@ -190,11 +190,11 @@ function parseProviderCatalogItem(
 const megaInput = z.object({ mega_test_id: z.string().uuid() });
 
 export const listMyMegaAccessTasks = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((input: unknown) => megaInput.parse(input))
   .handler(async ({ data, context }): Promise<MyMegaAccessTask[]> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const db = supabaseAdmin as any;
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const db = firestoreAdmin as any;
     const [{ data: test, error: testError }, { data: profile, error: profileError }] =
       await Promise.all([
         db
@@ -284,11 +284,11 @@ export const listMyMegaAccessTasks = createServerFn({ method: "GET" })
 const startInput = z.object({ assignment_id: z.string().uuid() });
 
 export const startMegaProviderTaskAttempt = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((input: unknown) => startInput.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const db = supabaseAdmin as any;
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const db = firestoreAdmin as any;
     const now = new Date();
 
     const { data: assignment, error: assignmentError } = await db
@@ -405,11 +405,11 @@ export const startMegaProviderTaskAttempt = createServerFn({ method: "POST" })
   });
 
 export const getMegaTaskAttemptStatus = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((input: unknown) => z.object({ attempt_id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: attempt, error } = await (supabaseAdmin as any)
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: attempt, error } = await (firestoreAdmin as any)
       .from("mega_access_task_attempts")
       .select("id, assignment_id, status, expires_at, completed_at, rejection_reason")
       .eq("id", data.attempt_id)
@@ -428,11 +428,11 @@ export const getMegaTaskAttemptStatus = createServerFn({ method: "GET" })
   });
 
 export const syncMegaStudyTaskCompletions = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((input: unknown) => megaInput.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const db = supabaseAdmin as any;
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const db = firestoreAdmin as any;
     const { data: assignments, error } = await db
       .from("mega_access_task_assignments")
       .select("id, task_id")
@@ -486,7 +486,7 @@ const taskSchema = z.object({
 });
 
 export const adminGetMegaProviderTasks = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }): Promise<ProviderTaskCatalogItem[]> => {
     await assertAdmin(context);
     const { provider, url, bearerToken } = requireProviderCatalogConfig();
@@ -542,11 +542,11 @@ export const adminGetMegaProviderTasks = createServerFn({ method: "GET" })
   });
 
 export const adminListMegaTaskTargets = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }): Promise<MegaTaskTarget[]> => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data, error } = await firestoreAdmin
       .from("mega_tests")
       .select("id, profession, scheduled_start, scheduled_end, status")
       .eq("status", "scheduled")
@@ -558,11 +558,11 @@ export const adminListMegaTaskTargets = createServerFn({ method: "GET" })
   });
 
 export const adminListMegaAccessTasks = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }): Promise<AdminMegaAccessTask[]> => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const db = supabaseAdmin as any;
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const db = firestoreAdmin as any;
     const { data: taskRows, error: taskError } = await db
       .from("mega_access_tasks")
       .select("*")
@@ -615,7 +615,7 @@ export const adminListMegaAccessTasks = createServerFn({ method: "GET" })
   });
 
 export const adminSaveMegaAccessTask = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((input: unknown) => taskSchema.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -670,8 +670,8 @@ export const adminSaveMegaAccessTask = createServerFn({ method: "POST" })
     const configReason = taskConfigurationReason(candidate);
     if (data.is_active && configReason) throw new Error(configReason);
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const db = supabaseAdmin as any;
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const db = firestoreAdmin as any;
     if (data.task_type === "external_link" && data.provider_task_id) {
       let duplicateQuery = db
         .from("mega_access_tasks")
@@ -793,12 +793,12 @@ export const adminSaveMegaAccessTask = createServerFn({ method: "POST" })
   });
 
 export const adminDeleteMegaAccessTask = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const db = supabaseAdmin as any;
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const db = firestoreAdmin as any;
     const { count, error: assignmentError } = await db
       .from("mega_access_task_assignments")
       .select("id", { count: "exact", head: true })

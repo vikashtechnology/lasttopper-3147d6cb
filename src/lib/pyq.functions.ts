@@ -1,22 +1,22 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 import type { QuizQuestion } from "@/lib/learning.functions";
 
 export type PyqOption = { exam: string; year: number | null; count: number };
 
 export const getPyqOptions = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }): Promise<PyqOption[]> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: profile } = await context.supabase
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: profile } = await context.db
       .from("users")
       .select("profession")
       .eq("id", context.userId)
       .maybeSingle();
     const profession = profile?.profession ?? null;
 
-    let q = supabaseAdmin
+    let q = firestoreAdmin
       .from("question_bank")
       .select("exam, exam_year")
       .not("exam", "is", null)
@@ -40,7 +40,7 @@ export const getPyqOptions = createServerFn({ method: "GET" })
   });
 
 export const startPyqQuiz = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -51,8 +51,8 @@ export const startPyqQuiz = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: profile } = await context.supabase
+    const { firestoreAdmin } = await import("@/integrations/firebase/data.server");
+    const { data: profile } = await context.db
       .from("users")
       .select("profession, is_pro")
       .eq("id", context.userId)
@@ -60,7 +60,7 @@ export const startPyqQuiz = createServerFn({ method: "POST" })
     if (data.count > 20 && !profile?.is_pro) throw new Error("PRO_REQUIRED");
     const profession = profile?.profession ?? null;
 
-    let q = supabaseAdmin
+    let q = firestoreAdmin
       .from("question_bank")
       .select("id, chapter_id, question, options, correct, hint, explanation")
       .ilike("exam", data.exam)
@@ -87,12 +87,12 @@ export const startPyqQuiz = createServerFn({ method: "POST" })
 
     let chapterIds = Array.from(new Set(questions.map((x) => x.chapter_id))).filter(Boolean);
     if (chapterIds.length === 0) {
-      const { data: subjects } = await context.supabase
+      const { data: subjects } = await context.db
         .from("subjects")
         .select("id")
         .eq("profession", (profession ?? "pcm") as "pcm" | "pcb")
         .limit(1);
-      const { data: ch } = await context.supabase
+      const { data: ch } = await context.db
         .from("chapters")
         .select("id")
         .in(
@@ -104,7 +104,7 @@ export const startPyqQuiz = createServerFn({ method: "POST" })
     }
 
     const nowIso = new Date().toISOString();
-    const { data: row, error: iErr } = await supabaseAdmin
+    const { data: row, error: iErr } = await firestoreAdmin
       .from("quiz_sessions")
       .insert({
         user_id: context.userId,
