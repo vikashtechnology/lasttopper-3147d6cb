@@ -25,8 +25,14 @@
 //   - .vercel/output/functions/__server.func    (vercel build / vercel preset)
 import { createRequire } from "node:module";
 import { execFileSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
+
+// The function bundle contains CJS packages that `require()` ESM-only
+// packages (jwks-rsa@4 -> jose@6). require(esm) is only enabled by default
+// since Node 20.19 / 22.12, so the old nodejs20.x lambda runtime throws
+// ERR_REQUIRE_ESM. nodejs22.x always has it.
+const TARGET_RUNTIME = "nodejs22.x";
 
 const targets = process.argv[2]
   ? [resolve(process.argv[2])]
@@ -317,6 +323,23 @@ for (const target of targets) {
   // node_modules, making checks falsely pass/fail).
   const checkBare = missingRoots.length ? [...missingRoots] : [...bare];
   const ok = verifyInChild(target, checkBare, present);
+
+  // Lambda runtime: nodejs22.x guarantees require(esm) support (jose@6 is
+  // ESM-only and required by the CJS jwks-rsa — nodejs20.x throws
+  // ERR_REQUIRE_ESM in /var/task).
+  const vcConfig = join(target, ".vc-config.json");
+  if (existsSync(vcConfig)) {
+    try {
+      const cfg = JSON.parse(readFileSync(vcConfig, "utf8"));
+      if (cfg.runtime && cfg.runtime !== TARGET_RUNTIME) {
+        cfg.runtime = TARGET_RUNTIME;
+        writeFileSync(vcConfig, JSON.stringify(cfg, null, 2));
+        console.log(`Runtime set to ${TARGET_RUNTIME} (was nodejs20.x; require(esm) support).`);
+      }
+    } catch (e) {
+      console.log(`  !! could not patch ${vcConfig}: ${e.message}`);
+    }
+  }
   console.log(`Target node_modules size: ${(dirSize(join(target, "node_modules")) / 1048576).toFixed(1)} MiB`);
   console.log(ok ? "VERIFIED: closure complete." : "FAILED: some packages still unresolvable.");
   if (!ok) exitCode = 1;

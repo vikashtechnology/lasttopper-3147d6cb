@@ -72,10 +72,16 @@ async function initializeFirebaseAdmin(): Promise<App> {
     });
   }
 
-  // Application Default Credentials are useful for the local emulator and
-  // Google-managed runtimes. Vercel staging should use one of the explicit
-  // service-account options above.
-  return initializeApp({ projectId, credential: applicationDefault() });
+  // Application Default Credentials are only usable where Google-managed
+  // credentials exist (local gcloud, emulator, Compute). On Vercel there is
+  // no ADC, and firebase-admin's lazy gRPC init turns the missing-credential
+  // error into an unhandled rejection that kills the whole lambda process.
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.FIRESTORE_EMULATOR_HOST) {
+    return initializeApp({ projectId, credential: applicationDefault() });
+  }
+  throw new Error(
+    "Firebase Admin is not configured: set FIREBASE_SERVICE_ACCOUNT_JSON (or FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY)",
+  );
 }
 
 export async function getFirebaseAdminApp(): Promise<App> {

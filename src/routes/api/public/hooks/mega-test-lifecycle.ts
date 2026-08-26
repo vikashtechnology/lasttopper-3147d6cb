@@ -13,7 +13,12 @@ export const Route = createFileRoute("/api/public/hooks/mega-test-lifecycle")({
       POST: async ({ request }) => {
         const auth = authorizeInternalHook(request);
         if (auth !== "ok") return internalHookAuthError(auth);
-        return Response.json({ ok: true, ...(await runMegaTestLifecycle()) });
+        try {
+          return Response.json({ ok: true, ...(await runMegaTestLifecycle()) });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown error";
+          return Response.json({ ok: false, error: message }, { status: 500, headers: { "cache-control": "no-store" } });
+        }
       },
     },
   },
